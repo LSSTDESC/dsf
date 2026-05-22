@@ -1,0 +1,190 @@
+[project]
+name = "dsf"
+version = "0.1.0"
+description = "Delta Sigma forecasting tools for LSST DESC galaxy-galaxy lensing analyses."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+authors = [
+  { name = "Nikolina Sarcevic", email = "nikolina.sarcevic@gmail.com" },
+]
+
+maintainers = [
+  { name = "Nikolina Sarcevic", email = "nikolina.sarcevic@gmail.com" },
+]
+
+keywords = [
+  "cosmology",
+  "weak lensing",
+  "galaxy-galaxy lensing",
+  "delta sigma",
+  "forecasting",
+  "LSST DESC",
+]
+
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Natural Language :: English",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Astronomy",
+  "Topic :: Scientific/Engineering :: Physics",
+]
+
+dependencies = [
+  "numpy",
+  "scipy",
+  "matplotlib",
+  "pyyaml",
+  "pyccl",
+  "pybinny>=0.3.2",
+  "derivkit",
+  "cmasher",
+  "getdist",
+]
+
+[project.optional-dependencies]
+dev = [
+  "bump-my-version>=0.26",
+  "pytest>=8",
+  "pytest-cov>=5",
+  "ruff>=0.6",
+  "tox>=4.22",
+]
+
+docs = [
+  "sphinx[doctest]<9",
+  "sphinx-copybutton",
+  "sphinx-design",
+  "furo",
+]
+
+all = [
+  "bump-my-version>=0.26",
+  "pytest>=8",
+  "pytest-cov>=5",
+  "ruff>=0.6",
+  "tox>=4.22",
+  "sphinx[doctest]<9",
+  "sphinx-copybutton",
+  "sphinx-design",
+  "furo",
+]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = { "" = "." }
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = [
+  "src*",
+  "analysis*",
+]
+exclude = [
+  "runs*",
+  "notebooks*",
+  "docs*",
+  "tests*",
+  "benchmarks*",
+]
+
+[tool.coverage.run]
+branch = true
+parallel = true
+source = ["src"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+]
+show_missing = true
+skip_empty = true
+
+[tool.pytest.ini_options]
+addopts = "-m 'not slow'"
+markers = [
+  "slow: long-running tests (opt-in)",
+  "regression: heavier regression / sweep tests (opt-in)",
+]
+testpaths = ["tests"]
+
+[tool.ruff]
+exclude = [
+  "benchmarks",
+  "docs",
+  "runs",
+  "notebooks",
+]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.format]
+indent-style = "space"
+quote-style = "double"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "UP"]
+
+[tool.bumpversion]
+current_version = "0.1.0"
+commit = true
+tag = true
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'current_version = "{current_version}"'
+replace = 'current_version = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+[tool.tox]
+requires = ["tox>=4.22"]
+envlist = [
+  "py312",
+  "cov",
+  "docs",
+]
+
+[tool.tox.env_run_base.setenv]
+PIP_CACHE_DIR = "{tox_root}/.cache/pip"
+
+[tool.tox.env.py312]
+description = "Run unit tests"
+extras = ["dev"]
+commands = [
+  ["pytest", "-q"],
+]
+
+[tool.tox.env.cov]
+description = "Run tests with coverage"
+extras = ["dev"]
+commands = [
+  [
+    "pytest",
+    "-q",
+    "--cov=src",
+    "--cov-branch",
+    "--cov-report=term-missing:skip-covered",
+  ],
+]
+
+[tool.tox.env.docs]
+description = "Build documentation"
+extras = ["docs"]
+commands = [
+  ["sphinx-build", "{tox_root}/docs", "{tox_root}/docs/_build/html", "--fail-on-warning"],
+]

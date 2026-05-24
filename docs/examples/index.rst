@@ -11,5 +11,6 @@ Available examples
 .. toctree::
    :maxdepth: 1
 
+   tomography
    data_vector
    covariance

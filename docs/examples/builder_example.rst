@@ -52,7 +52,7 @@ Forecast-builder example
 
    np.set_printoptions(precision=8, suppress=True)
 
-   cache_path = Path("docs/examples/builder_example_forecast_cache.npz")
+   cache_path = Path("cached_files/builder_example_forecast_cache.npz")
 
    parameter_names = ["log10Mmin_0", "log10M1_0"]
    parameter_labels = [

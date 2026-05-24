@@ -19,7 +19,6 @@ import os
 
 from dsf.utils.thread_limits import limit_numerical_threads
 
-
 if os.environ.get("DSF_DISABLE_THREAD_LIMITS") != "1":
     n_threads = int(os.environ.get("DSF_NUM_THREADS", "1"))
     limit_numerical_threads(n_threads)

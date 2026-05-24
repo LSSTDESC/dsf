@@ -1,12 +1,12 @@
-"""Unit tests for ``src.dsf.deta_sigma_forecast_builder``."""
+"""Unit tests for ``dsf.deta_sigma_forecast_builder``."""
 
 from types import SimpleNamespace
 
 import numpy as np
 import pytest
 
-import src.dsf.delta_sigma_forecast_builder as forecast_module
-from src.dsf.delta_sigma_forecast_builder import DeltaSigmaForecastBuilder
+import dsf.delta_sigma_forecast_builder as forecast_module
+from dsf.delta_sigma_forecast_builder import DeltaSigmaForecastBuilder
 
 
 def dummy_pk2d_func(*args, **kwargs):

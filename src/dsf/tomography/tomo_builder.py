@@ -15,7 +15,7 @@ from typing import Any
 import numpy as np
 from binny import NZTomography
 
-from src.dsf.utils.types import BinPairs, FloatArray, TomographyInputs
+from dsf.utils.types import BinPairs, FloatArray, TomographyInputs
 
 __all__ = [
     "TomographyBuilder",

@@ -1,10 +1,10 @@
-"""Unit tests for ``src.dsf.data_vector.mag_bias``."""
+"""Unit tests for ``dsf.data_vector.mag_bias``."""
 
 import numpy as np
 import pytest
 
-from src.dsf.data_vector import mag_bias
-from src.dsf.data_vector.mag_bias import (
+from dsf.data_vector import mag_bias
+from dsf.data_vector.mag_bias import (
     _inner_redshift_integrand,
     _lens_mag_distance_kernel,
     _lens_mag_lss_shear,

@@ -1,10 +1,10 @@
-"""Unit tests for ``src.dsf.data_vector.delta_sigma_builder``."""
+"""Unit tests for ``dsf.data_vector.delta_sigma_builder``."""
 
 import numpy as np
 import pytest
 
-from src.dsf.data_vector import delta_sigma_builder
-from src.dsf.data_vector.delta_sigma_builder import (
+from dsf.data_vector import delta_sigma_builder
+from dsf.data_vector.delta_sigma_builder import (
     DeltaSigmaCalculator,
     stellar_point_mass_delta_sigma,
 )

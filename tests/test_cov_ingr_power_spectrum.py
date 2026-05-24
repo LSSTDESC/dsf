@@ -1,11 +1,11 @@
-"""Unit tests for ``src.dsf.covariance.ingredients.power_spectrum``."""
+"""Unit tests for ``dsf.covariance.ingredients.power_spectrum``."""
 
 import numpy as np
 import pytest
 
-from src.dsf.covariance.ingredients.power_spectrum import lens_averaged_matter_power
+from dsf.covariance.ingredients.power_spectrum import lens_averaged_matter_power
 
-POWER_SPECTRUM_MODULE = "src.dsf.covariance.ingredients.power_spectrum"
+POWER_SPECTRUM_MODULE = "dsf.covariance.ingredients.power_spectrum"
 
 
 def test_lens_averaged_matter_power_uses_weighted_redshift_average(monkeypatch):

@@ -3,7 +3,7 @@
 This module contains reusable ``Pk2D`` model components that can be passed to
 ``DeltaSigmaForecastBuilder`` through its ``pk2d_func`` argument.
 
-The basic two-halo density profiles live in ``src.dsf.data_vector.profiles``.
+The basic two-halo density profiles live in ``dsf.data_vector.profiles``.
 Additive DeltaSigma-level terms, such as stellar point mass and lens
 magnification bias, live in the data-vector and magnification-bias modules.
 
@@ -21,8 +21,8 @@ import numpy as np
 import pyccl as ccl
 from numpy.typing import NDArray
 
-from src.dsf.data_vector.profiles import density_weighted_power_spectrum
-from src.dsf.utils.validators import (
+from dsf.data_vector.profiles import density_weighted_power_spectrum
+from dsf.utils.validators import (
     validate_finite_scalar,
     validate_positive_scalar,
     validate_positive_strictly_increasing_1d_array,

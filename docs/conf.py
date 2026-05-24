@@ -19,6 +19,7 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx_copybutton",
     "sphinx_design",
+    "matplotlib.sphinxext.plot_directive",
 ]
 
 templates_path = ["_templates"]
@@ -30,3 +31,12 @@ html_static_path = ["_static"]
 autodoc_typehints = "description"
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
+
+plot_formats = [("png", 100)]
+plot_html_show_source_link = False
+plot_html_show_formats = False
+
+plot_pre_code = """
+import matplotlib
+matplotlib.use("Agg")
+"""

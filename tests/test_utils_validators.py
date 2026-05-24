@@ -1,9 +1,9 @@
-"""Tests for ``src.dsf.utils.validators.py``."""
+"""Tests for ``dsf.utils.validators.py``."""
 
 import numpy as np
 import pytest
 
-from src.dsf.utils.validators import (
+from dsf.utils.validators import (
     as_1d_float_array,
     as_2d_float_array,
     is_non_negative_integer,

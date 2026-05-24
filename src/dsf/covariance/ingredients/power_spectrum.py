@@ -10,10 +10,10 @@ from __future__ import annotations
 import numpy as np
 import pyccl as ccl
 
-from src.dsf.utils.converters import redshift_to_scale_factor, resolve_h
-from src.dsf.utils.integrators import weighted_trapezoid_average
-from src.dsf.utils.types import FloatArray
-from src.dsf.utils.validators import (
+from dsf.utils.converters import redshift_to_scale_factor, resolve_h
+from dsf.utils.integrators import weighted_trapezoid_average
+from dsf.utils.types import FloatArray
+from dsf.utils.validators import (
     validate_positive_strictly_increasing_1d_array,
     validate_redshift_distribution,
 )

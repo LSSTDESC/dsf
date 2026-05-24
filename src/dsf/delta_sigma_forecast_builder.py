@@ -24,11 +24,11 @@ from typing import Any
 import numpy as np
 import pyccl as ccl
 
-from src.dsf.covariance.cov_builder import DeltaSigmaCovarianceBuilder
-from src.dsf.data_vector.delta_sigma_builder import DeltaSigmaCalculator
-from src.dsf.tomography.tomo_builder import TomographyBuilder
-from src.dsf.utils.types import ArrayLike, FloatArray, ScalarOrPerBin, ThetaMapper
-from src.dsf.utils.validators import (
+from dsf.covariance.cov_builder import DeltaSigmaCovarianceBuilder
+from dsf.data_vector.delta_sigma_builder import DeltaSigmaCalculator
+from dsf.tomography.tomo_builder import TomographyBuilder
+from dsf.utils.types import ArrayLike, FloatArray, ScalarOrPerBin, ThetaMapper
+from dsf.utils.validators import (
     validate_forecast_vector_and_covariance,
     validate_parameter_names,
 )

@@ -1,16 +1,16 @@
-"""Unit tests for ``src.dsf.covariance.ingredients.sigma_crit``."""
+"""Unit tests for ``dsf.covariance.ingredients.sigma_crit``."""
 
 import numpy as np
 import pytest
 
-from src.dsf.covariance.ingredients.sigma_crit import (
+from dsf.covariance.ingredients.sigma_crit import (
     effective_sigma_crit_squared,
     sigma_crit_inverse_comoving,
     sigma_crit_inverse_source_average,
     sigma_crit_squared_average,
 )
 
-SIGMA_CRIT_MODULE = "src.dsf.covariance.ingredients.sigma_crit"
+SIGMA_CRIT_MODULE = "dsf.covariance.ingredients.sigma_crit"
 
 
 def fake_comoving_distance_h(cosmo, z, *, h=None):

@@ -12,7 +12,7 @@ SITECUSTOMIZE_PATH = Path(__file__).resolve().parents[1] / "src" / "sitecustomiz
 
 def import_sitecustomize_from_path(monkeypatch, fake_limit):
     """Import src/sitecustomize.py after patching the thread-limit dependency."""
-    import src.dsf.utils.thread_limits as thread_limits
+    import dsf.utils.thread_limits as thread_limits
 
     monkeypatch.setattr(thread_limits, "limit_numerical_threads", fake_limit)
 

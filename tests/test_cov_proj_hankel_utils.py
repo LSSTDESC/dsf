@@ -1,10 +1,10 @@
-"""Unit tests for ``src.dsf.covariance.projection.hankel_utils``."""
+"""Unit tests for ``dsf.covariance.projection.hankel_utils``."""
 
 import numpy as np
 import pytest
 from scipy.special import jv
 
-from src.dsf.covariance.projection.hankel_utils import (
+from dsf.covariance.projection.hankel_utils import (
     apply_taper_spectrum,
     bessel_zeros,
     compute_bin_radial_matrix,

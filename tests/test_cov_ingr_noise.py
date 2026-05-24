@@ -1,14 +1,14 @@
-"""Unit tests for ``src.dsf.covariance.ingredients.noise``."""
+"""Unit tests for ``dsf.covariance.ingredients.noise``."""
 
 import numpy as np
 import pytest
 
-from src.dsf.covariance.ingredients.noise import (
+from dsf.covariance.ingredients.noise import (
     angular_shape_noise,
     projected_shape_noise,
     shot_noise,
 )
-from src.dsf.utils.converters import arcmin2_per_steradian
+from dsf.utils.converters import arcmin2_per_steradian
 
 
 def test_shot_noise_returns_inverse_number_density():

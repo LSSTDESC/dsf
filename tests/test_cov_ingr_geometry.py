@@ -1,9 +1,9 @@
-"""Unit tests for ``src.dsf.covariance.ingredients.geometry``."""
+"""Unit tests for ``dsf.covariance.ingredients.geometry``."""
 
 import numpy as np
 import pytest
 
-from src.dsf.covariance.ingredients.geometry import (
+from dsf.covariance.ingredients.geometry import (
     delta_pi_from_window,
     delta_pi_gg_from_edges,
     delta_pi_gm_factors,
@@ -16,7 +16,7 @@ from src.dsf.covariance.ingredients.geometry import (
     survey_volume_from_edges,
 )
 
-MODULE = "src.dsf.covariance.ingredients.geometry"
+MODULE = "dsf.covariance.ingredients.geometry"
 
 
 @pytest.fixture

@@ -1,8 +1,8 @@
-"""Unit tests for ``src.dsf.covariance.cov_builder``."""
+"""Unit tests for ``dsf.covariance.cov_builder``."""
 
 import numpy as np
 
-from src.dsf.covariance.cov_builder import DeltaSigmaCovarianceBuilder
+from dsf.covariance.cov_builder import DeltaSigmaCovarianceBuilder
 
 
 def test_selected_pairs_returns_stored_pairs_as_integer_tuples():

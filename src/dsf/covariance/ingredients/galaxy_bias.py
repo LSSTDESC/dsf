@@ -11,9 +11,9 @@ from __future__ import annotations
 import numpy as np
 import pyccl as ccl
 
-from src.dsf.utils.converters import redshift_to_scale_factor
-from src.dsf.utils.types import ArrayLike, FloatArray
-from src.dsf.utils.validators import (
+from dsf.utils.converters import redshift_to_scale_factor
+from dsf.utils.types import ArrayLike, FloatArray
+from dsf.utils.validators import (
     validate_nonnegative_1d_array,
     validate_positive_scalar,
 )

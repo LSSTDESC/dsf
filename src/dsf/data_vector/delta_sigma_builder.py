@@ -25,8 +25,8 @@ import numpy as np
 import pyccl as ccl
 from numpy.typing import NDArray
 
-from src.dsf.utils.converters import redshift_to_scale_factor
-from src.dsf.utils.validators import (
+from dsf.utils.converters import redshift_to_scale_factor
+from dsf.utils.validators import (
     redshift_window_mask,
     validate_finite_scalar,
     validate_positive_1d_array,

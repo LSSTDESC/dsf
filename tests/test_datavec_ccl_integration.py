@@ -1,9 +1,9 @@
-"""Unit tests for ``src.dsf.data_vector.ccl_integration``."""
+"""Unit tests for ``dsf.data_vector.ccl_integration``."""
 
 import numpy as np
 import pytest
 
-from src.dsf.data_vector.ccl_integration import HaloProfileGeneric
+from dsf.data_vector.ccl_integration import HaloProfileGeneric
 
 
 class DummyPk2D:

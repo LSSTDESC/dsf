@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import os
 
-from src.dsf.utils.thread_limits import limit_numerical_threads
+from dsf.utils.thread_limits import limit_numerical_threads
 
 if os.environ.get("DSF_DISABLE_THREAD_LIMITS") != "1":
     n_threads = int(os.environ.get("DSF_NUM_THREADS", "1"))

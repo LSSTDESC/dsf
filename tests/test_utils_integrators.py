@@ -1,9 +1,9 @@
-"""Tests for ``src.dsf.utils.integrators.py``."""
+"""Tests for ``dsf.utils.integrators.py``."""
 
 import numpy as np
 import pytest
 
-from src.dsf.utils.integrators import (
+from dsf.utils.integrators import (
     normalize_distribution,
     trapezoid_integral,
     weighted_trapezoid_average,

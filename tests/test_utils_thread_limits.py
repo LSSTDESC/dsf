@@ -1,8 +1,8 @@
-"""Tests for ``src.dsf.utils.thread_limits.py``."""
+"""Tests for ``dsf.utils.thread_limits.py``."""
 
 import os
 
-from src.dsf.utils.thread_limits import THREAD_LIMIT_ENV_VARS, limit_numerical_threads
+from dsf.utils.thread_limits import THREAD_LIMIT_ENV_VARS, limit_numerical_threads
 
 
 def test_thread_limit_env_vars_lists_expected_backend_variables():

@@ -1,11 +1,11 @@
-"""Unit tests for ``src.dsf.covariance.projection.hankel_transform``."""
+"""Unit tests for ``dsf.covariance.projection.hankel_transform``."""
 
 import numpy as np
 import pytest
 
-from src.dsf.covariance.projection.hankel_transform import HankelTransform
+from dsf.covariance.projection.hankel_transform import HankelTransform
 
-HANKEL_MODULE = "src.dsf.covariance.projection.hankel_transform"
+HANKEL_MODULE = "dsf.covariance.projection.hankel_transform"
 
 
 def make_fake_transform():

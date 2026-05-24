@@ -1,10 +1,10 @@
-"""Tests for ``src.dsf.utils.converters.py``."""
+"""Tests for ``dsf.utils.converters.py``."""
 
 import numpy as np
 import pyccl as ccl
 import pytest
 
-from src.dsf.utils.converters import (
+from dsf.utils.converters import (
     arcmin2_per_steradian,
     comoving_delta_sigma_to_proper,
     comoving_distance_h,

@@ -1,11 +1,11 @@
-"""Tests for ``src.dsf.utils.types.py``."""
+"""Tests for ``dsf.utils.types.py``."""
 
 from collections.abc import Callable, Mapping, Sequence
 from typing import get_args, get_origin
 
 import numpy as np
 
-from src.dsf.utils.types import (
+from dsf.utils.types import (
     ArrayLike,
     BinPairs,
     FloatArray,

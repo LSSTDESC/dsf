@@ -1,9 +1,9 @@
-"""Unit tests for ``src.dsf.data_vector.profiles``."""
+"""Unit tests for ``dsf.data_vector.profiles``."""
 
 import numpy as np
 
-from src.dsf.data_vector import profiles
-from src.dsf.data_vector.profiles import (
+from dsf.data_vector import profiles
+from dsf.data_vector.profiles import (
     density_weighted_power_spectrum,
     linear_twohalo_density_profile,
     nonlinear_twohalo_density_profile,

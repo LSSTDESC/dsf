@@ -1,11 +1,11 @@
-"""Unit tests for ``src.dsf.covariance.ingredients.cov_blocks``."""
+"""Unit tests for ``dsf.covariance.ingredients.cov_blocks``."""
 
 from types import SimpleNamespace
 
 import numpy as np
 import pytest
 
-from src.dsf.covariance.ingredients.cov_blocks import (
+from dsf.covariance.ingredients.cov_blocks import (
     _build_taper_kwargs,
     _covariance_on_requested_radius_grid,
     delta_sigma_gg_covariance,

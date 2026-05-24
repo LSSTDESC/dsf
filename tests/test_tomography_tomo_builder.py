@@ -1,12 +1,12 @@
-"""Unit tests for ``src.dsf.data_vector.tomography``."""
+"""Unit tests for ``dsf.data_vector.tomography``."""
 
 from types import SimpleNamespace
 
 import numpy as np
 import pytest
 
-from src.dsf.tomography import tomo_builder
-from src.dsf.tomography.tomo_builder import TomographyBuilder
+from dsf.tomography import tomo_builder
+from dsf.tomography.tomo_builder import TomographyBuilder
 
 
 class DummyNZTomography:

@@ -1,9 +1,9 @@
-"""Unit tests for ``src.dsf.covariance.ingredients.galaxy_bias``."""
+"""Unit tests for ``dsf.covariance.ingredients.galaxy_bias``."""
 
 import numpy as np
 import pytest
 
-from src.dsf.covariance.ingredients.galaxy_bias import linear_galaxy_bias
+from dsf.covariance.ingredients.galaxy_bias import linear_galaxy_bias
 
 
 def test_linear_galaxy_bias_returns_prefactor_over_growth(monkeypatch):
@@ -15,7 +15,7 @@ def test_linear_galaxy_bias_returns_prefactor_over_growth(monkeypatch):
         return growth
 
     monkeypatch.setattr(
-        "src.dsf.covariance.ingredients.galaxy_bias.ccl.growth_factor",
+        "dsf.covariance.ingredients.galaxy_bias.ccl.growth_factor",
         fake_growth_factor,
     )
 
@@ -40,7 +40,7 @@ def test_linear_galaxy_bias_rounds_output(monkeypatch):
         return growth
 
     monkeypatch.setattr(
-        "src.dsf.covariance.ingredients.galaxy_bias.ccl.growth_factor",
+        "dsf.covariance.ingredients.galaxy_bias.ccl.growth_factor",
         fake_growth_factor,
     )
 
@@ -65,7 +65,7 @@ def test_linear_galaxy_bias_does_not_round_when_round_decimals_is_none(monkeypat
         return growth
 
     monkeypatch.setattr(
-        "src.dsf.covariance.ingredients.galaxy_bias.ccl.growth_factor",
+        "dsf.covariance.ingredients.galaxy_bias.ccl.growth_factor",
         fake_growth_factor,
     )
 
@@ -93,7 +93,7 @@ def test_linear_galaxy_bias_rejects_non_positive_prefactor(
         return np.asarray([1.0])
 
     monkeypatch.setattr(
-        "src.dsf.covariance.ingredients.galaxy_bias.ccl.growth_factor",
+        "dsf.covariance.ingredients.galaxy_bias.ccl.growth_factor",
         fake_growth_factor,
     )
 
@@ -122,7 +122,7 @@ def test_linear_galaxy_bias_rejects_invalid_redshift_inputs(
         return np.asarray([1.0])
 
     monkeypatch.setattr(
-        "src.dsf.covariance.ingredients.galaxy_bias.ccl.growth_factor",
+        "dsf.covariance.ingredients.galaxy_bias.ccl.growth_factor",
         fake_growth_factor,
     )
 
@@ -150,7 +150,7 @@ def test_linear_galaxy_bias_rejects_non_positive_growth_factor(
         return bad_growth
 
     monkeypatch.setattr(
-        "src.dsf.covariance.ingredients.galaxy_bias.ccl.growth_factor",
+        "dsf.covariance.ingredients.galaxy_bias.ccl.growth_factor",
         fake_growth_factor,
     )
 
@@ -172,7 +172,7 @@ def test_linear_galaxy_bias_passes_expected_scale_factors_to_ccl(monkeypatch):
         return np.asarray([1.0, 0.8, 0.5])
 
     monkeypatch.setattr(
-        "src.dsf.covariance.ingredients.galaxy_bias.ccl.growth_factor",
+        "dsf.covariance.ingredients.galaxy_bias.ccl.growth_factor",
         fake_growth_factor,
     )
 

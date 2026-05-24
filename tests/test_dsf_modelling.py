@@ -1,11 +1,11 @@
-"""Unit tests for ``src.dsf.modelling``."""
+"""Unit tests for ``dsf.modelling``."""
 
 from types import SimpleNamespace
 
 import numpy as np
 import pytest
 
-import src.dsf.modelling as modelling
+import dsf.modelling as modelling
 
 
 class DummyCosmology(dict):

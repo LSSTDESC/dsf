@@ -42,6 +42,7 @@ installation notes and worked examples will be added as the package matures.
    :maxdepth: 2
    :caption: API
 
+   examples/index
    api/index
 
 Indices and tables

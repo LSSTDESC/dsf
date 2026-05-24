@@ -40,10 +40,10 @@ installation notes and worked examples will be added as the package matures.
 
 .. toctree::
    :maxdepth: 2
-   :caption: API
+   :caption: Documentation
 
-   examples/index
    installation
+   examples/index
    api/index
 
 Indices and tables

@@ -12,6 +12,10 @@ project = "DSF"
 author = "Nikolina Sarcevic, Ben Levine"
 copyright = "2026, LSST Dark Energy Science Collaboration"
 
+html_title = "DSF Documentation"
+html_baseurl = "https://lsstdesc.org/dsf/"
+root_doc = "index"
+
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",

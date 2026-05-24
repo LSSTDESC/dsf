@@ -49,7 +49,7 @@ The printed path should point to the ``src/dsf`` directory inside your local
 repository.
 
 Install DSF together with analysis scripts
------------------------------------------
+------------------------------------------
 
 If you are also working with the companion analysis repository, clone both
 repositories side by side:

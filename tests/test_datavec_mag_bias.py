@@ -120,9 +120,9 @@ def test_lens_mag_distance_kernel_uses_expected_ccl_distances(monkeypatch, cosmo
 
     expected = (
         fake_angular_diameter_distance(cosmo, a_inner, a_lens)
-        * fake_angular_diameter_distance(cosmo, a_lens, a_source)
+        * fake_angular_diameter_distance(cosmo, a_inner, a_source)
         / (
-            fake_angular_diameter_distance(cosmo, a_inner)
+            fake_angular_diameter_distance(cosmo, a_lens)
             * fake_angular_diameter_distance(cosmo, a_source)
         )
     )

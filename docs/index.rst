@@ -43,6 +43,7 @@ installation notes and worked examples will be added as the package matures.
    :caption: API
 
    examples/index
+   installation
    api/index
 
 Indices and tables

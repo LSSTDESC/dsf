@@ -12,7 +12,7 @@ for galaxy-matter lensing and related projected observables.
 
 from __future__ import annotations
 
-from src.dsf.utils.converters import arcmin2_per_steradian
+from dsf.utils.converters import arcmin2_per_steradian
 
 __all__ = [
     "angular_shape_noise",

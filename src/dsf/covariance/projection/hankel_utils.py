@@ -16,7 +16,7 @@ import numpy as np
 from scipy.optimize import brentq
 from scipy.special import jn_zeros, jv
 
-from src.dsf.utils.types import FloatArray
+from dsf.utils.types import FloatArray
 
 __all__ = [
     "bessel_zeros",

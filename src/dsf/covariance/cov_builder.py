@@ -22,31 +22,31 @@ from typing import Any
 import numpy as np
 import pyccl as ccl
 
-from src.dsf.covariance.ingredients.cov_blocks import (
+from dsf.covariance.ingredients.cov_blocks import (
     delta_sigma_gg_covariance,
     delta_sigma_gm_covariance,
     delta_sigma_gm_gg_cross_covariance,
     joint_delta_sigma_covariance,
 )
-from src.dsf.covariance.ingredients.galaxy_bias import linear_galaxy_bias
-from src.dsf.covariance.ingredients.geometry import (
+from dsf.covariance.ingredients.galaxy_bias import linear_galaxy_bias
+from dsf.covariance.ingredients.geometry import (
     delta_pi_gg_from_edges,
     delta_pi_gm_factors,
     effective_comoving_distance,
     lens_number_density_3d_from_angular_density,
     survey_volume_from_edges,
 )
-from src.dsf.covariance.ingredients.noise import projected_shape_noise, shot_noise
-from src.dsf.covariance.ingredients.power_spectrum import lens_averaged_matter_power
-from src.dsf.covariance.ingredients.sigma_crit import effective_sigma_crit_squared
-from src.dsf.covariance.projection.hankel_transform import HankelTransform
-from src.dsf.utils.converters import (
+from dsf.covariance.ingredients.noise import projected_shape_noise, shot_noise
+from dsf.covariance.ingredients.power_spectrum import lens_averaged_matter_power
+from dsf.covariance.ingredients.sigma_crit import effective_sigma_crit_squared
+from dsf.covariance.projection.hankel_transform import HankelTransform
+from dsf.utils.converters import (
     resolve_h,
     resolve_omega_m,
     rho_critical_projected_msun_pc2_per_mpc,
     sigma_crit_prefactor_msun_h_pc2,
 )
-from src.dsf.utils.types import ArrayLike, BinPairs, FloatArray, ScalarOrPerBin
+from dsf.utils.types import ArrayLike, BinPairs, FloatArray, ScalarOrPerBin
 
 __all__ = [
     "DeltaSigmaCovarianceBuilder",

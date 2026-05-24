@@ -13,14 +13,14 @@ from __future__ import annotations
 import numpy as np
 import pyccl as ccl
 
-from src.dsf.utils.converters import (
+from dsf.utils.converters import (
     comoving_distance_h,
     deg2_to_arcmin2,
     resolve_h,
 )
-from src.dsf.utils.integrators import trapezoid_integral
-from src.dsf.utils.types import FloatArray
-from src.dsf.utils.validators import (
+from dsf.utils.integrators import trapezoid_integral
+from dsf.utils.types import FloatArray
+from dsf.utils.validators import (
     validate_1d_pair,
     validate_finite_scalar,
     validate_positive_scalar,

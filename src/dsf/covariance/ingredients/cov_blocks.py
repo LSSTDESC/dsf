@@ -22,9 +22,9 @@ from typing import Any
 
 import numpy as np
 
-from src.dsf.covariance.projection.hankel_transform import HankelTransform
-from src.dsf.utils.types import ArrayLike
-from src.dsf.utils.validators import (
+from dsf.covariance.projection.hankel_transform import HankelTransform
+from dsf.utils.types import ArrayLike
+from dsf.utils.validators import (
     as_1d_float_array,
     as_2d_float_array,
     validate_joint_covariance_blocks,

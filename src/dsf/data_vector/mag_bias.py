@@ -25,13 +25,13 @@ import pyccl as ccl
 from numpy.typing import NDArray
 from scipy.special import jv
 
-from src.dsf.utils.converters import (
+from dsf.utils.converters import (
     hubble_over_c_cubed,
     redshift_to_scale_factor,
     scale_factor_to_redshift,
 )
-from src.dsf.utils.integrators import trapezoid_integral
-from src.dsf.utils.validators import (
+from dsf.utils.integrators import trapezoid_integral
+from dsf.utils.validators import (
     validate_finite_scalar,
     validate_integration_params,
     validate_positive_1d_array,

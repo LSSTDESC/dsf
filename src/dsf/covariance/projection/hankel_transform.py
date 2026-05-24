@@ -16,15 +16,15 @@ from collections.abc import Iterable
 import numpy as np
 from scipy.special import jv
 
-from src.dsf.covariance.projection.hankel_utils import (
+from dsf.covariance.projection.hankel_utils import (
     apply_taper_spectrum,
     bessel_zeros,
     compute_bin_radial_matrix,
     compute_correlation_matrix,
     compute_diagonal_error,
 )
-from src.dsf.utils.types import ArrayLike, FloatArray, SpectrumInput
-from src.dsf.utils.validators import (
+from dsf.utils.types import ArrayLike, FloatArray, SpectrumInput
+from dsf.utils.validators import (
     as_1d_float_array,
     validate_1d_pair,
     validate_positive_scalar,

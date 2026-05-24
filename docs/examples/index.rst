@@ -12,3 +12,4 @@ Available examples
    :maxdepth: 1
 
    data_vector
+   covariance

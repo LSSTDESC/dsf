@@ -26,15 +26,10 @@ Clone the repository:
 ```bash
 git clone https://github.com/LSSTDESC/dsf.git
 cd dsf
+````
 
 ## Documentation
 
 The documentation is available at:
 
 https://lsstdesc.org/dsf/
-
-The release documentation build can be checked locally with:
-
-```bash
-uv run tox -e docs-releases
-```

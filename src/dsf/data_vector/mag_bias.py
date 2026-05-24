@@ -103,23 +103,23 @@ def _lens_mag_distance_kernel(
     Returns:
         Distance kernel evaluated on the foreground scale-factor grid.
     """
-    distance_observer_to_inner = ccl.angular_diameter_distance(cosmo, a_inner)
+    distance_observer_to_lens = ccl.angular_diameter_distance(cosmo, a_lens)
     distance_observer_to_source = ccl.angular_diameter_distance(cosmo, a_source)
     distance_inner_to_lens = ccl.angular_diameter_distance(
         cosmo,
         a_inner,
         a_lens,
     )
-    distance_lens_to_source = ccl.angular_diameter_distance(
+    distance_inner_to_source = ccl.angular_diameter_distance(
         cosmo,
-        a_lens,
+        a_inner,
         a_source,
     )
 
     kernel = (
         distance_inner_to_lens
-        * distance_lens_to_source
-        / (distance_observer_to_inner * distance_observer_to_source)
+        * distance_inner_to_source
+        / (distance_observer_to_lens * distance_observer_to_source)
     )
 
     return kernel
@@ -346,7 +346,7 @@ def delta_sigma_lens_mag_correction(
 
     z_lens = scale_factor_to_redshift(a)
     z_source = z_lens + float(_LENS_MAG_INTEG_PARAMS["delta_z_source"])
-    a_source = redshift_to_scale_factor(z_source)
+    a_source = redshift_to_scale_factor(z_source).item()
 
     d_ang_lens = ccl.angular_diameter_distance(cosmo, a)
 

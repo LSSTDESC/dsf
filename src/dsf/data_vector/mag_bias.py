@@ -23,13 +23,13 @@ from typing import Any
 import numpy as np
 import pyccl as ccl
 from numpy.typing import NDArray
-from scipy.special import jv
 
 from dsf.utils.converters import (
     hubble_over_c_cubed,
     redshift_to_scale_factor,
     scale_factor_to_redshift,
 )
+from dsf.utils.hankel_transform_1d import hankel_J2
 from dsf.utils.integrators import trapezoid_integral
 from dsf.utils.validators import (
     validate_finite_scalar,
@@ -46,6 +46,7 @@ _LENS_MAG_INTEG_PARAMS: dict[str, int | float] = {
     "z_stepsize": 0.02,
     "z_min": 1.0e-5,
     "delta_z_source": 1.0,
+    "use_hankel_offset": True,
 }
 
 
@@ -65,7 +66,7 @@ def set_lens_mag_integ_params(**kwargs: Any) -> None:
     Args:
         **kwargs: Integration parameters to update. Supported keys are
             ``n_ell``, ``ell_min``, ``ell_max``, ``z_stepsize``, ``z_min``,
-            and ``delta_z_source``.
+            ``delta_z_source``, and ``use_hankel_offset``.
 
     Raises:
         KeyError: If an unknown integration parameter is supplied.
@@ -185,74 +186,23 @@ def _inner_redshift_integrand(
 
     redshift_kernel = ((1.0 + z_arr) ** 2) / ccl.h_over_h0(cosmo, a_inner)
     prefactor = redshift_kernel * distance_kernel
+    
+    D_a = ccl.angular_diameter_distance(cosmo, a_inner)
+    ell_plus = (ell_arr + 0.5).reshape((1, -1))
+    lk_grid = np.log(a_inner.reshape((-1, 1)) * ell_plus / D_a.reshape((-1, 1)))
 
-    matter_power = np.asarray(
+    pk2d_m = cosmo.get_nonlin_power()
+    matter_power = np.array(
         [
-            ccl.nonlin_matter_power(
-                cosmo,
-                a_i * (ell_arr + 0.5) / ccl.angular_diameter_distance(cosmo, a_i),
-                a_i,
-            )
-            for a_i in a_inner
+            ccl.lib.pk2d_eval_multi(
+                pk2d_m.psp, lk_grid[a_i], a_use, cosmo.cosmo, lk_grid[a_i].size, 0
+            )[0]
+            for a_i, a_use in enumerate(a_inner)
         ],
-        dtype=float,
+        dtype=float
     )
 
     return prefactor[:, None] * matter_power
-
-
-def _multipole_integrand(
-    ell: NDArray[np.float64],
-    theta: NDArray[np.float64],
-    cosmo: ccl.Cosmology,
-    z_lens: float,
-    z_source: float,
-) -> NDArray[np.float64]:
-    """Evaluate the multipole integrand for the lens-magnification correction.
-
-    The outer integral runs over multipole ``ell``. The returned array has
-    shape ``(n_ell, n_theta)``.
-
-    Args:
-        ell: Multipole grid.
-        theta: Angular separation values in radians.
-        cosmo: CCL cosmology object.
-        z_lens: Lens redshift.
-        z_source: Source redshift.
-
-    Returns:
-        Multipole integrand evaluated on the multipole and angular grids.
-
-    Raises:
-        ValueError: If the redshift pair, multipole grid, angular grid, or
-            generated redshift integration grid is invalid.
-    """
-    validate_redshift_pair(z_lens, z_source)
-
-    ell_arr = validate_positive_1d_array(ell, "ell")
-    theta_arr = validate_positive_1d_array(theta, "theta")
-
-    z_arr = np.arange(
-        float(_LENS_MAG_INTEG_PARAMS["z_min"]),
-        z_lens,
-        step=float(_LENS_MAG_INTEG_PARAMS["z_stepsize"]),
-    )
-
-    if z_arr.size < 2:
-        raise ValueError(
-            "The lens-magnification inner redshift grid must contain at least "
-            "two points. Check z_min, z_stepsize, and z_lens."
-        )
-
-    inner_integral = trapezoid_integral(
-        _inner_redshift_integrand(z_arr, ell_arr, cosmo, z_lens, z_source),
-        z_arr,
-        axis=0,
-    )
-
-    bessel_kernel = jv(2, ell_arr[:, None] * theta_arr[None, :]) * ell_arr[:, None]
-
-    return bessel_kernel * inner_integral[:, None]
 
 
 def _lens_mag_lss_shear(
@@ -286,18 +236,27 @@ def _lens_mag_lss_shear(
         float(_LENS_MAG_INTEG_PARAMS["ell_max"]),
         int(_LENS_MAG_INTEG_PARAMS["n_ell"]),
     )
-
-    integral = trapezoid_integral(
-        _multipole_integrand(ell_arr, theta_arr, cosmo, z_lens, z_source),
-        ell_arr,
-        axis=0,
+    ell_arr = validate_positive_1d_array(ell_arr, "ell")
+    
+    z_arr = np.arange(
+        float(_LENS_MAG_INTEG_PARAMS["z_min"]),
+        z_lens,
+        step=float(_LENS_MAG_INTEG_PARAMS["z_stepsize"]),
     )
+    z_arr = validate_positive_1d_array(z_arr, "z")
+
+    C_ell = trapezoid_integral(
+        _inner_redshift_integrand(z_arr, ell_arr, cosmo, z_lens, z_source),
+        z_arr,
+        axis=0
+    )
+    gamma_t_spline = hankel_J2(C_ell, ell_arr, offset=_LENS_MAG_INTEG_PARAMS["use_hankel_offset"])
 
     prefactor = (
         9.0 * hubble_over_c_cubed(float(cosmo["h"])) * float(cosmo["Omega_m"]) ** 2 / (8.0 * np.pi)
     )
 
-    return prefactor * integral
+    return prefactor * gamma_t_spline(theta_arr)
 
 
 def delta_sigma_lens_mag_correction(

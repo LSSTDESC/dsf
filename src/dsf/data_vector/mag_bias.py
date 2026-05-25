@@ -41,7 +41,7 @@ from dsf.utils.validators import (
 )
 
 _LENS_MAG_INTEG_PARAMS: dict[str, int | float] = {
-    "n_ell": 30000,
+    "n_ell": 5000,
     "ell_min": 1.0e-4,
     "ell_max": 1.0e6,
     "z_stepsize": 0.02,

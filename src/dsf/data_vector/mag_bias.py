@@ -13,7 +13,8 @@ The calculation currently approximates the source redshift as
     z_source = z_lens + delta_z_source,
 
 where ``delta_z_source`` is controlled by the lens-magnification integration
-parameters.
+parameters. But note that the choice of ``delta_z_source`` will cancel out upon
+transformation from ``gamma_t`` to ``Delta Sigma`` space.
 """
 
 from __future__ import annotations

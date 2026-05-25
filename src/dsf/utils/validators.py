@@ -7,6 +7,8 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from dsf.utils.types import FloatArray
+
 __all__ = [
     "as_1d_float_array",
     "as_2d_float_array",
@@ -17,6 +19,7 @@ __all__ = [
     "validate_1d_pair",
     "validate_finite_scalar",
     "validate_forecast_vector_and_covariance",
+    "validate_hankel_1d_grid_spacing",
     "validate_integration_axis",
     "validate_integration_params",
     "validate_joint_covariance_blocks",
@@ -738,3 +741,23 @@ def validate_redshift_distribution_support(
         raise ValueError(f"{name} normalization must be finite and positive.")
 
     return z_use, nz_use, norm
+
+
+def validate_hankel_1d_grid_spacing(
+    k: FloatArray,
+    name: str = "k",
+) -> FloatArray:
+    """Validate that the Hankel transform input grid has logarithmic spacing.
+
+    Args:
+        k: Wavenumber grid for the Hankel transform.
+        name: Name of the wavenumber grid used in error messages.
+    """
+    
+    k_arr = as_1d_float_array(k, "k", min_size=3)
+    lnk = np.log(k_arr)
+    dlnk = np.diff(lnk)
+    if not np.allclose(dlnk, dlnk[0]):
+        raise ValueError(f"{name} must have uniform logarithmic spacing for Hankel transforms.")
+        
+    return k_arr

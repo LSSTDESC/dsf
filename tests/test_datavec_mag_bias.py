@@ -8,7 +8,6 @@ from dsf.data_vector.mag_bias import (
     _inner_redshift_integrand,
     _lens_mag_distance_kernel,
     _lens_mag_lss_shear,
-    _multipole_integrand,
     delta_sigma_lens_mag_correction,
     get_lens_mag_integ_params,
     set_lens_mag_integ_params,
@@ -30,10 +29,20 @@ def restore_lens_mag_integ_params():
 @pytest.fixture
 def cosmo():
     """Return a small dictionary-like cosmology object for unit tests."""
-    return {
-        "h": 0.7,
-        "Omega_m": 0.3,
-    }
+    class _FakeNonlin:
+        def __init__(self, val=3.0):
+            self.psp = object()
+
+    class _FakeCosmo(dict):
+        def __init__(self, h, Omega_m, pk_value=3.0):
+            super().__init__(h=h, Omega_m=Omega_m)
+            self._nonlin = _FakeNonlin(pk_value)
+            self.cosmo = object()
+
+        def get_nonlin_power(self):
+            return self._nonlin
+
+    return _FakeCosmo(0.7, 0.3)
 
 
 def test_get_lens_mag_integ_params_returns_copy():
@@ -153,7 +162,14 @@ def test_inner_redshift_integrand_returns_expected_shape(monkeypatch, cosmo):
     monkeypatch.setattr(
         mag_bias.ccl,
         "nonlin_matter_power",
-        lambda cosmo, k, a: np.full_like(np.asarray(k, dtype=float), 3.0),
+        lambda *args, **kwargs: None,
+    )
+    monkeypatch.setattr(
+        mag_bias.ccl.lib,
+        "pk2d_eval_multi",
+        lambda psp, k_arr, a_use, cosmo_cosmo, n, zero: (
+            np.full_like(np.asarray(k_arr, dtype=float), 3.0),
+        ),
     )
 
     result = _inner_redshift_integrand(
@@ -215,8 +231,8 @@ def test_inner_redshift_integrand_rejects_invalid_ell(cosmo):
         )
 
 
-def test_multipole_integrand_returns_expected_shape(monkeypatch, cosmo):
-    """Tests that the multipole integrand has shape ``(n_ell, n_theta)``."""
+def test_lens_mag_lss_shear_returns_expected_shape(monkeypatch, cosmo):
+    """Tests that the LSS shear has shape ``(n_theta)``."""
     set_lens_mag_integ_params(
         n_ell=4,
         ell_min=1.0,
@@ -226,7 +242,6 @@ def test_multipole_integrand_returns_expected_shape(monkeypatch, cosmo):
         delta_z_source=0.5,
     )
 
-    ell = np.array([2.0, 4.0, 8.0])
     theta = np.array([0.01, 0.02])
 
     monkeypatch.setattr(
@@ -238,35 +253,29 @@ def test_multipole_integrand_returns_expected_shape(monkeypatch, cosmo):
         ),
     )
 
-    result = _multipole_integrand(
-        ell=ell,
-        theta=theta,
+    lss_shear = _lens_mag_lss_shear(
         cosmo=cosmo,
+        theta=theta,
         z_lens=0.5,
         z_source=1.0,
     )
+    result = lss_shear.shape
+    expected = theta.shape
 
-    z_arr = np.arange(0.1, 0.5, step=0.1)
-    inner_integral = np.trapezoid(np.ones((z_arr.size, ell.size)), z_arr, axis=0)
-    expected = mag_bias.jv(2, ell[:, None] * theta[None, :]) * ell[:, None]
-    expected = expected * inner_integral[:, None]
-
-    assert result.shape == (ell.size, theta.size)
     np.testing.assert_allclose(result, expected)
 
 
-def test_multipole_integrand_rejects_too_short_inner_redshift_grid(cosmo):
+def test_lens_mag_lss_shear_rejects_too_short_inner_redshift_grid(cosmo):
     """Tests that an under-sampled generated inner-redshift grid is rejected."""
     set_lens_mag_integ_params(
         z_min=0.49,
         z_stepsize=0.2,
     )
 
-    with pytest.raises(ValueError, match="inner redshift grid"):
-        _multipole_integrand(
-            ell=np.array([2.0, 4.0]),
-            theta=np.array([0.01, 0.02]),
+    with pytest.raises(ValueError, match="z_inner must contain at least two values"):
+        _lens_mag_lss_shear(
             cosmo=cosmo,
+            theta=np.array([0.01, 0.02]),
             z_lens=0.5,
             z_source=1.0,
         )
@@ -279,58 +288,20 @@ def test_multipole_integrand_rejects_too_short_inner_redshift_grid(cosmo):
         (np.array([1.0, 2.0]), np.array([0.0, 0.02])),
     ],
 )
-def test_multipole_integrand_rejects_invalid_grids(ell, theta, cosmo):
+def test_lens_mag_lss_shear_rejects_invalid_grids(ell, theta, cosmo):
     """Tests that invalid multipole or angular grids are rejected."""
     with pytest.raises(ValueError):
-        _multipole_integrand(
-            ell=ell,
-            theta=theta,
+        set_lens_mag_integ_params(
+            n_ell=len(ell),
+            ell_min=np.min(ell),
+            ell_max=np.max(ell),
+        )
+        _lens_mag_lss_shear(
             cosmo=cosmo,
+            theta=theta,
             z_lens=0.5,
             z_source=1.0,
         )
-
-
-def test_lens_mag_lss_shear_integrates_multipole_integrand(monkeypatch, cosmo):
-    """Tests that LSS shear integrates the multipole integrand with prefactor."""
-    set_lens_mag_integ_params(
-        n_ell=3,
-        ell_min=1.0,
-        ell_max=4.0,
-        z_stepsize=0.1,
-        z_min=0.1,
-        delta_z_source=0.5,
-    )
-
-    theta = np.array([0.01, 0.02])
-
-    def fake_multipole_integrand(ell, theta, cosmo, z_lens, z_source):
-        """Return a deterministic multipole integrand."""
-        return ell[:, None] * np.ones((ell.size, theta.size))
-
-    monkeypatch.setattr(
-        mag_bias,
-        "_multipole_integrand",
-        fake_multipole_integrand,
-    )
-    monkeypatch.setattr(
-        mag_bias,
-        "hubble_over_c_cubed",
-        lambda h: 2.0,
-    )
-
-    result = _lens_mag_lss_shear(
-        cosmo=cosmo,
-        theta=theta,
-        z_lens=0.5,
-        z_source=1.0,
-    )
-
-    ell = np.geomspace(1.0, 4.0, 3)
-    integral = np.trapezoid(ell[:, None] * np.ones((ell.size, theta.size)), ell, axis=0)
-    prefactor = 9.0 * 2.0 * cosmo["Omega_m"] ** 2 / (8.0 * np.pi)
-
-    np.testing.assert_allclose(result, prefactor * integral)
 
 
 def test_lens_mag_lss_shear_rejects_invalid_theta(cosmo):

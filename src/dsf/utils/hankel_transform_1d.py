@@ -3,10 +3,12 @@
 This module provides functions for performing 1D Hankel transforms using the FFTLog algorithm. 
 
 The public functions include:
-- ``hankel_j0``: Convert a 3D power spectrum to a 3D correlation function 
-                 using the J0 Bessel function.
-- ``hankel_J2``: Convert a projected GGL power spectrum to a 2D tangential 
-                 shear correlation function using the J2 Bessel function.
+
+1) ``hankel_j0``: Convert a 3D power spectrum to a 3D correlation function 
+using the J0 Bessel function.
+
+2) ``hankel_J2``: Convert a projected GGL power spectrum to a 2D tangential 
+shear correlation function using the J2 Bessel function.
 """
 
 from __future__ import annotations
@@ -30,7 +32,9 @@ def hankel_j0(
     k: FloatArray,
     offset: bool = True,
 ) -> Callable[[FloatArray], FloatArray]:
-    """Convert power spectrum to 3D correlation function using FFTLog.
+    """Convert power spectrum to 3D correlation function using FFTLog:
+    
+    :math:`\\xi(r) = \\int \\frac{k^2 dk}{2\\pi^2} P(k) j_0(kr)`.
 
     Args:
         power_spectrum: Power spectrum to transform.
@@ -80,7 +84,9 @@ def hankel_J2(
     ell: FloatArray,
     offset: bool = True,
 ) -> Callable[[FloatArray], FloatArray]:
-    """Convert projected GGL power spectrum to 2D correlation function using FFTLog.
+    """Convert projected GGL power spectrum to 2D correlation function using FFTLog:
+    
+    :math:`\\gamma_t(r) = \\int \\frac{\\ell d\\ell}{2\\pi} C(\\ell) J_2(\\ell \\theta)`.
 
     Args:
         C_ell: Power spectrum to transform.

@@ -85,3 +85,18 @@ def test_hankel_invalid_spacing_raises(transform_func, grid_name):
 
     with pytest.raises(ValueError):
         transform_func(P_or_C, non_logspaced, offset=True)
+
+
+def test_hankel_j0_matches_ccl():
+    import pyccl as ccl
+
+    cosmo = ccl.cosmology.CosmologyVanillaLCDM()
+
+    k_arr = np.logspace(-5, 5, 1000)
+    r_arr = np.geomspace(0.1, 100, 100)
+    z = 0.3
+
+    xi_dsf = hankel_j0(cosmo.nonlin_matter_power(k_arr, 1/(1+z)), k_arr, offset=False)(r_arr)
+    xi_ccl = ccl.correlation_3d(cosmo,r=r_arr, a=1/(1+z), p_of_k_a=cosmo.get_nonlin_power())
+
+    assert np.allclose(xi_dsf, xi_ccl, rtol=0.005, atol=0)

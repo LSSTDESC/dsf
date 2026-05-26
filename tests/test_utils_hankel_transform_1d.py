@@ -86,7 +86,7 @@ def test_hankel_invalid_spacing_raises(transform_func, grid_name):
     with pytest.raises(ValueError):
         transform_func(P_or_C, non_logspaced, offset=True)
 
-
+@pytest.mark.slow
 def test_hankel_j0_matches_ccl():
     import pyccl as ccl
 

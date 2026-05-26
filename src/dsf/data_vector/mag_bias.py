@@ -47,7 +47,7 @@ _LENS_MAG_INTEG_PARAMS: dict[str, int | float] = {
     "z_stepsize": 0.02,
     "z_min": 1.0e-5,
     "delta_z_source": 1.0,
-    "use_hankel_offset": True,
+    "use_hankel_offset": False,
 }
 
 

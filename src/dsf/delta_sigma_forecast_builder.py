@@ -70,7 +70,7 @@ class DeltaSigmaForecastBuilder:
         lens_sample: str | None = "lrg",
         source_sample: str | None = None,
         lens_year: str | None = None,
-        source_year: str | None = "1",
+        source_year: str | None = None,
         lens_role: str = "lens",
         source_role: str = "source",
         overlap_threshold: float = 0.10,

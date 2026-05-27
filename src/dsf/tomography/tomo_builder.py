@@ -254,31 +254,23 @@ class TomographyBuilder:
         if "density_per_bin" in stats:
             return stats
 
-        area_deg2 = sample_properties.get(
-            "effective_area_deg2",
-            sample_properties.get("survey_area_deg2"),
-        )
-
-        if area_deg2 is None:
+        if "n_gal_comoving_h3_mpc3" in density:
+            nbar = float(density["n_gal_comoving_h3_mpc3"])
+            stats["density_per_bin"] = {
+                int(bin_index): nbar * float(fraction)
+                for bin_index, fraction in stats.get("fractions", {}).items()
+            }
+            stats["density_unit"] = "h^3 Mpc^-3"
             return stats
 
-        if "total_count_per_bin" in stats:
-            counts = stats["total_count_per_bin"]
-        elif "counts_per_bin" in stats:
-            counts = stats["counts_per_bin"]
-        elif "total_counts_per_bin" in stats:
-            counts = stats["total_counts_per_bin"]
-        else:
+        if "total_count_per_bin" in stats and "volume_per_bin" in stats:
+            stats["density_per_bin"] = {
+                int(bin_index): float(stats["total_count_per_bin"][bin_index])
+                / float(stats["volume_per_bin"][bin_index])
+                for bin_index in stats["total_count_per_bin"]
+            }
+            stats["density_unit"] = "h^3 Mpc^-3"
             return stats
-
-        area_arcmin2 = float(area_deg2) * 3600.0
-
-        stats["density_per_bin"] = {
-            int(bin_index): float(count) / area_arcmin2
-            for bin_index, count in counts.items()
-        }
-
-        stats["density_unit"] = "arcmin^-2"
 
         return stats
 

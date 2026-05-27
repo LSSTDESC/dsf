@@ -1,0 +1,1097 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
+        <link rel="canonical" href="https://lsstdesc.org/dsf/_modules/dsf/delta_sigma_forecast_builder.html">
+
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.12.19 -->
+        <title>dsf.delta_sigma_forecast_builder - DSF Documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">DSF Documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+  
+  <span class="sidebar-brand-text">DSF Documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../examples/index.html">Examples</a><input aria-label="Toggle navigation of Examples" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../examples/tomography.html">Tomography</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples/data_vector.html">DeltaSigma data vector</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples/covariance.html">DeltaSigma covariance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../examples/builder_example.html">End-to-end forecast</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../api/index.html">dsf</a><input aria-label="Toggle navigation of dsf" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../api/dsf.html">dsf package</a><input aria-label="Toggle navigation of dsf package" class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../api/dsf.covariance.html">dsf.covariance package</a><input aria-label="Toggle navigation of dsf.covariance package" class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../../api/dsf.covariance.ingredients.html">dsf.covariance.ingredients package</a><input aria-label="Toggle navigation of dsf.covariance.ingredients package" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../../api/dsf.covariance.ingredients.cov_blocks.html">dsf.covariance.ingredients.cov_blocks module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../api/dsf.covariance.ingredients.galaxy_bias.html">dsf.covariance.ingredients.galaxy_bias module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../api/dsf.covariance.ingredients.geometry.html">dsf.covariance.ingredients.geometry module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../api/dsf.covariance.ingredients.noise.html">dsf.covariance.ingredients.noise module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../api/dsf.covariance.ingredients.power_spectrum.html">dsf.covariance.ingredients.power_spectrum module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../api/dsf.covariance.ingredients.sigma_crit.html">dsf.covariance.ingredients.sigma_crit module</a></li>
+</ul>
+</li>
+<li class="toctree-l4 has-children"><a class="reference internal" href="../../api/dsf.covariance.projection.html">dsf.covariance.projection package</a><input aria-label="Toggle navigation of dsf.covariance.projection package" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l5"><a class="reference internal" href="../../api/dsf.covariance.projection.hankel_transform.html">dsf.covariance.projection.hankel_transform module</a></li>
+<li class="toctree-l5"><a class="reference internal" href="../../api/dsf.covariance.projection.hankel_utils.html">dsf.covariance.projection.hankel_utils module</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/dsf.covariance.cov_builder.html">dsf.covariance.cov_builder module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../api/dsf.data_vector.html">dsf.data_vector package</a><input aria-label="Toggle navigation of dsf.data_vector package" class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/dsf.data_vector.ccl_integration.html">dsf.data_vector.ccl_integration module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/dsf.data_vector.delta_sigma_builder.html">dsf.data_vector.delta_sigma_builder module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/dsf.data_vector.mag_bias.html">dsf.data_vector.mag_bias module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/dsf.data_vector.profiles.html">dsf.data_vector.profiles module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../api/dsf.tomography.html">dsf.tomography package</a><input aria-label="Toggle navigation of dsf.tomography package" class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/dsf.tomography.tomo_builder.html">dsf.tomography.tomo_builder module</a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../api/dsf.utils.html">dsf.utils package</a><input aria-label="Toggle navigation of dsf.utils package" class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/dsf.utils.converters.html">dsf.utils.converters module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/dsf.utils.integrators.html">dsf.utils.integrators module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/dsf.utils.thread_limits.html">dsf.utils.thread_limits module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/dsf.utils.types.html">dsf.utils.types module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/dsf.utils.validators.html">dsf.utils.validators module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/dsf.delta_sigma_forecast_builder.html">dsf.delta_sigma_forecast_builder module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/dsf.modelling.html">dsf.modelling module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <h1>Source code for dsf.delta_sigma_forecast_builder</h1><div class="highlight"><pre>
+<span></span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Forecast-ready DeltaSigma inputs.</span>
+
+<span class="sd">This module provides the high-level builder used to prepare DeltaSigma forecast</span>
+<span class="sd">inputs for Fisher or DALI analyses. It connects three pieces of the forecast:</span>
+
+<span class="sd">- tomographic lens and source samples,</span>
+<span class="sd">- the stacked DeltaSigma data vector,</span>
+<span class="sd">- the covariance matrix matched to the selected lens-source bin pairs.</span>
+
+<span class="sd">The builder is intentionally model-agnostic. It assumes that the data vector is</span>
+<span class="sd">computed with ``DeltaSigmaCalculator``, but it does not assume a fixed physical</span>
+<span class="sd">parameterization. Users provide a function that maps a parameter vector into the</span>
+<span class="sd">cosmology and profile parameters used by the DeltaSigma calculation.</span>
+
+<span class="sd">This makes the class suitable for simple amplitude-only forecasts, cosmology</span>
+<span class="sd">forecasts, HOD or SHMR parameter forecasts, and later Fisher/DALI comparisons.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyccl</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ccl</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dsf.covariance.cov_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeltaSigmaCovarianceBuilder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dsf.data_vector.delta_sigma_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeltaSigmaCalculator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dsf.tomography.tomo_builder</span><span class="w"> </span><span class="kn">import</span> <span class="n">TomographyBuilder</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dsf.utils.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">ScalarOrPerBin</span><span class="p">,</span> <span class="n">ThetaMapper</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dsf.utils.validators</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">validate_forecast_vector_and_covariance</span><span class="p">,</span>
+    <span class="n">validate_parameter_names</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;DeltaSigmaForecastBuilder&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="DeltaSigmaForecastBuilder">
+<a class="viewcode-back" href="../../api/dsf.delta_sigma_forecast_builder.html#dsf.delta_sigma_forecast_builder.DeltaSigmaForecastBuilder">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DeltaSigmaForecastBuilder</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Prepare DeltaSigma data vectors and covariance inputs for forecasts.</span>
+
+<span class="sd">    This class is the user-facing forecast layer for DeltaSigma analyses. It</span>
+<span class="sd">    builds the tomographic samples, selects valid lens-source bin pairs,</span>
+<span class="sd">    constructs the matching covariance, and exposes a model function that can be</span>
+<span class="sd">    passed directly to forecast tools.</span>
+
+<span class="sd">    The current forecast data vector contains only the galaxy-matter</span>
+<span class="sd">    DeltaSigma signal, so this builder currently supports only the matching</span>
+<span class="sd">    ``gm`` covariance block. The covariance layer also contains heleprs for</span>
+<span class="sd">    ``gg`` and joint covariance blocks, which are intended for future forecast</span>
+<span class="sd">    builders once the corresponding ``gg`` or joint data vectors are added.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">cosmo</span><span class="p">:</span> <span class="n">ccl</span><span class="o">.</span><span class="n">Cosmology</span><span class="p">,</span>
+        <span class="n">pk2d_func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">ccl</span><span class="o">.</span><span class="n">Pk2D</span><span class="p">],</span>
+        <span class="n">theta0</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">r</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">rp_bin_edges</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="n">area_deg2</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">sigma_e</span><span class="p">:</span> <span class="n">ScalarOrPerBin</span> <span class="o">=</span> <span class="mf">0.26</span><span class="p">,</span>
+        <span class="n">theta_mapper</span><span class="p">:</span> <span class="n">ThetaMapper</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">parameter_names</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">lens_survey</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;desi&quot;</span><span class="p">,</span>
+        <span class="n">source_survey</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;lsst&quot;</span><span class="p">,</span>
+        <span class="n">lens_sample</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">&quot;lrg&quot;</span><span class="p">,</span>
+        <span class="n">source_sample</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">lens_year</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">source_year</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">lens_role</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;lens&quot;</span><span class="p">,</span>
+        <span class="n">source_role</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;source&quot;</span><span class="p">,</span>
+        <span class="n">overlap_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.10</span><span class="p">,</span>
+        <span class="n">source_behind_lens</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">center_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;mean&quot;</span><span class="p">,</span>
+        <span class="n">decimal_places</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">shared_overrides</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">lens_overrides</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">source_overrides</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">observable</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;delta_sigma&quot;</span><span class="p">,</span>
+        <span class="n">sigma_crit_prefactor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">galaxy_bias</span><span class="p">:</span> <span class="n">ScalarOrPerBin</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">galaxy_bias_prefactor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">galaxy_bias_round_decimals</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">k</span><span class="p">:</span> <span class="n">FloatArray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">h</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">omega_m</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">rho_crit</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">nonlinear</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">pi</span><span class="p">:</span> <span class="n">FloatArray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">gm_window</span><span class="p">:</span> <span class="n">FloatArray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">hankel_kwargs</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">covariance_orders</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">covariance_kind</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gm&quot;</span><span class="p">,</span>
+        <span class="n">taper</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">taper_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">trim_edge_points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Set the forecast configuration.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cosmo: Fiducial CCL cosmology. This is used as the default</span>
+<span class="sd">                cosmology for the data vector and covariance unless a</span>
+<span class="sd">                ``theta_mapper`` supplies a parameter-dependent cosmology.</span>
+<span class="sd">            pk2d_func: Function that returns the ``Pk2D`` object used by the</span>
+<span class="sd">                DeltaSigma model.</span>
+<span class="sd">            theta0: Fiducial parameter vector used as the expansion point for</span>
+<span class="sd">                forecast calculations.</span>
+<span class="sd">            r: Projected radii where the DeltaSigma data vector is evaluated.</span>
+<span class="sd">            rp_bin_edges: Projected-radius bin edges used when constructing the</span>
+<span class="sd">                covariance.</span>
+<span class="sd">            area_deg2: Survey overlap area in square degrees.</span>
+<span class="sd">            sigma_e: Source ellipticity dispersion used for the shape-noise</span>
+<span class="sd">                contribution to the covariance.</span>
+<span class="sd">            theta_mapper: Optional function mapping a parameter vector and</span>
+<span class="sd">                forecast context into model inputs. It may return ``cosmo`` and</span>
+<span class="sd">                ``pk2d_kwargs``.</span>
+<span class="sd">            parameter_names: Optional names for the entries of ``theta0``.</span>
+<span class="sd">            lens_survey: Survey preset used for the foreground lens sample.</span>
+<span class="sd">            source_survey: Survey preset used for the background source sample.</span>
+<span class="sd">            lens_sample: Optional sample label for the lens survey.</span>
+<span class="sd">            source_sample: Optional sample label for the source survey.</span>
+<span class="sd">            lens_year: Optional lens survey year or scenario label.</span>
+<span class="sd">            source_year: Optional source survey year or scenario label.</span>
+<span class="sd">            lens_role: Tomography role for the foreground sample.</span>
+<span class="sd">            source_role: Tomography role for the background sample.</span>
+<span class="sd">            overlap_threshold: Maximum allowed redshift overlap between a lens</span>
+<span class="sd">                bin and source bin.</span>
+<span class="sd">            source_behind_lens: Whether selected source bins must sit behind</span>
+<span class="sd">                selected lens bins.</span>
+<span class="sd">            center_method: Bin-center definition used when applying ordering</span>
+<span class="sd">                cuts to lens-source bin pairs.</span>
+<span class="sd">            decimal_places: Number of decimal places used in Binny summaries.</span>
+<span class="sd">            shared_overrides: Binny tomography-spec overrides applied to both samples.</span>
+<span class="sd">            lens_overrides: Binny tomography-spec overrides applied only to the lens</span>
+<span class="sd">                sample.</span>
+<span class="sd">            source_overrides: Binny tomography-spec overrides applied only to the</span>
+<span class="sd">                source sample.</span>
+<span class="sd">            observable: Forecast observable to evaluate. Currently only</span>
+<span class="sd">                ``&quot;delta_sigma&quot;`` is supported.</span>
+<span class="sd">            sigma_crit_prefactor: Optional unit-conversion factor applied to the</span>
+<span class="sd">                effective critical surface density used in the covariance.</span>
+<span class="sd">                If omitted, the covariance builder uses its internal default.</span>
+<span class="sd">            galaxy_bias: Galaxy bias value or per-lens-bin values.</span>
+<span class="sd">            galaxy_bias_prefactor: Normalization for the default galaxy-bias</span>
+<span class="sd">                model.</span>
+<span class="sd">            galaxy_bias_round_decimals: Optional rounding applied to the default</span>
+<span class="sd">                galaxy-bias values.</span>
+<span class="sd">            k: Wavenumber grid in ``h / Mpc`` used by the covariance.</span>
+<span class="sd">            h: Dimensionless Hubble parameter used by covariance ingredients</span>
+<span class="sd">                when needed explicitly.</span>
+<span class="sd">            omega_m: Matter density fraction used by covariance ingredients</span>
+<span class="sd">                when needed explicitly.</span>
+<span class="sd">            rho_crit: Critical-density normalization used by covariance</span>
+<span class="sd">                ingredients when needed explicitly.</span>
+<span class="sd">            nonlinear: Whether covariance matter spectra should use nonlinear</span>
+<span class="sd">                power.</span>
+<span class="sd">            pi: Optional line-of-sight grid in ``Mpc / h``.</span>
+<span class="sd">            gm_window: Optional galaxy-matter line-of-sight window.</span>
+<span class="sd">            hankel_kwargs: Optional settings for covariance Hankel projections.</span>
+<span class="sd">            covariance_orders: Bessel orders used by covariance projections.</span>
+<span class="sd">            covariance_kind: Covariance product to use. Only ``&quot;gm&quot;`` is currently</span>
+<span class="sd">                supported by this builder because the forecast data vector is</span>
+<span class="sd">                DeltaSigma-only. The ``&quot;gg&quot;`` and ``&quot;joint&quot;`` covariance paths are</span>
+<span class="sd">                reserved for future builders with matching data vectors.</span>
+<span class="sd">            taper: Whether covariance spectra are tapered before projection.</span>
+<span class="sd">            taper_kwargs: Optional taper settings.</span>
+<span class="sd">            trim_edge_points: Number of edge points removed from each lens-bin</span>
+<span class="sd">                redshift distribution before averaging DeltaSigma.</span>
+<span class="sd">            verbose: Whether progress messages are printed while preparing the</span>
+<span class="sd">                forecast.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">covariance_kind</span> <span class="o">!=</span> <span class="s2">&quot;gm&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">&quot;Only covariance_kind=&#39;gm&#39; is currently supported because &quot;</span>
+                <span class="s2">&quot;the forecast data vector is DeltaSigma-only. Add a joint data-vector &quot;</span>
+                <span class="s2">&quot;builder before using &#39;gg&#39; or &#39;joint&#39; covariance.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cosmo</span> <span class="o">=</span> <span class="n">cosmo</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pk2d_func</span> <span class="o">=</span> <span class="n">pk2d_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">calculator</span> <span class="o">=</span> <span class="n">DeltaSigmaCalculator</span><span class="p">(</span><span class="n">pk2d_func</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">theta0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parameter_names</span> <span class="o">=</span> <span class="n">validate_parameter_names</span><span class="p">(</span><span class="n">parameter_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">theta_mapper</span> <span class="o">=</span> <span class="n">theta_mapper</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rp_bin_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rp_bin_edges</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">area_deg2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">area_deg2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigma_e</span> <span class="o">=</span> <span class="n">sigma_e</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trim_edge_points</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">trim_edge_points</span><span class="p">)</span>
+
+        <span class="n">allowed_observables</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;delta_sigma&quot;</span><span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">observable</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed_observables</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;observable=</span><span class="si">{</span><span class="n">observable</span><span class="si">!r}</span><span class="s2"> is not supported yet. &quot;</span>
+                <span class="s2">&quot;Currently this builder supports only &#39;delta_sigma&#39;. &quot;</span>
+                <span class="s2">&quot;Use a pair-dependent data-vector builder for gamma_t.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">observable</span> <span class="o">=</span> <span class="n">observable</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">covariance_kind</span> <span class="o">=</span> <span class="n">covariance_kind</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">verbose</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tomography_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;lens_survey&quot;</span><span class="p">:</span> <span class="n">lens_survey</span><span class="p">,</span>
+            <span class="s2">&quot;source_survey&quot;</span><span class="p">:</span> <span class="n">source_survey</span><span class="p">,</span>
+            <span class="s2">&quot;lens_sample&quot;</span><span class="p">:</span> <span class="n">lens_sample</span><span class="p">,</span>
+            <span class="s2">&quot;source_sample&quot;</span><span class="p">:</span> <span class="n">source_sample</span><span class="p">,</span>
+            <span class="s2">&quot;lens_year&quot;</span><span class="p">:</span> <span class="n">lens_year</span><span class="p">,</span>
+            <span class="s2">&quot;source_year&quot;</span><span class="p">:</span> <span class="n">source_year</span><span class="p">,</span>
+            <span class="s2">&quot;lens_role&quot;</span><span class="p">:</span> <span class="n">lens_role</span><span class="p">,</span>
+            <span class="s2">&quot;source_role&quot;</span><span class="p">:</span> <span class="n">source_role</span><span class="p">,</span>
+            <span class="s2">&quot;overlap_threshold&quot;</span><span class="p">:</span> <span class="n">overlap_threshold</span><span class="p">,</span>
+            <span class="s2">&quot;source_behind_lens&quot;</span><span class="p">:</span> <span class="n">source_behind_lens</span><span class="p">,</span>
+            <span class="s2">&quot;center_method&quot;</span><span class="p">:</span> <span class="n">center_method</span><span class="p">,</span>
+            <span class="s2">&quot;decimal_places&quot;</span><span class="p">:</span> <span class="n">decimal_places</span><span class="p">,</span>
+            <span class="s2">&quot;shared_overrides&quot;</span><span class="p">:</span> <span class="n">shared_overrides</span><span class="p">,</span>
+            <span class="s2">&quot;lens_overrides&quot;</span><span class="p">:</span> <span class="n">lens_overrides</span><span class="p">,</span>
+            <span class="s2">&quot;source_overrides&quot;</span><span class="p">:</span> <span class="n">source_overrides</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">covariance_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;sigma_crit_prefactor&quot;</span><span class="p">:</span> <span class="n">sigma_crit_prefactor</span><span class="p">,</span>
+            <span class="s2">&quot;galaxy_bias&quot;</span><span class="p">:</span> <span class="n">galaxy_bias</span><span class="p">,</span>
+            <span class="s2">&quot;galaxy_bias_prefactor&quot;</span><span class="p">:</span> <span class="n">galaxy_bias_prefactor</span><span class="p">,</span>
+            <span class="s2">&quot;galaxy_bias_round_decimals&quot;</span><span class="p">:</span> <span class="n">galaxy_bias_round_decimals</span><span class="p">,</span>
+            <span class="s2">&quot;k&quot;</span><span class="p">:</span> <span class="n">k</span><span class="p">,</span>
+            <span class="s2">&quot;h&quot;</span><span class="p">:</span> <span class="n">h</span><span class="p">,</span>
+            <span class="s2">&quot;omega_m&quot;</span><span class="p">:</span> <span class="n">omega_m</span><span class="p">,</span>
+            <span class="s2">&quot;rho_crit&quot;</span><span class="p">:</span> <span class="n">rho_crit</span><span class="p">,</span>
+            <span class="s2">&quot;nonlinear&quot;</span><span class="p">:</span> <span class="n">nonlinear</span><span class="p">,</span>
+            <span class="s2">&quot;pi&quot;</span><span class="p">:</span> <span class="n">pi</span><span class="p">,</span>
+            <span class="s2">&quot;gm_window&quot;</span><span class="p">:</span> <span class="n">gm_window</span><span class="p">,</span>
+            <span class="s2">&quot;hankel_kwargs&quot;</span><span class="p">:</span> <span class="n">hankel_kwargs</span><span class="p">,</span>
+            <span class="s2">&quot;covariance_orders&quot;</span><span class="p">:</span> <span class="n">covariance_orders</span><span class="p">,</span>
+            <span class="s2">&quot;taper&quot;</span><span class="p">:</span> <span class="n">taper</span><span class="p">,</span>
+            <span class="s2">&quot;taper_kwargs&quot;</span><span class="p">:</span> <span class="n">taper_kwargs</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_forecast</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Print a progress message when verbose output is enabled.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DeltaSigmaForecastBuilder.prepare">
+<a class="viewcode-back" href="../../api/dsf.delta_sigma_forecast_builder.html#dsf.delta_sigma_forecast_builder.DeltaSigmaForecastBuilder.prepare">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">covariance</span><span class="p">:</span> <span class="n">FloatArray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build and cache all forecast products.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            covariance: Optional precomputed covariance matrix. If provided, the</span>
+<span class="sd">                builder reuses this matrix instead of recomputing the covariance</span>
+<span class="sd">                block. Tomography, context, and the fiducial data vector are still</span>
+<span class="sd">                rebuilt so the model function remains matched to the selected</span>
+<span class="sd">                lens-source bin pairs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary containing the model callable, fiducial parameters,</span>
+<span class="sd">            covariance matrix, fiducial data vector, selected bin pairs,</span>
+<span class="sd">            tomography products, covariance builder, DeltaSigma calculator, and</span>
+<span class="sd">            shared forecast context.</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            Calling this method explicitly recomputes the forecast products and</span>
+<span class="sd">            refreshes the cached result. Use ``forecast()`` when you want the</span>
+<span class="sd">            cached products if they already exist.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s2">&quot;[1/5] Building lens and source tomography...&quot;</span><span class="p">)</span>
+
+        <span class="n">tomography</span> <span class="o">=</span> <span class="n">TomographyBuilder</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">tomography_kwargs</span><span class="p">)</span><span class="o">.</span><span class="n">prepare_bins</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span>
+            <span class="s2">&quot;[1/5] Done: tomography built &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tomography</span><span class="p">[</span><span class="s1">&#39;bin_pairs&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> selected lens-source pairs.&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Selected bin pairs: </span><span class="si">{</span><span class="n">tomography</span><span class="p">[</span><span class="s1">&#39;bin_pairs&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s2">&quot;[2/5] Initializing DeltaSigma covariance builder...&quot;</span><span class="p">)</span>
+
+        <span class="n">cov_builder</span> <span class="o">=</span> <span class="n">DeltaSigmaCovarianceBuilder</span><span class="p">(</span>
+            <span class="n">cosmo</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cosmo</span><span class="p">,</span>
+            <span class="n">lens_result</span><span class="o">=</span><span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;lens_result&quot;</span><span class="p">],</span>
+            <span class="n">source_result</span><span class="o">=</span><span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;source_result&quot;</span><span class="p">],</span>
+            <span class="n">lens_population_stats</span><span class="o">=</span><span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;lens_population_stats&quot;</span><span class="p">],</span>
+            <span class="n">source_population_stats</span><span class="o">=</span><span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;source_population_stats&quot;</span><span class="p">],</span>
+            <span class="n">bin_pairs</span><span class="o">=</span><span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;bin_pairs&quot;</span><span class="p">],</span>
+            <span class="n">rp_bin_edges</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rp_bin_edges</span><span class="p">,</span>
+            <span class="n">area_deg2</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">area_deg2</span><span class="p">,</span>
+            <span class="n">sigma_e</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sigma_e</span><span class="p">,</span>
+            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">covariance_kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s2">&quot;[2/5] Done: covariance builder initialized.&quot;</span><span class="p">)</span>
+
+        <span class="n">data_pairs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">lens_bin</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">source_bin</span><span class="p">))</span> <span class="k">for</span> <span class="n">lens_bin</span><span class="p">,</span> <span class="n">source_bin</span> <span class="ow">in</span> <span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;bin_pairs&quot;</span><span class="p">]</span>
+        <span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">covariance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[3/5] Computing </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">covariance_kind</span><span class="si">}</span><span class="s2"> block-diagonal covariance...&quot;</span><span class="p">)</span>
+
+            <span class="n">cov_pairs</span><span class="p">,</span> <span class="n">cov</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_covariance</span><span class="p">(</span>
+                <span class="n">cov_builder</span><span class="o">=</span><span class="n">cov_builder</span><span class="p">,</span>
+                <span class="n">bin_pairs</span><span class="o">=</span><span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;bin_pairs&quot;</span><span class="p">],</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">list</span><span class="p">(</span><span class="n">cov_pairs</span><span class="p">)</span> <span class="o">!=</span> <span class="n">data_pairs</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;Covariance bin-pair ordering does not match the data-vector &quot;</span>
+                    <span class="s2">&quot;bin-pair ordering. The data vector and covariance must use the &quot;</span>
+                    <span class="s2">&quot;same selected lens-source pairs in the same order.&quot;</span>
+                <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[3/5] Done: covariance computed with shape </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">cov</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s2">&quot;[3/5] Reusing supplied covariance matrix...&quot;</span><span class="p">)</span>
+
+            <span class="n">cov</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">covariance</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+            <span class="n">cov_pairs</span> <span class="o">=</span> <span class="n">data_pairs</span>
+
+            <span class="k">if</span> <span class="n">cov</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Supplied covariance must be a 2D matrix, but got shape </span><span class="si">{</span><span class="n">cov</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">cov</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">cov</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Supplied covariance must be square, but got shape </span><span class="si">{</span><span class="n">cov</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">cov</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Supplied covariance contains non-finite values.&quot;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[3/5] Done: supplied covariance has shape </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">cov</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s2">&quot;[4/5] Preparing shared forecast context...&quot;</span><span class="p">)</span>
+
+        <span class="n">context</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">(</span>
+            <span class="n">tomography</span><span class="o">=</span><span class="n">tomography</span><span class="p">,</span>
+            <span class="n">cov_builder</span><span class="o">=</span><span class="n">cov_builder</span><span class="p">,</span>
+            <span class="n">cov_pairs</span><span class="o">=</span><span class="n">cov_pairs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s2">&quot;[4/5] Done: forecast context prepared.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span>
+            <span class="s2">&quot;[5/5] Computing fiducial DeltaSigma data vector in selected lens-source pair order...&quot;</span>
+        <span class="p">)</span>
+
+        <span class="n">data_vector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta0</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">)</span>
+        <span class="n">data_vector</span><span class="p">,</span> <span class="n">cov</span> <span class="o">=</span> <span class="n">validate_forecast_vector_and_covariance</span><span class="p">(</span><span class="n">data_vector</span><span class="p">,</span> <span class="n">cov</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[5/5] Done: fiducial data vector computed with length </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data_vector</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+
+        <span class="n">forecast</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span>
+            <span class="s2">&quot;theta0&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta0</span><span class="p">,</span>
+            <span class="s2">&quot;parameter_names&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">parameter_names</span><span class="p">,</span>
+            <span class="s2">&quot;cov&quot;</span><span class="p">:</span> <span class="n">cov</span><span class="p">,</span>
+            <span class="s2">&quot;data_vector&quot;</span><span class="p">:</span> <span class="n">data_vector</span><span class="p">,</span>
+            <span class="s2">&quot;fiducial_data_vector&quot;</span><span class="p">:</span> <span class="n">data_vector</span><span class="p">,</span>
+            <span class="s2">&quot;r&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="p">,</span>
+            <span class="s2">&quot;rp_bin_edges&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">rp_bin_edges</span><span class="p">,</span>
+            <span class="s2">&quot;bin_pairs&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;bin_pairs&quot;</span><span class="p">]),</span>
+            <span class="s2">&quot;cov_pairs&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">cov_pairs</span><span class="p">),</span>
+            <span class="s2">&quot;lens_result&quot;</span><span class="p">:</span> <span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;lens_result&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;source_result&quot;</span><span class="p">:</span> <span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;source_result&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;lens_population_stats&quot;</span><span class="p">:</span> <span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;lens_population_stats&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;source_population_stats&quot;</span><span class="p">:</span> <span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;source_population_stats&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;lens_bin_centers&quot;</span><span class="p">:</span> <span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;lens_bin_centers&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;source_bin_centers&quot;</span><span class="p">:</span> <span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;source_bin_centers&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;tomography&quot;</span><span class="p">:</span> <span class="n">tomography</span><span class="p">,</span>
+            <span class="s2">&quot;covariance_builder&quot;</span><span class="p">:</span> <span class="n">cov_builder</span><span class="p">,</span>
+            <span class="s2">&quot;calculator&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculator</span><span class="p">,</span>
+            <span class="s2">&quot;context&quot;</span><span class="p">:</span> <span class="n">context</span><span class="p">,</span>
+            <span class="s2">&quot;covariance_kind&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance_kind</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_forecast</span> <span class="o">=</span> <span class="n">forecast</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">(</span><span class="s2">&quot;Forecast preparation complete.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">forecast</span></div>
+
+
+<div class="viewcode-block" id="DeltaSigmaForecastBuilder.forecast">
+<a class="viewcode-back" href="../../api/dsf.delta_sigma_forecast_builder.html#dsf.delta_sigma_forecast_builder.DeltaSigmaForecastBuilder.forecast">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forecast</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">covariance</span><span class="p">:</span> <span class="n">FloatArray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return cached forecast products, preparing them if needed.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            covariance: Optional precomputed covariance matrix. If provided and no</span>
+<span class="sd">                forecast has been cached yet, the builder uses this matrix instead</span>
+<span class="sd">                of recomputing the covariance.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary of forecast products suitable for direct use in Fisher,</span>
+<span class="sd">            DALI, plotting, or diagnostic workflows.</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            This is the safe accessor to use in downstream code. Unlike</span>
+<span class="sd">            ``prepare()``, it does not rebuild tomography and covariance if the</span>
+<span class="sd">            forecast has already been prepared.</span>
+
+<span class="sd">            If a cached forecast already exists, passing a new covariance is not</span>
+<span class="sd">            allowed because it would silently mismatch the cached context.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forecast</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">covariance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;A forecast is already cached. Create a new &quot;</span>
+                    <span class="s2">&quot;DeltaSigmaForecastBuilder instance before supplying a new &quot;</span>
+                    <span class="s2">&quot;covariance matrix.&quot;</span>
+                <span class="p">)</span>
+
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forecast</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="n">covariance</span><span class="o">=</span><span class="n">covariance</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forecast</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;DeltaSigma forecast products were not prepared.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forecast</span></div>
+
+
+<div class="viewcode-block" id="DeltaSigmaForecastBuilder.model">
+<a class="viewcode-back" href="../../api/dsf.delta_sigma_forecast_builder.html#dsf.delta_sigma_forecast_builder.DeltaSigmaForecastBuilder.model">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">model</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">theta</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">context</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FloatArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the stacked DeltaSigma data vector for one parameter vector.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            theta: Parameter vector at which the DeltaSigma model is evaluated.</span>
+<span class="sd">            context: Optional forecast context. If omitted, the cached forecast</span>
+<span class="sd">                context is used.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            One-dimensional stacked data vector containing the DeltaSigma blocks</span>
+<span class="sd">            for all selected lens-source bin pairs.</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            The optional ``theta_mapper`` controls how ``theta`` changes the</span>
+<span class="sd">            physical model. For example, it can update the cosmology, HOD</span>
+<span class="sd">            parameters, SHMR parameters, or any keyword arguments accepted by</span>
+<span class="sd">            the supplied ``pk2d_func``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">theta_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">context</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">context</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">()</span>
+
+        <span class="n">model_inputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_inputs</span><span class="p">(</span><span class="n">theta_arr</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
+
+        <span class="n">cosmo</span> <span class="o">=</span> <span class="n">model_inputs</span><span class="p">[</span><span class="s2">&quot;cosmo&quot;</span><span class="p">]</span>
+        <span class="n">raw_pk2d_kwargs</span> <span class="o">=</span> <span class="n">model_inputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pk2d_kwargs&quot;</span><span class="p">,</span> <span class="p">{})</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw_pk2d_kwargs</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;theta_mapper output &#39;pk2d_kwargs&#39; must be a mapping.&quot;</span><span class="p">)</span>
+
+        <span class="n">pk2d_kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">raw_pk2d_kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data_vector</span><span class="p">(</span>
+            <span class="n">cosmo</span><span class="o">=</span><span class="n">cosmo</span><span class="p">,</span>
+            <span class="n">pk2d_kwargs</span><span class="o">=</span><span class="n">pk2d_kwargs</span><span class="p">,</span>
+            <span class="n">tomography</span><span class="o">=</span><span class="n">context</span><span class="p">[</span><span class="s2">&quot;tomography&quot;</span><span class="p">],</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DeltaSigmaForecastBuilder.context">
+<a class="viewcode-back" href="../../api/dsf.delta_sigma_forecast_builder.html#dsf.delta_sigma_forecast_builder.DeltaSigmaForecastBuilder.context">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">context</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the shared forecast context.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary containing the tomography products, bin centers, selected</span>
+<span class="sd">            bin pairs, covariance builder, calculator, radius grids, and</span>
+<span class="sd">            fiducial cosmology.</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            The returned dictionary is a shallow copy of the cached context so</span>
+<span class="sd">            that model calls can safely use it without directly exposing the</span>
+<span class="sd">            cached context object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">forecast</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forecast</span><span class="p">()</span>
+        <span class="n">cached_context</span> <span class="o">=</span> <span class="n">forecast</span><span class="p">[</span><span class="s2">&quot;context&quot;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cached_context</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Cached forecast context must be a mapping.&quot;</span><span class="p">)</span>
+
+        <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">cached_context</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">context</span></div>
+
+
+<div class="viewcode-block" id="DeltaSigmaForecastBuilder.forecast_inputs">
+<a class="viewcode-back" href="../../api/dsf.delta_sigma_forecast_builder.html#dsf.delta_sigma_forecast_builder.DeltaSigmaForecastBuilder.forecast_inputs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">forecast_inputs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLike</span><span class="p">],</span> <span class="n">FloatArray</span><span class="p">],</span> <span class="n">FloatArray</span><span class="p">,</span> <span class="n">FloatArray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the model function, fiducial parameters, and covariance.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple containing the model callable, fiducial parameter vector, and</span>
+<span class="sd">            covariance matrix.</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            This is the minimal interface needed by many Fisher-style forecast</span>
+<span class="sd">            tools. It uses cached forecast products when available, so repeated</span>
+<span class="sd">            calls do not rebuild tomography or covariance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">forecast</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forecast</span><span class="p">()</span>
+
+        <span class="n">model</span> <span class="o">=</span> <span class="n">forecast</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span>
+        <span class="n">theta0</span> <span class="o">=</span> <span class="n">forecast</span><span class="p">[</span><span class="s2">&quot;theta0&quot;</span><span class="p">]</span>
+        <span class="n">cov</span> <span class="o">=</span> <span class="n">forecast</span><span class="p">[</span><span class="s2">&quot;cov&quot;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">theta0</span><span class="p">,</span> <span class="n">cov</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_model_inputs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">theta</span><span class="p">:</span> <span class="n">FloatArray</span><span class="p">,</span>
+        <span class="n">context</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return model inputs for one forecast parameter vector.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            theta: Parameter vector for the current model evaluation.</span>
+<span class="sd">            context: Shared forecast context.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary containing the cosmology and profile keyword arguments</span>
+<span class="sd">            used to evaluate the DeltaSigma model.</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            If no ``theta_mapper`` is supplied, the model uses the fiducial</span>
+<span class="sd">            cosmology and no additional ``pk2d_func`` keyword arguments. If a</span>
+<span class="sd">            mapper is supplied, missing ``cosmo`` or ``pk2d_kwargs`` entries are</span>
+<span class="sd">            filled with sensible defaults.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_mapper</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">&quot;cosmo&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cosmo</span><span class="p">,</span>
+                <span class="s2">&quot;pk2d_kwargs&quot;</span><span class="p">:</span> <span class="p">{},</span>
+            <span class="p">}</span>
+
+        <span class="n">context_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+        <span class="n">mapped</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta_mapper</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">context_dict</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="s2">&quot;cosmo&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">mapped</span><span class="p">:</span>
+            <span class="n">mapped</span><span class="p">[</span><span class="s2">&quot;cosmo&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cosmo</span>
+
+        <span class="k">if</span> <span class="s2">&quot;pk2d_kwargs&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">mapped</span><span class="p">:</span>
+            <span class="n">mapped</span><span class="p">[</span><span class="s2">&quot;pk2d_kwargs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">return</span> <span class="n">mapped</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_data_vector</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">cosmo</span><span class="p">:</span> <span class="n">ccl</span><span class="o">.</span><span class="n">Cosmology</span><span class="p">,</span>
+        <span class="n">pk2d_kwargs</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">tomography</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FloatArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the stacked forecast data vector for selected bin pairs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cosmo: Cosmology used for the current model evaluation.</span>
+<span class="sd">            pk2d_kwargs: Keyword arguments passed to the profile model.</span>
+<span class="sd">            tomography: Tomography products containing lens bins, source bins,</span>
+<span class="sd">                and selected lens-source bin pairs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            One-dimensional stacked data vector.</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            For the current ``delta_sigma`` observable, the mean signal depends</span>
+<span class="sd">            on the lens bin only. The selected source bin still matters for the</span>
+<span class="sd">            pair selection and covariance ordering, so the returned vector keeps</span>
+<span class="sd">            the exact Binny lens-source pair order.</span>
+
+<span class="sd">            A future ``gamma_t`` observable should be evaluated per full</span>
+<span class="sd">            lens-source pair because the source redshift distribution enters</span>
+<span class="sd">            through the lensing efficiency or effective critical surface density.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">observable</span> <span class="o">==</span> <span class="s2">&quot;delta_sigma&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_delta_sigma_data_vector</span><span class="p">(</span>
+                <span class="n">cosmo</span><span class="o">=</span><span class="n">cosmo</span><span class="p">,</span>
+                <span class="n">pk2d_kwargs</span><span class="o">=</span><span class="n">pk2d_kwargs</span><span class="p">,</span>
+                <span class="n">tomography</span><span class="o">=</span><span class="n">tomography</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;observable=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">observable</span><span class="si">!r}</span><span class="s2"> is not supported by this builder.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_delta_sigma_data_vector</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">cosmo</span><span class="p">:</span> <span class="n">ccl</span><span class="o">.</span><span class="n">Cosmology</span><span class="p">,</span>
+        <span class="n">pk2d_kwargs</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">tomography</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FloatArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the stacked lens-bin DeltaSigma vector in pair order.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cosmo: Cosmology used for the current model evaluation.</span>
+<span class="sd">            pk2d_kwargs: Keyword arguments passed to the profile model.</span>
+<span class="sd">            tomography: Tomography products containing lens bins and selected</span>
+<span class="sd">                lens-source bin pairs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            One-dimensional stacked DeltaSigma vector ordered by the selected</span>
+<span class="sd">            lens-source bin pairs.</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            DeltaSigma is computed once per unique lens bin because the mean</span>
+<span class="sd">            DeltaSigma profile is lens-bin dependent. The resulting blocks are</span>
+<span class="sd">            then repeated according to the exact Binny-selected pair order so</span>
+<span class="sd">            that the data vector remains matched to the covariance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">lens_result</span> <span class="o">=</span> <span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;lens_result&quot;</span><span class="p">]</span>
+        <span class="n">bin_pairs</span> <span class="o">=</span> <span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;bin_pairs&quot;</span><span class="p">]</span>
+
+        <span class="n">lens_edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
+            <span class="n">lens_result</span><span class="o">.</span><span class="n">tomo_meta</span><span class="p">[</span><span class="s2">&quot;bins&quot;</span><span class="p">][</span><span class="s2">&quot;bin_edges&quot;</span><span class="p">],</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">lens_z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">lens_result</span><span class="o">.</span><span class="n">z</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">unique_lens_bins</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="nb">int</span><span class="p">(</span><span class="n">lens_bin</span><span class="p">)</span> <span class="k">for</span> <span class="n">lens_bin</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">bin_pairs</span><span class="p">})</span>
+
+        <span class="n">block_by_lens_bin</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Keep the user-facing forecast and covariance radius grid in comoving</span>
+        <span class="c1"># Mpc / h. Convert to comoving Mpc here because the DeltaSigma</span>
+        <span class="c1"># data-vector calculation passes radii to the CCL-backed profile</span>
+        <span class="c1"># evaluation, which expects Mpc.</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">cosmo</span><span class="p">[</span><span class="s2">&quot;h&quot;</span><span class="p">])</span>
+        <span class="n">r_mpc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span> <span class="o">/</span> <span class="n">h</span>
+
+        <span class="k">for</span> <span class="n">lens_bin</span> <span class="ow">in</span> <span class="n">unique_lens_bins</span><span class="p">:</span>
+            <span class="n">block_by_lens_bin</span><span class="p">[</span><span class="n">lens_bin</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">calculator</span><span class="o">.</span><span class="n">delta_sigma_lens_bin</span><span class="p">(</span>
+                    <span class="n">r_mpc</span><span class="p">,</span>
+                    <span class="n">lens_dndz</span><span class="o">=</span><span class="p">(</span>
+                        <span class="n">lens_z</span><span class="p">,</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">lens_result</span><span class="o">.</span><span class="n">bins</span><span class="p">[</span><span class="n">lens_bin</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">),</span>
+                    <span class="p">),</span>
+                    <span class="n">cosmo</span><span class="o">=</span><span class="n">cosmo</span><span class="p">,</span>
+                    <span class="n">pk2d_kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">pk2d_kwargs</span><span class="p">),</span>
+                    <span class="n">z_min</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">lens_edges</span><span class="p">[</span><span class="n">lens_bin</span><span class="p">]),</span>
+                    <span class="n">z_max</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">lens_edges</span><span class="p">[</span><span class="n">lens_bin</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]),</span>
+                    <span class="n">trim_edge_points</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">trim_edge_points</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">blocks</span> <span class="o">=</span> <span class="p">[</span><span class="n">block_by_lens_bin</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">lens_bin</span><span class="p">)]</span> <span class="k">for</span> <span class="n">lens_bin</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">bin_pairs</span><span class="p">]</span>
+
+        <span class="n">data_vector</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">blocks</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data_vector</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_covariance</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">cov_builder</span><span class="p">:</span> <span class="n">DeltaSigmaCovarianceBuilder</span><span class="p">,</span>
+        <span class="n">bin_pairs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">FloatArray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the covariance matrix requested by the forecast.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cov_builder: Covariance builder matched to the selected tomography.</span>
+<span class="sd">            bin_pairs: Lens-source bin pairs used by the DeltaSigma data vector.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Bin-pair ordering and covariance matrix for the selected covariance</span>
+<span class="sd">            product.</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            The default is ``gm`` because the current forecast data vector is the</span>
+<span class="sd">            lensing-style DeltaSigma signal. The ``joint`` option should only be</span>
+<span class="sd">            used when the data vector is also expanded to include the matching</span>
+<span class="sd">            galaxy-galaxy observable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pair_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">lens_bin</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">source_bin</span><span class="p">))</span> <span class="k">for</span> <span class="n">lens_bin</span><span class="p">,</span> <span class="n">source_bin</span> <span class="ow">in</span> <span class="n">bin_pairs</span>
+        <span class="p">]</span>
+
+        <span class="n">cov_pairs</span><span class="p">,</span> <span class="n">cov</span> <span class="o">=</span> <span class="n">cov_builder</span><span class="o">.</span><span class="n">gm_block_diagonal</span><span class="p">(</span><span class="n">bin_pairs</span><span class="o">=</span><span class="n">pair_list</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">cov_pairs</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">cov</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_context</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">tomography</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">cov_builder</span><span class="p">:</span> <span class="n">DeltaSigmaCovarianceBuilder</span><span class="p">,</span>
+        <span class="n">cov_pairs</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return shared objects needed by model and forecast calls.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tomography: Tomography products for the lens and source samples.</span>
+<span class="sd">            cov_builder: Covariance builder matched to the same tomography.</span>
+<span class="sd">            cov_pairs: Bin-pair ordering used by the covariance.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary collecting the forecast state that should remain fixed</span>
+<span class="sd">            during model evaluations.</span>
+
+<span class="sd">        Notes:</span>
+<span class="sd">            The context is designed to keep expensive or shared objects in one</span>
+<span class="sd">            place. Forecast tools can repeatedly evaluate ``model(theta)`` while</span>
+<span class="sd">            reusing the same tomography, bin-pair selection, radius grids, and</span>
+<span class="sd">            covariance setup.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;cosmo&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cosmo</span><span class="p">,</span>
+            <span class="s2">&quot;calculator&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculator</span><span class="p">,</span>
+            <span class="s2">&quot;r&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="p">,</span>
+            <span class="s2">&quot;rp_bin_edges&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">rp_bin_edges</span><span class="p">,</span>
+            <span class="s2">&quot;tomography&quot;</span><span class="p">:</span> <span class="n">tomography</span><span class="p">,</span>
+            <span class="s2">&quot;lens_result&quot;</span><span class="p">:</span> <span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;lens_result&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;source_result&quot;</span><span class="p">:</span> <span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;source_result&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;bin_pairs&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;bin_pairs&quot;</span><span class="p">]),</span>
+            <span class="s2">&quot;lens_bin_centers&quot;</span><span class="p">:</span> <span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;lens_bin_centers&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;source_bin_centers&quot;</span><span class="p">:</span> <span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;source_bin_centers&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;lens_shape_stats&quot;</span><span class="p">:</span> <span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;lens_shape_stats&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;source_shape_stats&quot;</span><span class="p">:</span> <span class="n">tomography</span><span class="p">[</span><span class="s2">&quot;source_shape_stats&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;covariance_builder&quot;</span><span class="p">:</span> <span class="n">cov_builder</span><span class="p">,</span>
+            <span class="s2">&quot;cov_pairs&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">cov_pairs</span><span class="p">),</span>
+            <span class="s2">&quot;covariance_kind&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">covariance_kind</span><span class="p">,</span>
+            <span class="s2">&quot;observable&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">observable</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, LSST Dark Energy Science Collaboration
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            <div class="icons">
+              <a class="muted-link " href="https://github.com/LSSTDESC/dsf" aria-label="GitHub">
+            <svg stroke="currentColor" fill="currentColor" stroke-width="0"
+                 viewBox="0 0 16 16">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53
+                5.47 7.59.4.07.55-.17.55-.38
+                0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94
+                -.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53
+                .63-.01 1.08.58 1.23.82.72 1.21 1.87.87
+                2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89
+                -3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02
+                .08-2.12 0 0 .67-.21 2.2.82A7.65 7.65 0 0 1
+                8 3.87c.68 0 1.36.09 2 .26
+                1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12
+                .51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65
+                3.95.29.25.54.73.54 1.48
+                0 1.07-.01 1.93-.01 2.2
+                0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8
+                c0-4.42-3.58-8-8-8z"></path>
+            </svg>
+            </a>
+              
+            </div>
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    </body>
+</html>

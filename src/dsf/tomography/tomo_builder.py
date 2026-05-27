@@ -238,8 +238,9 @@ class TomographyBuilder:
         builder: NZTomography,
         result: Any,
     ) -> dict[str, Any]:
-        """Return population statistics using preset density when available."""
-        density = result.spec.get("sample_properties", {}).get("number_density", {})
+        """Return population statistics in the format expected by DSF."""
+        sample_properties = result.spec.get("sample_properties", {})
+        density = sample_properties.get("number_density", {})
 
         kwargs: dict[str, Any] = {
             "decimal_places": self.decimal_places,
@@ -248,7 +249,30 @@ class TomographyBuilder:
         if "n_gal_arcmin2" in density:
             kwargs["density_total"] = float(density["n_gal_arcmin2"])
 
-        return builder.population_stats(**kwargs)
+        stats = dict(builder.population_stats(**kwargs))
+
+        if "density_per_bin" in stats:
+            return stats
+
+        if "n_gal_comoving_h3_mpc3" in density:
+            nbar = float(density["n_gal_comoving_h3_mpc3"])
+            stats["density_per_bin"] = {
+                int(bin_index): nbar * float(fraction)
+                for bin_index, fraction in stats.get("fractions", {}).items()
+            }
+            stats["density_unit"] = "h^3 Mpc^-3"
+            return stats
+
+        if "total_count_per_bin" in stats and "volume_per_bin" in stats:
+            stats["density_per_bin"] = {
+                int(bin_index): float(stats["total_count_per_bin"][bin_index])
+                / float(stats["volume_per_bin"][bin_index])
+                for bin_index in stats["total_count_per_bin"]
+            }
+            stats["density_unit"] = "h^3 Mpc^-3"
+            return stats
+
+        return stats
 
     def _selected_pairs(
         self,

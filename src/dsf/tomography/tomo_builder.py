@@ -238,8 +238,9 @@ class TomographyBuilder:
         builder: NZTomography,
         result: Any,
     ) -> dict[str, Any]:
-        """Return population statistics using preset density when available."""
-        density = result.spec.get("sample_properties", {}).get("number_density", {})
+        """Return population statistics in the format expected by DSF."""
+        sample_properties = result.spec.get("sample_properties", {})
+        density = sample_properties.get("number_density", {})
 
         kwargs: dict[str, Any] = {
             "decimal_places": self.decimal_places,
@@ -248,7 +249,38 @@ class TomographyBuilder:
         if "n_gal_arcmin2" in density:
             kwargs["density_total"] = float(density["n_gal_arcmin2"])
 
-        return builder.population_stats(**kwargs)
+        stats = dict(builder.population_stats(**kwargs))
+
+        if "density_per_bin" in stats:
+            return stats
+
+        area_deg2 = sample_properties.get(
+            "effective_area_deg2",
+            sample_properties.get("survey_area_deg2"),
+        )
+
+        if area_deg2 is None:
+            return stats
+
+        if "total_count_per_bin" in stats:
+            counts = stats["total_count_per_bin"]
+        elif "counts_per_bin" in stats:
+            counts = stats["counts_per_bin"]
+        elif "total_counts_per_bin" in stats:
+            counts = stats["total_counts_per_bin"]
+        else:
+            return stats
+
+        area_arcmin2 = float(area_deg2) * 3600.0
+
+        stats["density_per_bin"] = {
+            int(bin_index): float(count) / area_arcmin2
+            for bin_index, count in counts.items()
+        }
+
+        stats["density_unit"] = "arcmin^-2"
+
+        return stats
 
     def _selected_pairs(
         self,

@@ -106,7 +106,7 @@ def hankel_J2(
     gammat = ifht(C_ell * ell_arr, 
                   dln=dln_ell, 
                   mu=2, 
-                  offset=offset) / theta
+                  offset=offset) / theta / (2.0 * np.pi)
     
     def gamma_t(r_eval: FloatArray) -> FloatArray:
         """Return the tangential shear correlation function at the requested radii."""

@@ -33,7 +33,7 @@ class TomographyBuilder:
         lens_sample: str | None = "lrg",
         source_sample: str | None = None,
         lens_year: str | None = None,
-        source_year: str | None = "1",
+        source_year: str | None = None,
         lens_scenario: str | None = None,
         source_scenario: str | None = None,
         lens_role: str = "lens",

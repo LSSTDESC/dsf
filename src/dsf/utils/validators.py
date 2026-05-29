@@ -755,7 +755,7 @@ def validate_hankel_1d_grid_spacing(
         name: Name of the wavenumber grid used in error messages.
     """
     
-    k_arr = as_1d_float_array(k, "k", min_size=3)
+    k_arr = as_1d_float_array(k, name, min_size=2)
     lnk = np.log(k_arr)
     dlnk = np.diff(lnk)
     if not np.allclose(dlnk, dlnk[0]):

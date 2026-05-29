@@ -39,7 +39,7 @@ def hankel_spherical_order_0(
     Args:
         power_spectrum: Power spectrum to transform.
         k: Wavenumber array (must be uniform in logspace).
-        offset: Optional flag to apply an offset to the lgoarithmic spacing 
+        offset: Optional flag to apply an offset to the logarithmic spacing 
             of the output. Can reduce numerical ringing.
 
     Returns:
@@ -91,7 +91,7 @@ def hankel_projected_order_2(
     Args:
         C_ell: Power spectrum to transform.
         ell: ell array (must be uniform in logspace).
-        offset: Optional flag to apply an offset to the lgoarithmic spacing 
+        offset: Optional flag to apply an offset to the logarithmic spacing 
             of the output. Can reduce numerical ringing.
 
     Returns:

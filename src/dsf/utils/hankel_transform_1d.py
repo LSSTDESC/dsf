@@ -91,7 +91,7 @@ def hankel_projected_order_2(
 ) -> Callable[[FloatArray], FloatArray]:
     """Convert projected GGL power spectrum to 2D correlation function using FFTLog:
     
-    :math:`\\gamma_t(r) = \\int \\frac{\\ell d\\ell}{2\\pi} C(\\ell) J_2(\\ell \\theta)`.
+    :math:`\\gamma_t(\\theta) = \\int \\frac{\\ell d\\ell}{2\\pi} C(\\ell) J_2(\\ell \\theta)`.
 
     Args:
         ell: ell array (must be uniform in logspace).

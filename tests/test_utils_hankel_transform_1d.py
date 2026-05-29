@@ -32,6 +32,7 @@ def test_hankel_spherical_order_0_output_exists_and_correct_length(
     r_eval,
     expected_len,
 ):
+    """Tests that hankel_spherical_order_0 has shape ``len(r_eval)``."""
     xi_func = hankel_spherical_order_0(k=k, pk=pk, use_offset=False)
     xi_vals = xi_func(r_eval)
 
@@ -64,6 +65,7 @@ def test_hankel_projected_order_2_output_exists_and_correct_length(
     theta_eval,
     expected_len,
 ):
+    """Tests that hankel_projected_order_2 has shape ``len(theta_eval)``."""
     gamma_t_func = hankel_projected_order_2(ell=ell, C_ell=C_ell, use_offset=False)
     gamma_vals = gamma_t_func(theta_eval)
 
@@ -72,14 +74,14 @@ def test_hankel_projected_order_2_output_exists_and_correct_length(
 
 
 @pytest.mark.parametrize(
-    "transform_func,grid_name",
+    "transform_func",
     [
-        param(hankel_spherical_order_0, "k", id="invalid_spacing_k_hankel_spherical_order_0"),
-        param(hankel_projected_order_2, "ell", id="invalid_spacing_ell_hankel_projected_order_2"),
+        param(hankel_spherical_order_0, id="invalid_spacing_k_hankel_spherical_order_0"),
+        param(hankel_projected_order_2, id="invalid_spacing_ell_hankel_projected_order_2"),
     ],
 )
-def test_hankel_invalid_spacing_raises(transform_func, grid_name):
-    # Use non-logspaced arrays: linear spacing should fail validation
+def test_hankel_invalid_spacing_raises(transform_func):
+    """Tests that non-logspaced input arrays are rejected."""
     P_or_C = np.ones(4)
     non_logspaced = np.array([1.0, 2.0, 3.0, 4.0])
 
@@ -100,7 +102,7 @@ def test_hankel_invalid_spacing_raises(transform_func, grid_name):
 def test_hankel_spherical_order_0_rejects_interpolation_outside_bounds(
     k,pk,r_eval,
 ):
-
+    """Tests that hankel_spherical_order_0 rejects r outside the interpolation grid."""
     with pytest.raises(ValueError):
         xi_func = hankel_spherical_order_0(k=k, pk=pk, use_offset=False)
         xi_func(r_eval)
@@ -121,7 +123,7 @@ def test_hankel_projected_order_2_rejects_interpolation_outside_bounds(
     C_ell,
     theta_eval,
 ):
-
+    """Tests that hankel_projected_order_2 rejects theta outside the interpolation grid."""
     with pytest.raises(ValueError):
         gamma_t_func = hankel_projected_order_2(ell=ell, C_ell=C_ell, use_offset=False)
         gamma_t_func(theta_eval)
@@ -129,6 +131,7 @@ def test_hankel_projected_order_2_rejects_interpolation_outside_bounds(
 
 @pytest.mark.slow
 def test_hankel_spherical_order_0_matches_ccl():
+    """Tests that hankel_spherical_order_0 agrees with the CCL transform."""
     import pyccl as ccl
 
     cosmo = ccl.cosmology.CosmologyVanillaLCDM()

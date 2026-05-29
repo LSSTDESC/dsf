@@ -23,6 +23,7 @@ from dsf.utils.validators import (
     as_1d_float_array,
     validate_hankel_1d_grid_spacing,
     validate_power_spectrum_inputs,
+    validate_interpolation_within_bounds,
 )
 
 __all__ = [
@@ -69,15 +70,13 @@ def hankel_spherical_order_0(
     
     def correlation(r_eval: FloatArray) -> FloatArray:
         """Return the correlation function at the requested radii."""
-        r_eval_arr = np.asarray(r_eval, dtype=float)
+        r_eval_arr = validate_interpolation_within_bounds(r_eval, r, "r")
 
         return np.asarray(
             np.interp(
                 r_eval_arr,
                 r,
                 xi,
-                left=xi[0],
-                right=xi[-1],
             ),
             dtype=float,
         )
@@ -116,16 +115,14 @@ def hankel_projected_order_2(
                   mu=2, 
                   offset=offset) / theta / (2.0 * np.pi)
     
-    def gamma_t(r_eval: FloatArray) -> FloatArray:
+    def gamma_t(theta_eval: FloatArray) -> FloatArray:
         """Return the tangential shear correlation function at the requested radii."""
-        r_eval_arr = np.asarray(r_eval, dtype=float)
+        theta_eval_arr = validate_interpolation_within_bounds(theta_eval, theta, "theta")
         return np.asarray(
             np.interp(
-                r_eval_arr,
+                theta_eval_arr,
                 theta,
                 gammat,
-                left=gammat[0],
-                right=gammat[-1],
             ),
             dtype=float,
         )

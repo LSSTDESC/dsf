@@ -22,6 +22,7 @@ __all__ = [
     "validate_hankel_1d_grid_spacing",
     "validate_integration_axis",
     "validate_integration_params",
+    "validate_interpolation_within_bounds",
     "validate_joint_covariance_blocks",
     "validate_nonnegative_1d_array",
     "validate_nonnegative_scalar",
@@ -761,3 +762,30 @@ def validate_hankel_1d_grid_spacing(
         raise ValueError(f"{name} must have uniform logarithmic spacing for Hankel transforms.")
         
     return k_arr
+
+
+def validate_interpolation_within_bounds(
+    x_eval: Any,
+    x_data: Any,
+    name: str,
+) -> FloatArray:
+    """Validate that interpolation points are within the bounds of the data grid.
+
+    Args:
+        x_eval: Points at which to evaluate the interpolation.
+        x_data: Data points for the interpolation.
+        name: Name of the interpolation variable used in error messages.
+
+    Returns:
+        Validated interpolation points as a float array.
+
+    Raises:
+        ValueError: If the inputs are invalid.
+    """
+    x_eval_arr = as_1d_float_array(x_eval, f"{name}_eval", min_size=1)
+    x_data_arr = as_1d_float_array(x_data, f"{name}_data", min_size=2)
+
+    if not np.all((x_eval_arr >= x_data_arr[0]) & (x_eval_arr <= x_data_arr[-1])):
+        raise ValueError(f"Requested interpolation values for {name} lie outside the data grid.")
+
+    return x_eval_arr

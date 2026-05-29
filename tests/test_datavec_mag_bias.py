@@ -242,7 +242,7 @@ def test_lens_mag_lss_shear_returns_expected_shape(monkeypatch, cosmo):
         delta_z_source=0.5,
     )
 
-    theta = np.array([0.01, 0.02])
+    theta = np.array([0.2, 0.9])
 
     monkeypatch.setattr(
         mag_bias,

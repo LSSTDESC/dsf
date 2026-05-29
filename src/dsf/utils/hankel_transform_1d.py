@@ -30,7 +30,7 @@ __all__ = [
 def hankel_spherical_order_0(
     P_k: FloatArray,
     k: FloatArray,
-    offset: bool = True,
+    use_offset: bool = True,
 ) -> Callable[[FloatArray], FloatArray]:
     """Convert power spectrum to 3D correlation function using FFTLog:
     
@@ -39,7 +39,7 @@ def hankel_spherical_order_0(
     Args:
         power_spectrum: Power spectrum to transform.
         k: Wavenumber array (must be uniform in logspace).
-        offset: Optional flag to apply an offset to the logarithmic spacing 
+        use_offset: Optional flag to apply an offset to the logarithmic spacing 
             of the output. Can reduce numerical ringing.
 
     Returns:
@@ -49,7 +49,7 @@ def hankel_spherical_order_0(
     
     r = 1.0 / k_arr[::-1]
     dln_k = float(np.log(k_arr[1] / k_arr[0]))
-    offset = fhtoffset(dln=dln_k, mu=0.5) if offset else 0.0
+    offset = fhtoffset(dln=dln_k, mu=0.5) if use_offset else 0.0
     
     transformed_power = ifht(
         k_arr**1.5 * P_k,
@@ -82,7 +82,7 @@ def hankel_spherical_order_0(
 def hankel_projected_order_2(
     C_ell: FloatArray,
     ell: FloatArray,
-    offset: bool = True,
+    use_offset: bool = True,
 ) -> Callable[[FloatArray], FloatArray]:
     """Convert projected GGL power spectrum to 2D correlation function using FFTLog:
     
@@ -91,7 +91,7 @@ def hankel_projected_order_2(
     Args:
         C_ell: Power spectrum to transform.
         ell: ell array (must be uniform in logspace).
-        offset: Optional flag to apply an offset to the logarithmic spacing 
+        use_offset: Optional flag to apply an offset to the logarithmic spacing 
             of the output. Can reduce numerical ringing.
 
     Returns:
@@ -101,7 +101,7 @@ def hankel_projected_order_2(
     
     theta = 1.0 / ell_arr[::-1]
     dln_ell = float(np.log(ell_arr[1] / ell_arr[0]))
-    offset = fhtoffset(dln=dln_ell, mu=2) if offset else 0.0
+    offset = fhtoffset(dln=dln_ell, mu=2) if use_offset else 0.0
     
     gammat = ifht(C_ell * ell_arr, 
                   dln=dln_ell, 

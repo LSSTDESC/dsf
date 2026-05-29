@@ -251,7 +251,9 @@ def _lens_mag_lss_shear(
         z_arr,
         axis=0
     )
-    gamma_t_spline = hankel_projected_order_2(C_ell, ell_arr, offset=_LENS_MAG_INTEG_PARAMS["use_hankel_offset"])
+    gamma_t_spline = hankel_projected_order_2(C_ell, 
+                                              ell_arr, 
+                                              use_offset=_LENS_MAG_INTEG_PARAMS["use_hankel_offset"])
 
     prefactor = (
         9.0 * hubble_over_c_cubed(float(cosmo["h"])) * float(cosmo["Omega_m"]) ** 2 / 4

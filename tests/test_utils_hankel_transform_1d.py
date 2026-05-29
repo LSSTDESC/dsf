@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from pytest import param
 
-from dsf.utils.hankel_transform_1d import hankel_j0, hankel_J2
+from dsf.utils.hankel_transform_1d import hankel_spherical_order_0, hankel_projected_order_2
 
 
 @pytest.mark.parametrize(
@@ -26,13 +26,13 @@ from dsf.utils.hankel_transform_1d import hankel_j0, hankel_J2
         ),
     ],
 )
-def test_hankel_j0_output_exists_and_correct_length(
+def test_hankel_spherical_order_0_output_exists_and_correct_length(
     P_k,
     k,
     r_eval,
     expected_len,
 ):
-    xi_func = hankel_j0(P_k=P_k, k=k, offset=True)
+    xi_func = hankel_spherical_order_0(P_k=P_k, k=k, offset=True)
     xi_vals = xi_func(r_eval)
 
     assert isinstance(xi_vals, np.ndarray)
@@ -47,24 +47,24 @@ def test_hankel_j0_output_exists_and_correct_length(
             np.logspace(1, 3, 16),
             np.logspace(0, 2, 7),
             7,
-            id="hankel_J2_output_length_basic",
+            id="hankel_projected_order_2_output_length_basic",
         ),
         param(
             np.linspace(0.01, 1.0, 10),
             np.logspace(0, 2, 10),
             np.array([0.01, 0.02, 0.05]),
             3,
-            id="hankel_J2_output_length_three_points",
+            id="hankel_projected_order_2_output_length_three_points",
         ),
     ],
 )
-def test_hankel_J2_output_exists_and_correct_length(
+def test_hankel_projected_order_2_output_exists_and_correct_length(
     C_ell,
     ell,
     theta_eval,
     expected_len,
 ):
-    gamma_t_func = hankel_J2(C_ell=C_ell, ell=ell, offset=True)
+    gamma_t_func = hankel_projected_order_2(C_ell=C_ell, ell=ell, offset=True)
     gamma_vals = gamma_t_func(theta_eval)
 
     assert isinstance(gamma_vals, np.ndarray)
@@ -74,8 +74,8 @@ def test_hankel_J2_output_exists_and_correct_length(
 @pytest.mark.parametrize(
     "transform_func,grid_name",
     [
-        param(hankel_j0, "k", id="invalid_spacing_k_hankel_j0"),
-        param(hankel_J2, "ell", id="invalid_spacing_ell_hankel_J2"),
+        param(hankel_spherical_order_0, "k", id="invalid_spacing_k_hankel_spherical_order_0"),
+        param(hankel_projected_order_2, "ell", id="invalid_spacing_ell_hankel_projected_order_2"),
     ],
 )
 def test_hankel_invalid_spacing_raises(transform_func, grid_name):
@@ -87,7 +87,7 @@ def test_hankel_invalid_spacing_raises(transform_func, grid_name):
         transform_func(P_or_C, non_logspaced, offset=True)
 
 @pytest.mark.slow
-def test_hankel_j0_matches_ccl():
+def test_hankel_spherical_order_0_matches_ccl():
     import pyccl as ccl
 
     cosmo = ccl.cosmology.CosmologyVanillaLCDM()
@@ -96,7 +96,7 @@ def test_hankel_j0_matches_ccl():
     r_arr = np.geomspace(0.1, 100, 100)
     z = 0.3
 
-    xi_dsf = hankel_j0(cosmo.nonlin_matter_power(k_arr, 1/(1+z)), k_arr, offset=False)(r_arr)
+    xi_dsf = hankel_spherical_order_0(cosmo.nonlin_matter_power(k_arr, 1/(1+z)), k_arr, offset=False)(r_arr)
     xi_ccl = ccl.correlation_3d(cosmo,r=r_arr, a=1/(1+z), p_of_k_a=cosmo.get_nonlin_power())
 
     assert np.allclose(xi_dsf, xi_ccl, rtol=0.005, atol=0)

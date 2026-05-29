@@ -4,10 +4,10 @@ This module provides functions for performing 1D Hankel transforms using the FFT
 
 The public functions include:
 
-1) ``hankel_j0``: Convert a 3D power spectrum to a 3D correlation function 
+1) ``hankel_spherical_order_0``: Convert a 3D power spectrum to a 3D correlation function 
 using the J0 Bessel function.
 
-2) ``hankel_J2``: Convert a projected GGL power spectrum to a 2D tangential 
+2) ``hankel_projected_order_2``: Convert a projected GGL power spectrum to a 2D tangential 
 shear correlation function using the J2 Bessel function.
 """
 
@@ -22,12 +22,12 @@ from dsf.utils.types import FloatArray
 from dsf.utils.validators import validate_hankel_1d_grid_spacing
 
 __all__ = [
-    "hankel_j0",
-    "hankel_J2",
+    "hankel_spherical_order_0",
+    "hankel_projected_order_2",
 ]
 
 
-def hankel_j0(
+def hankel_spherical_order_0(
     P_k: FloatArray,
     k: FloatArray,
     offset: bool = True,
@@ -79,7 +79,7 @@ def hankel_j0(
     return correlation
 
 
-def hankel_J2(
+def hankel_projected_order_2(
     C_ell: FloatArray,
     ell: FloatArray,
     offset: bool = True,

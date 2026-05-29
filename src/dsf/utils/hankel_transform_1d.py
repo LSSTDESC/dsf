@@ -28,8 +28,8 @@ __all__ = [
 
 
 def hankel_spherical_order_0(
-    P_k: FloatArray,
     k: FloatArray,
+    pk: FloatArray,
     use_offset: bool = True,
 ) -> Callable[[FloatArray], FloatArray]:
     """Convert power spectrum to 3D correlation function using FFTLog:
@@ -37,8 +37,8 @@ def hankel_spherical_order_0(
     :math:`\\xi(r) = \\int \\frac{k^2 dk}{2\\pi^2} P(k) j_0(kr)`.
 
     Args:
-        power_spectrum: Power spectrum to transform.
         k: Wavenumber array (must be uniform in logspace).
+        pk: Power spectrum to transform.
         use_offset: Optional flag to apply an offset to the logarithmic spacing 
             of the output. Can reduce numerical ringing.
 
@@ -52,7 +52,7 @@ def hankel_spherical_order_0(
     offset = fhtoffset(dln=dln_k, mu=0.5) if use_offset else 0.0
     
     transformed_power = ifht(
-        k_arr**1.5 * P_k,
+        k_arr**1.5 * pk,
         dln=dln_k,
         mu=0.5,
         offset=offset,
@@ -80,8 +80,8 @@ def hankel_spherical_order_0(
 
 
 def hankel_projected_order_2(
-    C_ell: FloatArray,
     ell: FloatArray,
+    C_ell: FloatArray,
     use_offset: bool = True,
 ) -> Callable[[FloatArray], FloatArray]:
     """Convert projected GGL power spectrum to 2D correlation function using FFTLog:
@@ -89,8 +89,8 @@ def hankel_projected_order_2(
     :math:`\\gamma_t(r) = \\int \\frac{\\ell d\\ell}{2\\pi} C(\\ell) J_2(\\ell \\theta)`.
 
     Args:
-        C_ell: Power spectrum to transform.
         ell: ell array (must be uniform in logspace).
+        C_ell: Power spectrum to transform.
         use_offset: Optional flag to apply an offset to the logarithmic spacing 
             of the output. Can reduce numerical ringing.
 

@@ -251,8 +251,8 @@ def _lens_mag_lss_shear(
         z_arr,
         axis=0
     )
-    gamma_t_spline = hankel_projected_order_2(C_ell, 
-                                              ell_arr, 
+    gamma_t_spline = hankel_projected_order_2(ell_arr,
+                                              C_ell,
                                               use_offset=_LENS_MAG_INTEG_PARAMS["use_hankel_offset"])
 
     prefactor = (

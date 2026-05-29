@@ -19,7 +19,11 @@ import numpy as np
 from scipy.fft import fhtoffset, ifht
 
 from dsf.utils.types import FloatArray
-from dsf.utils.validators import validate_hankel_1d_grid_spacing
+from dsf.utils.validators import (
+    as_1d_float_array,
+    validate_hankel_1d_grid_spacing,
+    validate_power_spectrum_inputs,
+)
 
 __all__ = [
     "hankel_spherical_order_0",
@@ -46,13 +50,15 @@ def hankel_spherical_order_0(
         Function returning :math:`\\xi(r)` evaluated at the requested radii.
     """
     k_arr = validate_hankel_1d_grid_spacing(k, "k")
-    
+    pk_arr = as_1d_float_array(pk, "pk", min_size=2)
+    validate_power_spectrum_inputs(k_arr, pk_arr)
+
     r = 1.0 / k_arr[::-1]
     dln_k = float(np.log(k_arr[1] / k_arr[0]))
     offset = fhtoffset(dln=dln_k, mu=0.5) if use_offset else 0.0
     
     transformed_power = ifht(
-        k_arr**1.5 * pk,
+        k_arr**1.5 * pk_arr,
         dln=dln_k,
         mu=0.5,
         offset=offset,
@@ -98,12 +104,14 @@ def hankel_projected_order_2(
         Function returning :math:`\\gamma_t(r)` evaluated at the requested radii.
     """
     ell_arr = validate_hankel_1d_grid_spacing(ell, "ell")
-    
+    C_ell_arr = as_1d_float_array(C_ell, "C_ell", min_size=2)
+    validate_power_spectrum_inputs(ell_arr, C_ell_arr, k_name='ell', pk_name='C_ell')
+
     theta = 1.0 / ell_arr[::-1]
     dln_ell = float(np.log(ell_arr[1] / ell_arr[0]))
     offset = fhtoffset(dln=dln_ell, mu=2) if use_offset else 0.0
     
-    gammat = ifht(C_ell * ell_arr, 
+    gammat = ifht(C_ell_arr * ell_arr, 
                   dln=dln_ell, 
                   mu=2, 
                   offset=offset) / theta / (2.0 * np.pi)

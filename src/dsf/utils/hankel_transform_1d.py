@@ -22,8 +22,8 @@ from dsf.utils.types import FloatArray
 from dsf.utils.validators import (
     as_1d_float_array,
     validate_hankel_1d_grid_spacing,
-    validate_power_spectrum_inputs,
     validate_interpolation_within_bounds,
+    validate_power_spectrum_inputs,
 )
 
 __all__ = [
@@ -118,6 +118,7 @@ def hankel_projected_order_2(
     def gamma_t(theta_eval: FloatArray) -> FloatArray:
         """Return the tangential shear correlation function at the requested radii."""
         theta_eval_arr = validate_interpolation_within_bounds(theta_eval, theta, "theta")
+        
         return np.asarray(
             np.interp(
                 theta_eval_arr,

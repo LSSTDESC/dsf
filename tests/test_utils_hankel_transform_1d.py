@@ -38,6 +38,7 @@ def test_hankel_spherical_order_0_output_exists_and_correct_length(
 
     assert isinstance(xi_vals, np.ndarray)
     assert len(xi_vals) == expected_len
+    assert np.all(np.isfinite(xi_vals))
 
 
 @pytest.mark.parametrize(
@@ -71,6 +72,7 @@ def test_hankel_projected_order_2_output_exists_and_correct_length(
 
     assert isinstance(gamma_vals, np.ndarray)
     assert len(gamma_vals) == expected_len
+    assert np.all(np.isfinite(gamma_vals))
 
 
 @pytest.mark.parametrize(

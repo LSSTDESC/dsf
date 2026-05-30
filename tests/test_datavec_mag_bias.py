@@ -4,6 +4,7 @@ import numpy as np
 import pyccl as ccl
 import pytest
 
+from dsf.utils import validators
 from dsf.data_vector import mag_bias
 from dsf.data_vector.mag_bias import (
     _inner_redshift_integrand,
@@ -285,8 +286,14 @@ def test_lens_mag_lss_shear_rejects_too_short_inner_redshift_grid(cosmo):
         (np.array([1.0, 2.0]), np.array([0.0, 0.02])),
     ],
 )
-def test_lens_mag_lss_shear_rejects_invalid_grids(ell, theta, cosmo):
+def test_lens_mag_lss_shear_rejects_invalid_grids(monkeypatch, ell, theta, cosmo):
     """Tests that invalid multipole or angular grids are rejected."""
+    monkeypatch.setattr(
+        validators,
+        'validate_integration_params',
+        lambda: None,
+    )
+    
     with pytest.raises(ValueError):
         set_lens_mag_integ_params(
             n_ell=len(ell),

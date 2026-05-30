@@ -1,10 +1,13 @@
 """Unit tests for ``dsf.utils.hankel_transform_1d``."""
 
 import numpy as np
+import pyccl as ccl
 import pytest
 from pytest import param
+from scipy.special import jv
 
 from dsf.utils.hankel_transform_1d import hankel_projected_order_2, hankel_spherical_order_0
+from dsf.utils.integrators import trapezoid_integral
 
 
 @pytest.mark.parametrize(
@@ -153,11 +156,6 @@ def test_hankel_spherical_order_0_matches_ccl():
 @pytest.mark.slow
 def test_hankel_projected_order_2_matches_direct_integration():
     """Tests that hankel_projected_order_2 agrees with direct Bessel integration."""
-    import pyccl as ccl
-    from scipy.special import jv
-
-    from dsf.utils.integrators import trapezoid_integral
-
     cosmo = ccl.cosmology.CosmologyVanillaLCDM()
     
     ell_arr = np.geomspace(1e-6, 1e6, 30000)

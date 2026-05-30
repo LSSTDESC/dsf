@@ -1,6 +1,7 @@
 """Unit tests for ``dsf.data_vector.mag_bias``."""
 
 import numpy as np
+import pyccl as ccl
 import pytest
 
 from dsf.data_vector import mag_bias
@@ -417,8 +418,6 @@ def test_delta_sigma_lens_mag_correction_rejects_invalid_inputs(
 @pytest.mark.slow
 def test_delta_sigma_lens_mag_correction_matches_ccl():
     """Tests that delta_sigma_lens_mag_correction agrees with the CCL prediction."""
-    import pyccl as ccl
-
     cosmo = ccl.cosmology.CosmologyVanillaLCDM()
     Z_LENS = 0.3
     Z_SOURCE = 1.3

@@ -41,7 +41,7 @@ def test_hankel_spherical_order_0_output_exists_and_correct_length(
 
 
 @pytest.mark.parametrize(
-    "ell,C_ell,theta_eval,expected_len",
+    "ell,c_ell,theta_eval,expected_len",
     [
         param(
             np.geomspace(1.0e-2, 10.0, 16),
@@ -61,12 +61,12 @@ def test_hankel_spherical_order_0_output_exists_and_correct_length(
 )
 def test_hankel_projected_order_2_output_exists_and_correct_length(
     ell,
-    C_ell,
+    c_ell,
     theta_eval,
     expected_len,
 ):
     """Tests that hankel_projected_order_2 has shape ``len(theta_eval)``."""
-    gamma_t_func = hankel_projected_order_2(ell=ell, C_ell=C_ell, use_offset=False)
+    gamma_t_func = hankel_projected_order_2(ell=ell, c_ell=c_ell, use_offset=False)
     gamma_vals = gamma_t_func(theta_eval)
 
     assert isinstance(gamma_vals, np.ndarray)
@@ -109,7 +109,7 @@ def test_hankel_spherical_order_0_rejects_interpolation_outside_bounds(
         
         
 @pytest.mark.parametrize(
-    "ell,C_ell,theta_eval",
+    "ell,c_ell,theta_eval",
     [
         param(
             np.geomspace(1.0e-2, 10.0, 8),
@@ -120,12 +120,12 @@ def test_hankel_spherical_order_0_rejects_interpolation_outside_bounds(
 )
 def test_hankel_projected_order_2_rejects_interpolation_outside_bounds(
     ell,
-    C_ell,
+    c_ell,
     theta_eval,
 ):
     """Tests that hankel_projected_order_2 rejects theta outside the interpolation grid."""
     with pytest.raises(ValueError):
-        gamma_t_func = hankel_projected_order_2(ell=ell, C_ell=C_ell, use_offset=False)
+        gamma_t_func = hankel_projected_order_2(ell=ell, c_ell=c_ell, use_offset=False)
         gamma_t_func(theta_eval)
         
 

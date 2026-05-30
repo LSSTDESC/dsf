@@ -86,7 +86,7 @@ def hankel_spherical_order_0(
 
 def hankel_projected_order_2(
     ell: FloatArray,
-    C_ell: FloatArray,
+    c_ell: FloatArray,
     use_offset: bool = True,
 ) -> Callable[[FloatArray], FloatArray]:
     """Convert projected GGL power spectrum to 2D correlation function using FFTLog:
@@ -95,7 +95,7 @@ def hankel_projected_order_2(
 
     Args:
         ell: ell array (must be uniform in logspace).
-        C_ell: Power spectrum to transform.
+        c_ell: Power spectrum to transform.
         use_offset: Optional flag to apply an offset to the logarithmic spacing 
             of the output. Can reduce numerical ringing.
 
@@ -103,14 +103,14 @@ def hankel_projected_order_2(
         Function returning :math:`\\gamma_t(r)` evaluated at the requested radii.
     """
     ell_arr = validate_hankel_1d_grid_spacing(ell, "ell")
-    C_ell_arr = as_1d_float_array(C_ell, "C_ell", min_size=2)
-    validate_power_spectrum_inputs(ell_arr, C_ell_arr, k_name='ell', pk_name='C_ell')
+    c_ell_arr = as_1d_float_array(c_ell, "c_ell", min_size=2)
+    validate_power_spectrum_inputs(ell_arr, c_ell_arr, k_name='ell', pk_name='c_ell')
 
     theta = 1.0 / ell_arr[::-1]
     dln_ell = float(np.log(ell_arr[1] / ell_arr[0]))
     offset = fhtoffset(dln=dln_ell, mu=2) if use_offset else 0.0
     
-    gammat = ifht(C_ell_arr * ell_arr, 
+    gammat = ifht(c_ell_arr * ell_arr, 
                   dln=dln_ell, 
                   mu=2, 
                   offset=offset) / theta / (2.0 * np.pi)

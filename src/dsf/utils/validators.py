@@ -32,8 +32,8 @@ __all__ = [
     "validate_positive_strictly_increasing_1d_array",
     "validate_power_spectrum_inputs",
     "validate_redshift_distribution",
-    "validate_redshift_edges",
     "validate_redshift_distribution_support",
+    "validate_redshift_edges",
     "validate_redshift_pair",
     "validate_scale_factor",
     "validate_strictly_increasing",
@@ -521,6 +521,8 @@ def validate_integration_params(params: dict[str, Any]) -> None:
         raise ValueError("z_min must be non-negative.")
     if float(params["delta_z_source"]) <= 0.0:
         raise ValueError("delta_z_source must be positive.")
+    if not isinstance(params["use_hankel_offset"], bool):
+        raise ValueError("use_hankel_offset must be a boolean.")
 
 
 def is_non_negative_integer(value: float | int) -> bool:

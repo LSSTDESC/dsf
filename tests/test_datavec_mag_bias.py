@@ -4,7 +4,6 @@ import numpy as np
 import pyccl as ccl
 import pytest
 
-from dsf.utils import validators
 from dsf.data_vector import mag_bias
 from dsf.data_vector.mag_bias import (
     _inner_redshift_integrand,
@@ -14,6 +13,7 @@ from dsf.data_vector.mag_bias import (
     get_lens_mag_integ_params,
     set_lens_mag_integ_params,
 )
+from dsf.utils import validators
 
 
 @pytest.fixture(autouse=True)

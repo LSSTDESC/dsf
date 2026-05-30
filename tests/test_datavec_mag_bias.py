@@ -261,6 +261,7 @@ def test_lens_mag_lss_shear_returns_expected_shape(monkeypatch, cosmo):
     expected = theta.shape
 
     np.testing.assert_allclose(result, expected)
+    assert np.all(np.isfinite(lss_shear))
 
 
 def test_lens_mag_lss_shear_rejects_too_short_inner_redshift_grid(cosmo):
@@ -274,6 +275,32 @@ def test_lens_mag_lss_shear_rejects_too_short_inner_redshift_grid(cosmo):
         _lens_mag_lss_shear(
             cosmo=cosmo,
             theta=np.array([0.01, 0.02]),
+            z_lens=0.5,
+            z_source=1.0,
+        )
+        
+
+def test_lens_mag_lss_shear_rejects_interpolation_outside_grid(monkeypatch, cosmo):
+    """Tests that interpolation outside the ell grid is rejected."""
+    monkeypatch.setattr(
+        mag_bias,
+        "_inner_redshift_integrand",
+        lambda z_inner, ell, cosmo, z_lens, z_source: np.ones(
+            (z_inner.size, ell.size),
+            dtype=float,
+        ),
+    )
+    
+    set_lens_mag_integ_params(
+        ell_min=1,
+        ell_max=10,
+        n_ell=2
+    )
+
+    with pytest.raises(ValueError, match="lie outside the data grid"):
+        _lens_mag_lss_shear(
+            cosmo=cosmo,
+            theta=np.array([0.5, 2.0]),
             z_lens=0.5,
             z_source=1.0,
         )

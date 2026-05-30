@@ -272,7 +272,7 @@ def test_lens_mag_lss_shear_rejects_too_short_inner_redshift_grid(cosmo):
         z_stepsize=0.2,
     )
 
-    with pytest.raises(ValueError, match="z_inner must contain at least two values"):
+    with pytest.raises(ValueError, match="z must contain at least 2 values"):
         _lens_mag_lss_shear(
             cosmo=cosmo,
             theta=np.array([0.01, 0.02]),

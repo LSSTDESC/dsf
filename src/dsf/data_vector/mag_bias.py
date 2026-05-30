@@ -157,20 +157,7 @@ def _inner_redshift_integrand(
             invalid.
     """
     validate_redshift_pair(z_lens, z_source)
-
-    z_arr = np.asarray(z_inner, dtype=float)
-    if z_arr.ndim != 1:
-        raise ValueError("z_inner must be one-dimensional.")
-
-    if z_arr.size < 2:
-        raise ValueError("z_inner must contain at least two values.")
-
-    if np.any(~np.isfinite(z_arr)):
-        raise ValueError("z_inner must contain only finite values.")
-
-    if np.any(z_arr < 0.0):
-        raise ValueError("z_inner must be non-negative.")
-
+    z_arr = validate_positive_1d_array(z_inner, name="z_inner", min_size=2)
     ell_arr = validate_positive_1d_array(ell, "ell")
 
     a_inner = redshift_to_scale_factor(z_arr)
@@ -246,7 +233,7 @@ def _lens_mag_lss_shear(
         z_lens,
         step=float(_LENS_MAG_INTEG_PARAMS["z_stepsize"]),
     )
-    z_arr = validate_positive_1d_array(z_arr, "z")
+    z_arr = validate_positive_1d_array(z_arr, "z", min_size=2)
 
     angular_spectrum = trapezoid_integral(
         _inner_redshift_integrand(z_arr, ell_arr, cosmo, z_lens, z_source),

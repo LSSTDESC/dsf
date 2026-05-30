@@ -415,3 +415,52 @@ def test_delta_sigma_lens_mag_correction_rejects_invalid_inputs(
             cosmo=cosmo,
             alpha_lens=alpha_lens,
         )
+
+@pytest.mark.slow
+def test_delta_sigma_lens_mag_correction_matches_ccl():
+    """Tests that delta_sigma_lens_mag_correction agrees with the CCL prediction."""
+    import pyccl as ccl
+
+    cosmo = ccl.cosmology.CosmologyVanillaLCDM()
+    Z_LENS = 0.3
+    Z_SOURCE = 1.3
+    SIGMA_NZ = 0.005
+    ALPHA = 1.5
+
+    ell_ccl = np.geomspace(1e-5, 1e6, 5000)
+    r = np.geomspace(1e0, 1e2)
+    theta = np.degrees(r / (1+Z_LENS) / ccl.angular_diameter_distance(cosmo, 1/(1+Z_LENS)))
+
+    z_lens_ccl = np.linspace(0.01, 1.0, 500)
+    nz_lens_ccl = np.exp(-0.5 * ((z_lens_ccl - Z_LENS)/SIGMA_NZ)**2)
+    z_source_ccl = np.linspace(0.5, 1.5, 500)
+    nz_source_ccl = np.exp(-0.5 * ((z_source_ccl - Z_SOURCE)/SIGMA_NZ)**2)
+
+    t_g = ccl.NumberCountsTracer(cosmo, dndz=(z_lens_ccl, nz_lens_ccl), 
+                                bias=None, 
+                                mag_bias=(z_lens_ccl, ALPHA/2.5 * np.ones_like(nz_lens_ccl)), 
+                                has_rsd=False)
+    t_m = ccl.WeakLensingTracer(cosmo,
+                                dndz=(z_source_ccl, nz_source_ccl),
+                                has_shear=True)
+    c_ell_ccl = ccl.angular_cl(cosmo, t_g, t_m, ell_ccl)
+    gammat_ccl = ccl.correlation(cosmo, 
+                                ell=ell_ccl, 
+                                C_ell=c_ell_ccl, 
+                                theta=theta, 
+                                method='FFTLog', 
+                                type='NG')
+    correction_ccl = gammat_ccl / 1e12 * ((1/(1+Z_LENS))**2) * ccl.sigma_critical(cosmo, 
+                                                                        a_lens=1/(1+Z_LENS), 
+                                                                        a_source=1/(1+Z_SOURCE))
+
+    set_lens_mag_integ_params(
+        ell_min=1e-5,
+        ell_max=1e6,
+        n_ell=5000,
+        delta_z_source=1.0,
+    )
+    correction_dsf = delta_sigma_lens_mag_correction(r, 1/(1+Z_LENS), cosmo, alpha_lens=ALPHA)
+    
+    # This is just a rough comparison, so require a match only within 3%.
+    assert np.allclose(correction_ccl, correction_dsf, rtol=0.03, atol=0)

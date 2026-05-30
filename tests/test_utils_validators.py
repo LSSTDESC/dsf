@@ -13,8 +13,10 @@ from dsf.utils.validators import (
     validate_1d_pair,
     validate_finite_scalar,
     validate_forecast_vector_and_covariance,
+    validate_hankel_1d_grid_spacing,
     validate_integration_axis,
     validate_integration_params,
+    validate_interpolation_within_bounds,
     validate_joint_covariance_blocks,
     validate_nonnegative_1d_array,
     validate_nonnegative_scalar,
@@ -272,6 +274,34 @@ def test_validate_redshift_distribution_rejects_negative_redshift():
     """Tests that negative redshift values are rejected."""
     with pytest.raises(ValueError, match="z must be non-negative"):
         validate_redshift_distribution([-0.1, 0.5], [1.0, 1.0])
+        
+        
+def test_validate_hankel_1d_grid_spacing_accepts_valid_k():
+    """Tests that valid array values are accepted."""
+    validate_hankel_1d_grid_spacing([1e0, 1e1, 1e2], "k")
+        
+        
+def test_validate_hankel_1d_grid_spacing_rejects_negative_k():
+    """Tests that negative array values are rejected."""
+    with pytest.raises(ValueError, match="must contain only positive values"):
+        validate_hankel_1d_grid_spacing([-1, 0], "k")
+        
+
+def test_validate_hankel_1d_grid_spacing_rejects_invalid_k_spacing():
+    """Tests that non-logspaced array values are rejected."""
+    with pytest.raises(ValueError, match="must have uniform logarithmic spacing"):
+        validate_hankel_1d_grid_spacing([1, 2, 3], "k")
+        
+        
+def test_validate_interpolation_within_bounds_accepts_valid_x():
+    """Tests that valid array values are accepted."""
+    validate_interpolation_within_bounds([1e1], [1e0, 1e1, 1e2], "x")
+    
+  
+def test_validate_hankel_1d_grid_spacing_rejects_invalid_x():
+    """Tests that array values outside the data grid are rejected."""
+    with pytest.raises(ValueError, match="lie outside the data grid"):
+        validate_interpolation_within_bounds([1e-1], [1e0, 1e1, 1e2], "x")
 
 
 def test_validate_integration_params_accepts_valid_settings():
@@ -284,6 +314,7 @@ def test_validate_integration_params_accepts_valid_settings():
             "z_stepsize": 0.01,
             "z_min": 0.0,
             "delta_z_source": 0.1,
+            "use_hankel_offset": False,
         }
     )
 
@@ -299,6 +330,23 @@ def test_validate_integration_params_rejects_invalid_ell_range():
                 "z_stepsize": 0.01,
                 "z_min": 0.0,
                 "delta_z_source": 0.1,
+                "use_hankel_offset": False,
+            }
+        )
+        
+        
+def test_validate_integration_params_rejects_invalid_use_hankel_offset():
+    """Tests that use_hankel_offset must be a boolean."""
+    with pytest.raises(ValueError, match="use_hankel_offset must be a boolean"):
+        validate_integration_params(
+            {
+                "n_ell": 10,
+                "ell_min": 10.0,
+                "ell_max": 100.0,
+                "z_stepsize": 0.01,
+                "z_min": 0.0,
+                "delta_z_source": 0.1,
+                "use_hankel_offset": "not a boolean",
             }
         )
 

@@ -7,14 +7,6 @@ using a nested integral over foreground redshift and multipole.
 The public function ``delta_sigma_lens_mag_correction`` returns the quantity
 that should be subtracted from the observed Delta Sigma signal when including
 lens magnification.
-
-The calculation currently approximates the source redshift as
-
-    z_source = z_lens + delta_z_source,
-
-where ``delta_z_source`` is controlled by the lens-magnification integration
-parameters. But note that the choice of ``delta_z_source`` will cancel out upon
-transformation from ``gamma_t`` to ``Delta Sigma`` space.
 """
 
 from __future__ import annotations
@@ -46,7 +38,6 @@ _LENS_MAG_INTEG_PARAMS: dict[str, int | float] = {
     "ell_max": 1.0e6,
     "z_stepsize": 0.02,
     "z_min": 1.0e-5,
-    "delta_z_source": 1.0,
     "use_hankel_offset": False,
 }
 
@@ -67,8 +58,8 @@ def set_lens_mag_integ_params(**kwargs: Any) -> None:
     Args:
         **kwargs: Integration parameters to update. Supported keys are
             ``n_ell``, ``ell_min``, ``ell_max``, ``z_stepsize``, ``z_min``,
-            ``delta_z_source``, and ``use_hankel_offset``. ``use_hankel_offset``
-            applies an offset to the logarithmic spacing of the output, which
+            and ``use_hankel_offset``. ``use_hankel_offset`` applies an 
+            offset to the logarithmic spacing of the output, which
             can reduce numerical ringing at the cost of some accuracy.
 
     Raises:
@@ -253,7 +244,8 @@ def _lens_mag_lss_shear(
 
 def delta_sigma_lens_mag_correction(
     r: NDArray[np.float64],
-    a: float,
+    a_lens: float,
+    a_source: float,
     cosmo: ccl.Cosmology,
     alpha_lens: float,
 ) -> NDArray[np.float64]:
@@ -261,23 +253,16 @@ def delta_sigma_lens_mag_correction(
 
     This returns the comoving correction to the excess surface density profile
     caused by magnification of the lens sample. The correction is evaluated at
-    lens scale factor ``a`` and projected comoving radii ``r``.
+    lens scale factor ``a_lens``, source scale factor ``a_source``, and 
+    projected comoving radii ``r``.
 
     The returned correction has the same radial shape as ``r`` and is intended
     to be subtracted from the measured Delta Sigma signal.
 
-    The source redshift is approximated as
-
-    .. math::
-
-        z_\mathrm{s} = z_\mathrm{l} + \Delta z_\mathrm{s},
-
-    where ``delta_z_source`` is taken from the lens-magnification integration
-    parameters.
-
     Args:
         r: Comoving projected radii in Mpc.
-        a: Lens scale factor.
+        a_lens: Lens scale factor.
+        a_source : Source scale factor.
         cosmo: CCL cosmology object.
         alpha_lens: Lens-sample magnification-bias slope. The correction is
             proportional to ``alpha_lens - 1``.
@@ -287,23 +272,26 @@ def delta_sigma_lens_mag_correction(
         :math:`M_\odot / \mathrm{pc}^2`.
 
     Raises:
-        ValueError: If the radius array, scale factor, lens magnification-bias
-            slope, or derived lens/source redshift pair is invalid.
+        ValueError: If the radius array, lens scale factor, source scale factor,
+        lens magnification-bias slope, or derived lens/source redshift pair is invalid.
     """
-    validate_scale_factor(a)
+    validate_scale_factor(a_lens)
+    validate_scale_factor(a_source)
+    if a_lens <= a_source:
+        raise ValueError("a_lens must be larger than a_source.")
+    
     validate_finite_scalar(alpha_lens, "alpha_lens")
 
     r_arr = validate_positive_1d_array(r, "r")
 
-    z_lens = scale_factor_to_redshift(a)
-    z_source = z_lens + float(_LENS_MAG_INTEG_PARAMS["delta_z_source"])
-    a_source = redshift_to_scale_factor(z_source).item()
+    z_lens = scale_factor_to_redshift(a_lens)
+    z_source = scale_factor_to_redshift(a_source)
 
-    d_ang_lens = ccl.angular_diameter_distance(cosmo, a)
+    d_ang_lens = ccl.angular_diameter_distance(cosmo, a_lens)
 
     # r is comoving, while D_A is physical. The transverse comoving distance is
-    # D_M = D_A / a, so theta = r / D_M = r * a / D_A.
-    theta = r_arr * a / d_ang_lens
+    # D_M = D_A / a_lens, so theta = r / D_M = r * a_lens / D_A.
+    theta = r_arr * a_lens / d_ang_lens
 
     lss_shear = _lens_mag_lss_shear(
         cosmo,
@@ -314,8 +302,8 @@ def delta_sigma_lens_mag_correction(
 
     correction = (
         2.0
-        * a**2
-        * ccl.sigma_critical(cosmo, a_lens=a, a_source=a_source)
+        * a_lens**2
+        * ccl.sigma_critical(cosmo, a_lens=a_lens, a_source=a_source)
         * (alpha_lens - 1.0)
         * lss_shear
         / 1.0e12

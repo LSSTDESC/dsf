@@ -62,7 +62,6 @@ def test_set_lens_mag_integ_params_updates_known_parameters():
         ell_max=1.0e3,
         z_stepsize=0.05,
         z_min=1.0e-4,
-        delta_z_source=0.5,
     )
 
     params = get_lens_mag_integ_params()
@@ -72,7 +71,6 @@ def test_set_lens_mag_integ_params_updates_known_parameters():
     assert params["ell_max"] == 1.0e3
     assert params["z_stepsize"] == 0.05
     assert params["z_min"] == 1.0e-4
-    assert params["delta_z_source"] == 0.5
 
 
 def test_set_lens_mag_integ_params_rejects_unknown_parameter():
@@ -89,7 +87,6 @@ def test_set_lens_mag_integ_params_rejects_unknown_parameter():
         {"ell_max": 1.0e-5},
         {"z_stepsize": 0.0},
         {"z_min": -0.1},
-        {"delta_z_source": 0.0},
     ],
 )
 def test_set_lens_mag_integ_params_rejects_invalid_values(kwargs):
@@ -239,7 +236,6 @@ def test_lens_mag_lss_shear_returns_expected_shape(monkeypatch, cosmo):
         ell_max=10.0,
         z_stepsize=0.1,
         z_min=0.1,
-        delta_z_source=0.5,
     )
 
     theta = np.array([0.2, 0.9])
@@ -317,10 +313,9 @@ def test_lens_mag_lss_shear_rejects_invalid_theta(cosmo):
 
 def test_delta_sigma_lens_mag_correction_matches_expected_formula(monkeypatch, cosmo):
     """Tests that the public correction applies the expected prefactors."""
-    set_lens_mag_integ_params(delta_z_source=0.5)
-
     r = np.array([1.0, 2.0, 3.0])
-    a = 0.5
+    a_lens = 0.5
+    a_source = 0.3
     alpha_lens = 2.0
 
     monkeypatch.setattr(
@@ -341,13 +336,14 @@ def test_delta_sigma_lens_mag_correction_matches_expected_formula(monkeypatch, c
 
     result = delta_sigma_lens_mag_correction(
         r=r,
-        a=a,
+        a_lens=a_lens,
+        a_source=a_source,
         cosmo=cosmo,
         alpha_lens=alpha_lens,
     )
 
-    theta = r * a / 100.0
-    expected = 2.0 * a**2 * 4.0e12 * (alpha_lens - 1.0) * (theta + 1.0) / 1.0e12
+    theta = r * a_lens / 100.0
+    expected = 2.0 * a_lens**2 * 4.0e12 * (alpha_lens - 1.0) * (theta + 1.0) / 1.0e12
 
     np.testing.assert_allclose(result, expected)
 
@@ -357,8 +353,6 @@ def test_delta_sigma_lens_mag_correction_passes_expected_redshifts(
     cosmo,
 ):
     """Tests that the public correction derives lens and source redshifts."""
-    set_lens_mag_integ_params(delta_z_source=0.25)
-
     calls = []
 
     monkeypatch.setattr(
@@ -385,25 +379,28 @@ def test_delta_sigma_lens_mag_correction_passes_expected_redshifts(
 
     delta_sigma_lens_mag_correction(
         r=np.array([1.0, 2.0]),
-        a=0.5,
+        a_lens=0.5,
+        a_source=0.4,
         cosmo=cosmo,
         alpha_lens=1.5,
     )
 
-    assert calls == [(1.0, 1.25)]
+    assert calls == [(1.0, 1.5)]
 
 
 @pytest.mark.parametrize(
-    ("r", "a", "alpha_lens"),
+    ("r", "a_lens", "a_source", "alpha_lens"),
     [
-        (np.array([0.0, 1.0]), 0.5, 1.0),
-        (np.array([1.0, 2.0]), 0.0, 1.0),
-        (np.array([1.0, 2.0]), 0.5, np.nan),
+        (np.array([0.0, 1.0]), 0.5, 0.3, 1.0),
+        (np.array([1.0, 2.0]), 0.0, 0.3, 1.0),
+        (np.array([1.0, 2.0]), 0.5, 0.6, 1.0),
+        (np.array([1.0, 2.0]), 0.5, 0.3, np.nan),
     ],
 )
 def test_delta_sigma_lens_mag_correction_rejects_invalid_inputs(
     r,
-    a,
+    a_lens,
+    a_source,
     alpha_lens,
     cosmo,
 ):
@@ -411,7 +408,8 @@ def test_delta_sigma_lens_mag_correction_rejects_invalid_inputs(
     with pytest.raises(ValueError):
         delta_sigma_lens_mag_correction(
             r=r,
-            a=a,
+            a_lens=a_lens,
+            a_source=a_source,
             cosmo=cosmo,
             alpha_lens=alpha_lens,
         )
@@ -458,9 +456,12 @@ def test_delta_sigma_lens_mag_correction_matches_ccl():
         ell_min=1e-5,
         ell_max=1e6,
         n_ell=5000,
-        delta_z_source=1.0,
     )
-    correction_dsf = delta_sigma_lens_mag_correction(r, 1/(1+Z_LENS), cosmo, alpha_lens=ALPHA)
+    correction_dsf = delta_sigma_lens_mag_correction(r, 
+                                                     1/(1+Z_LENS), 
+                                                     1/(1+Z_SOURCE), 
+                                                     cosmo, 
+                                                     alpha_lens=ALPHA)
     
     # This is just a rough comparison, so require a match only within 3%.
     assert np.allclose(correction_ccl, correction_dsf, rtol=0.03, atol=0)

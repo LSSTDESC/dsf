@@ -313,7 +313,6 @@ def test_validate_integration_params_accepts_valid_settings():
             "ell_max": 100.0,
             "z_stepsize": 0.01,
             "z_min": 0.0,
-            "delta_z_source": 0.1,
             "use_hankel_offset": False,
         }
     )
@@ -329,7 +328,6 @@ def test_validate_integration_params_rejects_invalid_ell_range():
                 "ell_max": 10.0,
                 "z_stepsize": 0.01,
                 "z_min": 0.0,
-                "delta_z_source": 0.1,
                 "use_hankel_offset": False,
             }
         )
@@ -345,7 +343,6 @@ def test_validate_integration_params_rejects_invalid_use_hankel_offset():
                 "ell_max": 100.0,
                 "z_stepsize": 0.01,
                 "z_min": 0.0,
-                "delta_z_source": 0.1,
                 "use_hankel_offset": "not a boolean",
             }
         )

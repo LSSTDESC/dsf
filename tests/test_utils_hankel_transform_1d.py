@@ -146,3 +146,29 @@ def test_hankel_spherical_order_0_matches_ccl():
     xi_ccl = ccl.correlation_3d(cosmo,r=r_arr, a=1/(1+z), p_of_k_a=cosmo.get_nonlin_power())
 
     assert np.allclose(xi_dsf, xi_ccl, rtol=0.005, atol=0)
+    
+    
+@pytest.mark.slow
+def test_hankel_projected_order_2_matches_direct_integration():
+    """Tests that hankel_projected_order_2 agrees with direct Bessel integration."""
+    import pyccl as ccl
+    from scipy.special import jv
+
+    from dsf.utils.integrators import trapezoid_integral
+
+    cosmo = ccl.cosmology.CosmologyVanillaLCDM()
+    
+    ell_arr = np.geomspace(1e-6, 1e6, 30000)
+    theta_arr = np.radians(np.geomspace(0.1, 100, 100))
+    c_ell_arr = cosmo.nonlin_power(ell_arr, 1)
+    
+    bessel_kernel = jv(2, ell_arr[:, None] * theta_arr[None, :]) * ell_arr[:, None]
+    direct_integ_result = trapezoid_integral(
+        bessel_kernel * c_ell_arr[:, None],
+        ell_arr,
+        axis=0,
+    ) / (2 * np.pi)
+    
+    dsf_result = hankel_projected_order_2(ell_arr, c_ell_arr, use_offset=False)(theta_arr)
+    
+    assert np.allclose(dsf_result, direct_integ_result, rtol=0.005, atol=0)

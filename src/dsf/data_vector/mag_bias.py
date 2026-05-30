@@ -248,13 +248,13 @@ def _lens_mag_lss_shear(
     )
     z_arr = validate_positive_1d_array(z_arr, "z")
 
-    C_ell = trapezoid_integral(
+    angular_spectrum = trapezoid_integral(
         _inner_redshift_integrand(z_arr, ell_arr, cosmo, z_lens, z_source),
         z_arr,
         axis=0
     )
     gamma_t_spline = hankel_projected_order_2(ell_arr,
-                                              C_ell,
+                                              angular_spectrum,
                                               use_offset=_LENS_MAG_INTEG_PARAMS["use_hankel_offset"])
 
     prefactor = (

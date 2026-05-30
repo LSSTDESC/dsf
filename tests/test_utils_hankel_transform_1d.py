@@ -148,7 +148,10 @@ def test_hankel_spherical_order_0_matches_ccl():
     xi_dsf = hankel_spherical_order_0(k_arr,
                                       cosmo.nonlin_matter_power(k_arr, 1/(1+z)), 
                                       use_offset=False)(r_arr)
-    xi_ccl = ccl.correlation_3d(cosmo,r=r_arr, a=1/(1+z), p_of_k_a=cosmo.get_nonlin_power())
+    xi_ccl = ccl.correlation_3d(cosmo,
+                                r=r_arr, 
+                                a=1/(1+z),
+                                p_of_k_a=cosmo.get_nonlin_power())
 
     assert np.allclose(xi_dsf, xi_ccl, rtol=0.005, atol=0)
     
@@ -169,6 +172,8 @@ def test_hankel_projected_order_2_matches_direct_integration():
         axis=0,
     ) / (2 * np.pi)
     
-    dsf_result = hankel_projected_order_2(ell_arr, c_ell_arr, use_offset=False)(theta_arr)
+    dsf_result = hankel_projected_order_2(ell_arr, 
+                                          c_ell_arr, 
+                                          use_offset=False)(theta_arr)
     
     assert np.allclose(dsf_result, direct_integ_result, rtol=0.005, atol=0)

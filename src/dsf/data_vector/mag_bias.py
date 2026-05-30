@@ -67,7 +67,9 @@ def set_lens_mag_integ_params(**kwargs: Any) -> None:
     Args:
         **kwargs: Integration parameters to update. Supported keys are
             ``n_ell``, ``ell_min``, ``ell_max``, ``z_stepsize``, ``z_min``,
-            ``delta_z_source``, and ``use_hankel_offset``.
+            ``delta_z_source``, and ``use_hankel_offset``. ``use_hankel_offset``
+            applies an offset to the logarithmic spacing of the output, which
+            can reduce numerical ringing at the cost of some accuracy.
 
     Raises:
         KeyError: If an unknown integration parameter is supplied.

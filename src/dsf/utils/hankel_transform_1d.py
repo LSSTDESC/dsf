@@ -35,7 +35,7 @@ __all__ = [
 def hankel_spherical_order_0(
     k: FloatArray,
     pk: FloatArray,
-    use_offset: bool = True,
+    use_offset: bool = False,
 ) -> Callable[[FloatArray], FloatArray]:
     """Convert power spectrum to 3D correlation function using FFTLog:
     
@@ -87,7 +87,7 @@ def hankel_spherical_order_0(
 def hankel_projected_order_2(
     ell: FloatArray,
     c_ell: FloatArray,
-    use_offset: bool = True,
+    use_offset: bool = False,
 ) -> Callable[[FloatArray], FloatArray]:
     """Convert projected GGL power spectrum to 2D correlation function using FFTLog:
     
@@ -100,7 +100,7 @@ def hankel_projected_order_2(
             of the output. Can reduce numerical ringing.
 
     Returns:
-        Function returning :math:`\\gamma_t(r)` evaluated at the requested radii.
+        Function returning :math:`\\gamma_t(\\theta)` evaluated at the requested angular scales.
     """
     ell_arr = validate_hankel_1d_grid_spacing(ell, "ell")
     c_ell_arr = as_1d_float_array(c_ell, "c_ell", min_size=2)

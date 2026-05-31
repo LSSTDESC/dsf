@@ -32,7 +32,7 @@ from dsf.utils.validators import (
     validate_scale_factor,
 )
 
-_LENS_MAG_INTEG_PARAMS: dict[str, int | float] = {
+_LENS_MAG_INTEG_PARAMS: dict[str, int | float | bool] = {
     "n_ell": 5000,
     "ell_min": 1.0e-4,
     "ell_max": 1.0e6,
@@ -230,7 +230,7 @@ def _lens_mag_lss_shear(
         _inner_redshift_integrand(z_arr, ell_arr, cosmo, z_lens, z_source), z_arr, axis=0
     )
     gamma_t_spline = hankel_projected_order_2(
-        ell_arr, angular_spectrum, use_offset=_LENS_MAG_INTEG_PARAMS["use_hankel_offset"]
+        ell_arr, angular_spectrum, use_offset=bool(_LENS_MAG_INTEG_PARAMS["use_hankel_offset"])
     )
 
     prefactor = 9.0 * hubble_over_c_cubed(float(cosmo["h"])) * float(cosmo["Omega_m"]) ** 2 / 4

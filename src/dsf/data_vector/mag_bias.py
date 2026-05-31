@@ -58,7 +58,7 @@ def set_lens_mag_integ_params(**kwargs: Any) -> None:
     Args:
         **kwargs: Integration parameters to update. Supported keys are
             ``n_ell``, ``ell_min``, ``ell_max``, ``z_stepsize``, ``z_min``,
-            and ``use_hankel_offset``. ``use_hankel_offset`` applies an 
+            and ``use_hankel_offset``. ``use_hankel_offset`` applies an
             offset to the logarithmic spacing of the output, which
             can reduce numerical ringing at the cost of some accuracy.
 
@@ -151,7 +151,7 @@ def _inner_redshift_integrand(
     z_arr = validate_positive_1d_array(z_inner, name="z_inner", min_size=2)
     ell_arr = validate_positive_1d_array(ell, "ell")
 
-    a_inner = redshift_to_scale_factor(z_arr)
+    a_inner = np.atleast_1d(redshift_to_scale_factor(z_arr))
     a_lens = np.broadcast_to(redshift_to_scale_factor(z_lens), np.shape(a_inner))
     a_source = np.broadcast_to(
         redshift_to_scale_factor(z_source),
@@ -167,10 +167,10 @@ def _inner_redshift_integrand(
 
     redshift_kernel = ((1.0 + z_arr) ** 2) / ccl.h_over_h0(cosmo, a_inner)
     prefactor = redshift_kernel * distance_kernel
-    
-    D_a = ccl.angular_diameter_distance(cosmo, a_inner)
+
+    d_a = ccl.angular_diameter_distance(cosmo, a_inner)
     ell_plus = (ell_arr + 0.5).reshape((1, -1))
-    lk_grid = np.log(a_inner.reshape((-1, 1)) * ell_plus / D_a.reshape((-1, 1)))
+    lk_grid = np.log(a_inner.reshape((-1, 1)) * ell_plus / d_a.reshape((-1, 1)))
 
     pk2d_m = cosmo.get_nonlin_power()
     matter_power = np.array(
@@ -180,7 +180,7 @@ def _inner_redshift_integrand(
             )[0]
             for a_i, a_use in enumerate(a_inner)
         ],
-        dtype=float
+        dtype=float,
     )
 
     return prefactor[:, None] * matter_power
@@ -218,7 +218,7 @@ def _lens_mag_lss_shear(
         int(_LENS_MAG_INTEG_PARAMS["n_ell"]),
     )
     ell_arr = validate_positive_1d_array(ell_arr, "ell")
-    
+
     z_arr = np.arange(
         float(_LENS_MAG_INTEG_PARAMS["z_min"]),
         z_lens,
@@ -227,17 +227,13 @@ def _lens_mag_lss_shear(
     z_arr = validate_positive_1d_array(z_arr, "z", min_size=2)
 
     angular_spectrum = trapezoid_integral(
-        _inner_redshift_integrand(z_arr, ell_arr, cosmo, z_lens, z_source),
-        z_arr,
-        axis=0
+        _inner_redshift_integrand(z_arr, ell_arr, cosmo, z_lens, z_source), z_arr, axis=0
     )
-    gamma_t_spline = hankel_projected_order_2(ell_arr,
-                                              angular_spectrum,
-                                              use_offset=_LENS_MAG_INTEG_PARAMS["use_hankel_offset"])
+    gamma_t_spline = hankel_projected_order_2(
+        ell_arr, angular_spectrum, use_offset=_LENS_MAG_INTEG_PARAMS["use_hankel_offset"]
+    )
 
-    prefactor = (
-        9.0 * hubble_over_c_cubed(float(cosmo["h"])) * float(cosmo["Omega_m"]) ** 2 / 4
-    )
+    prefactor = 9.0 * hubble_over_c_cubed(float(cosmo["h"])) * float(cosmo["Omega_m"]) ** 2 / 4
 
     return prefactor * gamma_t_spline(theta_arr)
 
@@ -253,7 +249,7 @@ def delta_sigma_lens_mag_correction(
 
     This returns the comoving correction to the excess surface density profile
     caused by magnification of the lens sample. The correction is evaluated at
-    lens scale factor ``a_lens``, source scale factor ``a_source``, and 
+    lens scale factor ``a_lens``, source scale factor ``a_source``, and
     projected comoving radii ``r``.
 
     The returned correction has the same radial shape as ``r`` and is intended
@@ -279,7 +275,7 @@ def delta_sigma_lens_mag_correction(
     validate_scale_factor(a_source)
     if a_lens <= a_source:
         raise ValueError("a_lens must be larger than a_source.")
-    
+
     validate_finite_scalar(alpha_lens, "alpha_lens")
 
     r_arr = validate_positive_1d_array(r, "r")

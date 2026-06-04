@@ -10,7 +10,7 @@ from power-spectrum-backed CCL halo profiles.  The main use case is the
 galaxy-galaxy lensing observable around a lens sample, optionally averaged over
 a lens-bin redshift distribution.
 
-The returned profiles use proejcted comoving radii and are reported in
+The returned profiles use projected comoving radii and are reported in
 :math:`M_\odot / \mathrm{pc}^2`.  Any conversion between comoving and proper
 surface-density conventions should be applied consistently at the likelihood or
 data-vector level.
@@ -309,7 +309,7 @@ def stellar_point_mass_delta_sigma(
 
         \Delta\Sigma_\star(R) = \frac{M_\star}{\pi R^2}.
 
-    This contirbution is most relevant at small projected separations where the
+    This contribution is most relevant at small projected separations where the
     lens galaxy's stellar mass is non-negligible compared with the extended
     dark-matter contribution.
 

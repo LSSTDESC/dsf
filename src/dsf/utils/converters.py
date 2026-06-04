@@ -7,7 +7,6 @@ from collections.abc import Callable
 import astropy.units as u
 import numpy as np
 import pyccl as ccl
-from scipy.fft import ifht
 
 from .types import FloatArray, FloatLike
 from .validators import validate_positive_scalar
@@ -23,7 +22,6 @@ __all__ = [
     "deg2_to_arcmin2",
     "hubble_constant_per_s_per_mpc",
     "hubble_over_c_cubed",
-    "power_spectrum_to_correlation",
     "redshift_to_scale_factor",
     "rho_critical_comoving_msun_mpc3",
     "rho_critical_projected_msun_pc2_per_mpc",
@@ -119,56 +117,6 @@ def hubble_over_c_cubed(h: float) -> float:
     c_mpc_per_s = speed_of_light_mpc_per_s() * u.Mpc / u.s
 
     return float(((h0**3) / (c_mpc_per_s**3)).to(1 / u.Mpc**3).value)
-
-
-def power_spectrum_to_correlation(
-    power_spectrum: Callable[..., FloatArray],
-    a: float,
-    k: FloatArray | None = None,
-) -> Callable[[FloatArray], FloatArray]:
-    """Convert a power spectrum to a correlation function using FFTLog.
-
-    Args:
-        power_spectrum: Power spectrum function with arguments ``k`` and ``a``.
-        a: Scale factor.
-        k: Wavenumber array. If not provided, a default logarithmic grid is used.
-
-    Returns:
-        Function returning :math:`\\xi(r)` evaluated at the requested radii.
-    """
-    if k is None:
-        k = np.geomspace(1e-6, 1e5, 300)
-
-    k_arr = np.asarray(k, dtype=float)
-
-    r = 1.0 / k_arr[::-1]
-    dln_k = float(np.log(k_arr[1] / k_arr[0]))
-
-    transformed_power = ifht(
-        k_arr**1.5 * power_spectrum(k=k_arr, a=a),
-        dln=dln_k,
-        mu=0.5,
-    )
-
-    prefactor = 1.0 / (2.0 * np.pi * r) ** 1.5
-    xi = np.asarray(prefactor * transformed_power, dtype=float)
-
-    def correlation(r_eval: FloatArray) -> FloatArray:
-        """Return the correlation function at the requested radii."""
-        r_eval_arr = np.asarray(r_eval, dtype=float)
-
-        return np.asarray(
-            np.interp(
-                r_eval_arr,
-                r,
-                xi,
-                left=xi[0],
-                right=xi[-1],
-            ),
-            dtype=float,
-        )
-
-    return correlation
 
 
 def comoving_delta_sigma_to_proper(

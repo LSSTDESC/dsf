@@ -7,13 +7,6 @@ using a nested integral over foreground redshift and multipole.
 The public function ``delta_sigma_lens_mag_correction`` returns the quantity
 that should be subtracted from the observed Delta Sigma signal when including
 lens magnification.
-
-The calculation currently approximates the source redshift as
-
-    z_source = z_lens + delta_z_source,
-
-where ``delta_z_source`` is controlled by the lens-magnification integration
-parameters.
 """
 
 from __future__ import annotations
@@ -23,13 +16,13 @@ from typing import Any
 import numpy as np
 import pyccl as ccl
 from numpy.typing import NDArray
-from scipy.special import jv
 
 from dsf.utils.converters import (
     hubble_over_c_cubed,
     redshift_to_scale_factor,
     scale_factor_to_redshift,
 )
+from dsf.utils.hankel_transform_1d import hankel_projected_order_2
 from dsf.utils.integrators import trapezoid_integral
 from dsf.utils.validators import (
     validate_finite_scalar,
@@ -39,13 +32,13 @@ from dsf.utils.validators import (
     validate_scale_factor,
 )
 
-_LENS_MAG_INTEG_PARAMS: dict[str, int | float] = {
-    "n_ell": 30000,
+_LENS_MAG_INTEG_PARAMS: dict[str, int | float | bool] = {
+    "n_ell": 5000,
     "ell_min": 1.0e-4,
     "ell_max": 1.0e6,
     "z_stepsize": 0.02,
     "z_min": 1.0e-5,
-    "delta_z_source": 1.0,
+    "use_hankel_offset": False,
 }
 
 
@@ -65,7 +58,9 @@ def set_lens_mag_integ_params(**kwargs: Any) -> None:
     Args:
         **kwargs: Integration parameters to update. Supported keys are
             ``n_ell``, ``ell_min``, ``ell_max``, ``z_stepsize``, ``z_min``,
-            and ``delta_z_source``.
+            and ``use_hankel_offset``. ``use_hankel_offset`` applies an
+            offset to the logarithmic spacing of the output, which
+            can reduce numerical ringing at the cost of some accuracy.
 
     Raises:
         KeyError: If an unknown integration parameter is supplied.
@@ -153,23 +148,10 @@ def _inner_redshift_integrand(
             invalid.
     """
     validate_redshift_pair(z_lens, z_source)
-
-    z_arr = np.asarray(z_inner, dtype=float)
-    if z_arr.ndim != 1:
-        raise ValueError("z_inner must be one-dimensional.")
-
-    if z_arr.size < 2:
-        raise ValueError("z_inner must contain at least two values.")
-
-    if np.any(~np.isfinite(z_arr)):
-        raise ValueError("z_inner must contain only finite values.")
-
-    if np.any(z_arr < 0.0):
-        raise ValueError("z_inner must be non-negative.")
-
+    z_arr = validate_positive_1d_array(z_inner, name="z_inner", min_size=2)
     ell_arr = validate_positive_1d_array(ell, "ell")
 
-    a_inner = redshift_to_scale_factor(z_arr)
+    a_inner = np.atleast_1d(redshift_to_scale_factor(z_arr))
     a_lens = np.broadcast_to(redshift_to_scale_factor(z_lens), np.shape(a_inner))
     a_source = np.broadcast_to(
         redshift_to_scale_factor(z_source),
@@ -186,73 +168,22 @@ def _inner_redshift_integrand(
     redshift_kernel = ((1.0 + z_arr) ** 2) / ccl.h_over_h0(cosmo, a_inner)
     prefactor = redshift_kernel * distance_kernel
 
-    matter_power = np.asarray(
+    d_a = ccl.angular_diameter_distance(cosmo, a_inner)
+    ell_plus = (ell_arr + 0.5).reshape((1, -1))
+    lk_grid = np.log(a_inner.reshape((-1, 1)) * ell_plus / d_a.reshape((-1, 1)))
+
+    pk2d_m = cosmo.get_nonlin_power()
+    matter_power = np.array(
         [
-            ccl.nonlin_matter_power(
-                cosmo,
-                a_i * (ell_arr + 0.5) / ccl.angular_diameter_distance(cosmo, a_i),
-                a_i,
-            )
-            for a_i in a_inner
+            ccl.lib.pk2d_eval_multi(
+                pk2d_m.psp, lk_grid[a_i], a_use, cosmo.cosmo, lk_grid[a_i].size, 0
+            )[0]
+            for a_i, a_use in enumerate(a_inner)
         ],
         dtype=float,
     )
 
     return prefactor[:, None] * matter_power
-
-
-def _multipole_integrand(
-    ell: NDArray[np.float64],
-    theta: NDArray[np.float64],
-    cosmo: ccl.Cosmology,
-    z_lens: float,
-    z_source: float,
-) -> NDArray[np.float64]:
-    """Evaluate the multipole integrand for the lens-magnification correction.
-
-    The outer integral runs over multipole ``ell``. The returned array has
-    shape ``(n_ell, n_theta)``.
-
-    Args:
-        ell: Multipole grid.
-        theta: Angular separation values in radians.
-        cosmo: CCL cosmology object.
-        z_lens: Lens redshift.
-        z_source: Source redshift.
-
-    Returns:
-        Multipole integrand evaluated on the multipole and angular grids.
-
-    Raises:
-        ValueError: If the redshift pair, multipole grid, angular grid, or
-            generated redshift integration grid is invalid.
-    """
-    validate_redshift_pair(z_lens, z_source)
-
-    ell_arr = validate_positive_1d_array(ell, "ell")
-    theta_arr = validate_positive_1d_array(theta, "theta")
-
-    z_arr = np.arange(
-        float(_LENS_MAG_INTEG_PARAMS["z_min"]),
-        z_lens,
-        step=float(_LENS_MAG_INTEG_PARAMS["z_stepsize"]),
-    )
-
-    if z_arr.size < 2:
-        raise ValueError(
-            "The lens-magnification inner redshift grid must contain at least "
-            "two points. Check z_min, z_stepsize, and z_lens."
-        )
-
-    inner_integral = trapezoid_integral(
-        _inner_redshift_integrand(z_arr, ell_arr, cosmo, z_lens, z_source),
-        z_arr,
-        axis=0,
-    )
-
-    bessel_kernel = jv(2, ell_arr[:, None] * theta_arr[None, :]) * ell_arr[:, None]
-
-    return bessel_kernel * inner_integral[:, None]
 
 
 def _lens_mag_lss_shear(
@@ -286,23 +217,31 @@ def _lens_mag_lss_shear(
         float(_LENS_MAG_INTEG_PARAMS["ell_max"]),
         int(_LENS_MAG_INTEG_PARAMS["n_ell"]),
     )
+    ell_arr = validate_positive_1d_array(ell_arr, "ell")
 
-    integral = trapezoid_integral(
-        _multipole_integrand(ell_arr, theta_arr, cosmo, z_lens, z_source),
-        ell_arr,
-        axis=0,
+    z_arr = np.arange(
+        float(_LENS_MAG_INTEG_PARAMS["z_min"]),
+        z_lens,
+        step=float(_LENS_MAG_INTEG_PARAMS["z_stepsize"]),
+    )
+    z_arr = validate_positive_1d_array(z_arr, "z", min_size=2)
+
+    angular_spectrum = trapezoid_integral(
+        _inner_redshift_integrand(z_arr, ell_arr, cosmo, z_lens, z_source), z_arr, axis=0
+    )
+    gamma_t_spline = hankel_projected_order_2(
+        ell_arr, angular_spectrum, use_offset=bool(_LENS_MAG_INTEG_PARAMS["use_hankel_offset"])
     )
 
-    prefactor = (
-        9.0 * hubble_over_c_cubed(float(cosmo["h"])) * float(cosmo["Omega_m"]) ** 2 / (8.0 * np.pi)
-    )
+    prefactor = 9.0 * hubble_over_c_cubed(float(cosmo["h"])) * float(cosmo["Omega_m"]) ** 2 / 4
 
-    return prefactor * integral
+    return prefactor * gamma_t_spline(theta_arr)
 
 
 def delta_sigma_lens_mag_correction(
     r: NDArray[np.float64],
-    a: float,
+    a_lens: float,
+    a_source: float,
     cosmo: ccl.Cosmology,
     alpha_lens: float,
 ) -> NDArray[np.float64]:
@@ -310,23 +249,16 @@ def delta_sigma_lens_mag_correction(
 
     This returns the comoving correction to the excess surface density profile
     caused by magnification of the lens sample. The correction is evaluated at
-    lens scale factor ``a`` and projected comoving radii ``r``.
+    lens scale factor ``a_lens``, source scale factor ``a_source``, and
+    projected comoving radii ``r``.
 
     The returned correction has the same radial shape as ``r`` and is intended
     to be subtracted from the measured Delta Sigma signal.
 
-    The source redshift is approximated as
-
-    .. math::
-
-        z_\mathrm{s} = z_\mathrm{l} + \Delta z_\mathrm{s},
-
-    where ``delta_z_source`` is taken from the lens-magnification integration
-    parameters.
-
     Args:
         r: Comoving projected radii in Mpc.
-        a: Lens scale factor.
+        a_lens: Lens scale factor.
+        a_source : Source scale factor.
         cosmo: CCL cosmology object.
         alpha_lens: Lens-sample magnification-bias slope. The correction is
             proportional to ``alpha_lens - 1``.
@@ -336,23 +268,26 @@ def delta_sigma_lens_mag_correction(
         :math:`M_\odot / \mathrm{pc}^2`.
 
     Raises:
-        ValueError: If the radius array, scale factor, lens magnification-bias
-            slope, or derived lens/source redshift pair is invalid.
+        ValueError: If the radius array, lens scale factor, source scale factor,
+        lens magnification-bias slope, or derived lens/source redshift pair is invalid.
     """
-    validate_scale_factor(a)
+    validate_scale_factor(a_lens)
+    validate_scale_factor(a_source)
+    if a_lens <= a_source:
+        raise ValueError("a_lens must be larger than a_source.")
+
     validate_finite_scalar(alpha_lens, "alpha_lens")
 
     r_arr = validate_positive_1d_array(r, "r")
 
-    z_lens = scale_factor_to_redshift(a)
-    z_source = z_lens + float(_LENS_MAG_INTEG_PARAMS["delta_z_source"])
-    a_source = redshift_to_scale_factor(z_source).item()
+    z_lens = scale_factor_to_redshift(a_lens)
+    z_source = scale_factor_to_redshift(a_source)
 
-    d_ang_lens = ccl.angular_diameter_distance(cosmo, a)
+    d_ang_lens = ccl.angular_diameter_distance(cosmo, a_lens)
 
     # r is comoving, while D_A is physical. The transverse comoving distance is
-    # D_M = D_A / a, so theta = r / D_M = r * a / D_A.
-    theta = r_arr * a / d_ang_lens
+    # D_M = D_A / a_lens, so theta = r / D_M = r * a_lens / D_A.
+    theta = r_arr * a_lens / d_ang_lens
 
     lss_shear = _lens_mag_lss_shear(
         cosmo,
@@ -363,8 +298,8 @@ def delta_sigma_lens_mag_correction(
 
     correction = (
         2.0
-        * a**2
-        * ccl.sigma_critical(cosmo, a_lens=a, a_source=a_source)
+        * a_lens**2
+        * ccl.sigma_critical(cosmo, a_lens=a_lens, a_source=a_source)
         * (alpha_lens - 1.0)
         * lss_shear
         / 1.0e12

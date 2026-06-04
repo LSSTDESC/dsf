@@ -1,6 +1,7 @@
 """Unit tests for ``dsf.data_vector.mag_bias``."""
 
 import numpy as np
+import pyccl as ccl
 import pytest
 
 from dsf.data_vector import mag_bias
@@ -8,11 +9,11 @@ from dsf.data_vector.mag_bias import (
     _inner_redshift_integrand,
     _lens_mag_distance_kernel,
     _lens_mag_lss_shear,
-    _multipole_integrand,
     delta_sigma_lens_mag_correction,
     get_lens_mag_integ_params,
     set_lens_mag_integ_params,
 )
+from dsf.utils import validators
 
 
 @pytest.fixture(autouse=True)
@@ -30,10 +31,20 @@ def restore_lens_mag_integ_params():
 @pytest.fixture
 def cosmo():
     """Return a small dictionary-like cosmology object for unit tests."""
-    return {
-        "h": 0.7,
-        "Omega_m": 0.3,
-    }
+    class _FakeNonlin:
+        def __init__(self, val=3.0):
+            self.psp = object()
+
+    class _FakeCosmo(dict):
+        def __init__(self, h, Omega_m, pk_value=3.0):
+            super().__init__(h=h, Omega_m=Omega_m)
+            self._nonlin = _FakeNonlin(pk_value)
+            self.cosmo = object()
+
+        def get_nonlin_power(self):
+            return self._nonlin
+
+    return _FakeCosmo(0.7, 0.3)
 
 
 def test_get_lens_mag_integ_params_returns_copy():
@@ -53,7 +64,6 @@ def test_set_lens_mag_integ_params_updates_known_parameters():
         ell_max=1.0e3,
         z_stepsize=0.05,
         z_min=1.0e-4,
-        delta_z_source=0.5,
     )
 
     params = get_lens_mag_integ_params()
@@ -63,7 +73,6 @@ def test_set_lens_mag_integ_params_updates_known_parameters():
     assert params["ell_max"] == 1.0e3
     assert params["z_stepsize"] == 0.05
     assert params["z_min"] == 1.0e-4
-    assert params["delta_z_source"] == 0.5
 
 
 def test_set_lens_mag_integ_params_rejects_unknown_parameter():
@@ -80,7 +89,6 @@ def test_set_lens_mag_integ_params_rejects_unknown_parameter():
         {"ell_max": 1.0e-5},
         {"z_stepsize": 0.0},
         {"z_min": -0.1},
-        {"delta_z_source": 0.0},
     ],
 )
 def test_set_lens_mag_integ_params_rejects_invalid_values(kwargs):
@@ -153,7 +161,14 @@ def test_inner_redshift_integrand_returns_expected_shape(monkeypatch, cosmo):
     monkeypatch.setattr(
         mag_bias.ccl,
         "nonlin_matter_power",
-        lambda cosmo, k, a: np.full_like(np.asarray(k, dtype=float), 3.0),
+        lambda *args, **kwargs: None,
+    )
+    monkeypatch.setattr(
+        mag_bias.ccl.lib,
+        "pk2d_eval_multi",
+        lambda psp, k_arr, a_use, cosmo_cosmo, n, zero: (
+            np.full_like(np.asarray(k_arr, dtype=float), 3.0),
+        ),
     )
 
     result = _inner_redshift_integrand(
@@ -215,19 +230,17 @@ def test_inner_redshift_integrand_rejects_invalid_ell(cosmo):
         )
 
 
-def test_multipole_integrand_returns_expected_shape(monkeypatch, cosmo):
-    """Tests that the multipole integrand has shape ``(n_ell, n_theta)``."""
+def test_lens_mag_lss_shear_returns_expected_shape(monkeypatch, cosmo):
+    """Tests that the LSS shear has shape ``(n_theta)``."""
     set_lens_mag_integ_params(
         n_ell=4,
         ell_min=1.0,
         ell_max=10.0,
         z_stepsize=0.1,
         z_min=0.1,
-        delta_z_source=0.5,
     )
 
-    ell = np.array([2.0, 4.0, 8.0])
-    theta = np.array([0.01, 0.02])
+    theta = np.array([0.2, 0.9])
 
     monkeypatch.setattr(
         mag_bias,
@@ -238,35 +251,56 @@ def test_multipole_integrand_returns_expected_shape(monkeypatch, cosmo):
         ),
     )
 
-    result = _multipole_integrand(
-        ell=ell,
-        theta=theta,
+    lss_shear = _lens_mag_lss_shear(
         cosmo=cosmo,
+        theta=theta,
         z_lens=0.5,
         z_source=1.0,
     )
+    result = lss_shear.shape
+    expected = theta.shape
 
-    z_arr = np.arange(0.1, 0.5, step=0.1)
-    inner_integral = np.trapezoid(np.ones((z_arr.size, ell.size)), z_arr, axis=0)
-    expected = mag_bias.jv(2, ell[:, None] * theta[None, :]) * ell[:, None]
-    expected = expected * inner_integral[:, None]
-
-    assert result.shape == (ell.size, theta.size)
     np.testing.assert_allclose(result, expected)
+    assert np.all(np.isfinite(lss_shear))
 
 
-def test_multipole_integrand_rejects_too_short_inner_redshift_grid(cosmo):
+def test_lens_mag_lss_shear_rejects_too_short_inner_redshift_grid(cosmo):
     """Tests that an under-sampled generated inner-redshift grid is rejected."""
     set_lens_mag_integ_params(
         z_min=0.49,
         z_stepsize=0.2,
     )
 
-    with pytest.raises(ValueError, match="inner redshift grid"):
-        _multipole_integrand(
-            ell=np.array([2.0, 4.0]),
-            theta=np.array([0.01, 0.02]),
+    with pytest.raises(ValueError, match="z must contain at least 2 values"):
+        _lens_mag_lss_shear(
             cosmo=cosmo,
+            theta=np.array([0.01, 0.02]),
+            z_lens=0.5,
+            z_source=1.0,
+        )
+        
+
+def test_lens_mag_lss_shear_rejects_interpolation_outside_grid(monkeypatch, cosmo):
+    """Tests that interpolation outside the ell grid is rejected."""
+    monkeypatch.setattr(
+        mag_bias,
+        "_inner_redshift_integrand",
+        lambda z_inner, ell, cosmo, z_lens, z_source: np.ones(
+            (z_inner.size, ell.size),
+            dtype=float,
+        ),
+    )
+    
+    set_lens_mag_integ_params(
+        ell_min=1,
+        ell_max=10,
+        n_ell=2
+    )
+
+    with pytest.raises(ValueError, match="lie outside the data grid"):
+        _lens_mag_lss_shear(
+            cosmo=cosmo,
+            theta=np.array([0.5, 2.0]),
             z_lens=0.5,
             z_source=1.0,
         )
@@ -279,58 +313,26 @@ def test_multipole_integrand_rejects_too_short_inner_redshift_grid(cosmo):
         (np.array([1.0, 2.0]), np.array([0.0, 0.02])),
     ],
 )
-def test_multipole_integrand_rejects_invalid_grids(ell, theta, cosmo):
+def test_lens_mag_lss_shear_rejects_invalid_grids(monkeypatch, ell, theta, cosmo):
     """Tests that invalid multipole or angular grids are rejected."""
+    monkeypatch.setattr(
+        validators,
+        'validate_integration_params',
+        lambda: None,
+    )
+    
     with pytest.raises(ValueError):
-        _multipole_integrand(
-            ell=ell,
-            theta=theta,
+        set_lens_mag_integ_params(
+            n_ell=len(ell),
+            ell_min=np.min(ell),
+            ell_max=np.max(ell),
+        )
+        _lens_mag_lss_shear(
             cosmo=cosmo,
+            theta=theta,
             z_lens=0.5,
             z_source=1.0,
         )
-
-
-def test_lens_mag_lss_shear_integrates_multipole_integrand(monkeypatch, cosmo):
-    """Tests that LSS shear integrates the multipole integrand with prefactor."""
-    set_lens_mag_integ_params(
-        n_ell=3,
-        ell_min=1.0,
-        ell_max=4.0,
-        z_stepsize=0.1,
-        z_min=0.1,
-        delta_z_source=0.5,
-    )
-
-    theta = np.array([0.01, 0.02])
-
-    def fake_multipole_integrand(ell, theta, cosmo, z_lens, z_source):
-        """Return a deterministic multipole integrand."""
-        return ell[:, None] * np.ones((ell.size, theta.size))
-
-    monkeypatch.setattr(
-        mag_bias,
-        "_multipole_integrand",
-        fake_multipole_integrand,
-    )
-    monkeypatch.setattr(
-        mag_bias,
-        "hubble_over_c_cubed",
-        lambda h: 2.0,
-    )
-
-    result = _lens_mag_lss_shear(
-        cosmo=cosmo,
-        theta=theta,
-        z_lens=0.5,
-        z_source=1.0,
-    )
-
-    ell = np.geomspace(1.0, 4.0, 3)
-    integral = np.trapezoid(ell[:, None] * np.ones((ell.size, theta.size)), ell, axis=0)
-    prefactor = 9.0 * 2.0 * cosmo["Omega_m"] ** 2 / (8.0 * np.pi)
-
-    np.testing.assert_allclose(result, prefactor * integral)
 
 
 def test_lens_mag_lss_shear_rejects_invalid_theta(cosmo):
@@ -346,10 +348,9 @@ def test_lens_mag_lss_shear_rejects_invalid_theta(cosmo):
 
 def test_delta_sigma_lens_mag_correction_matches_expected_formula(monkeypatch, cosmo):
     """Tests that the public correction applies the expected prefactors."""
-    set_lens_mag_integ_params(delta_z_source=0.5)
-
     r = np.array([1.0, 2.0, 3.0])
-    a = 0.5
+    a_lens = 0.5
+    a_source = 0.3
     alpha_lens = 2.0
 
     monkeypatch.setattr(
@@ -370,13 +371,14 @@ def test_delta_sigma_lens_mag_correction_matches_expected_formula(monkeypatch, c
 
     result = delta_sigma_lens_mag_correction(
         r=r,
-        a=a,
+        a_lens=a_lens,
+        a_source=a_source,
         cosmo=cosmo,
         alpha_lens=alpha_lens,
     )
 
-    theta = r * a / 100.0
-    expected = 2.0 * a**2 * 4.0e12 * (alpha_lens - 1.0) * (theta + 1.0) / 1.0e12
+    theta = r * a_lens / 100.0
+    expected = 2.0 * a_lens**2 * 4.0e12 * (alpha_lens - 1.0) * (theta + 1.0) / 1.0e12
 
     np.testing.assert_allclose(result, expected)
 
@@ -386,8 +388,6 @@ def test_delta_sigma_lens_mag_correction_passes_expected_redshifts(
     cosmo,
 ):
     """Tests that the public correction derives lens and source redshifts."""
-    set_lens_mag_integ_params(delta_z_source=0.25)
-
     calls = []
 
     monkeypatch.setattr(
@@ -414,25 +414,28 @@ def test_delta_sigma_lens_mag_correction_passes_expected_redshifts(
 
     delta_sigma_lens_mag_correction(
         r=np.array([1.0, 2.0]),
-        a=0.5,
+        a_lens=0.5,
+        a_source=0.4,
         cosmo=cosmo,
         alpha_lens=1.5,
     )
 
-    assert calls == [(1.0, 1.25)]
+    assert calls == [(1.0, 1.5)]
 
 
 @pytest.mark.parametrize(
-    ("r", "a", "alpha_lens"),
+    ("r", "a_lens", "a_source", "alpha_lens"),
     [
-        (np.array([0.0, 1.0]), 0.5, 1.0),
-        (np.array([1.0, 2.0]), 0.0, 1.0),
-        (np.array([1.0, 2.0]), 0.5, np.nan),
+        (np.array([0.0, 1.0]), 0.5, 0.3, 1.0),
+        (np.array([1.0, 2.0]), 0.0, 0.3, 1.0),
+        (np.array([1.0, 2.0]), 0.5, 0.6, 1.0),
+        (np.array([1.0, 2.0]), 0.5, 0.3, np.nan),
     ],
 )
 def test_delta_sigma_lens_mag_correction_rejects_invalid_inputs(
     r,
-    a,
+    a_lens,
+    a_source,
     alpha_lens,
     cosmo,
 ):
@@ -440,7 +443,58 @@ def test_delta_sigma_lens_mag_correction_rejects_invalid_inputs(
     with pytest.raises(ValueError):
         delta_sigma_lens_mag_correction(
             r=r,
-            a=a,
+            a_lens=a_lens,
+            a_source=a_source,
             cosmo=cosmo,
             alpha_lens=alpha_lens,
         )
+
+@pytest.mark.slow
+def test_delta_sigma_lens_mag_correction_matches_ccl():
+    """Tests that delta_sigma_lens_mag_correction agrees with the CCL prediction."""
+    cosmo = ccl.cosmology.CosmologyVanillaLCDM()
+    Z_LENS = 0.3
+    Z_SOURCE = 1.3
+    SIGMA_NZ = 0.005
+    ALPHA = 1.5
+
+    ell_ccl = np.geomspace(1e-5, 1e6, 5000)
+    r = np.geomspace(1e0, 1e2)
+    theta = np.degrees(r / (1+Z_LENS) / ccl.angular_diameter_distance(cosmo, 1/(1+Z_LENS)))
+
+    z_lens_ccl = np.linspace(0.01, 1.0, 500)
+    nz_lens_ccl = np.exp(-0.5 * ((z_lens_ccl - Z_LENS)/SIGMA_NZ)**2)
+    z_source_ccl = np.linspace(0.5, 1.5, 500)
+    nz_source_ccl = np.exp(-0.5 * ((z_source_ccl - Z_SOURCE)/SIGMA_NZ)**2)
+
+    t_g = ccl.NumberCountsTracer(cosmo, dndz=(z_lens_ccl, nz_lens_ccl), 
+                                bias=None, 
+                                mag_bias=(z_lens_ccl, ALPHA/2.5 * np.ones_like(nz_lens_ccl)), 
+                                has_rsd=False)
+    t_m = ccl.WeakLensingTracer(cosmo,
+                                dndz=(z_source_ccl, nz_source_ccl),
+                                has_shear=True)
+    c_ell_ccl = ccl.angular_cl(cosmo, t_g, t_m, ell_ccl)
+    gammat_ccl = ccl.correlation(cosmo, 
+                                ell=ell_ccl, 
+                                C_ell=c_ell_ccl, 
+                                theta=theta, 
+                                method='FFTLog', 
+                                type='NG')
+    correction_ccl = gammat_ccl / 1e12 * ((1/(1+Z_LENS))**2) * ccl.sigma_critical(cosmo, 
+                                                                        a_lens=1/(1+Z_LENS), 
+                                                                        a_source=1/(1+Z_SOURCE))
+
+    set_lens_mag_integ_params(
+        ell_min=1e-5,
+        ell_max=1e6,
+        n_ell=5000,
+    )
+    correction_dsf = delta_sigma_lens_mag_correction(r, 
+                                                     1/(1+Z_LENS), 
+                                                     1/(1+Z_SOURCE), 
+                                                     cosmo, 
+                                                     alpha_lens=ALPHA)
+    
+    # This is just a rough comparison, so require a match only within 3%.
+    assert np.allclose(correction_ccl, correction_dsf, rtol=0.03, atol=0)

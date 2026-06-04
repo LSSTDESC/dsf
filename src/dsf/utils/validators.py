@@ -7,6 +7,8 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
+from dsf.utils.types import FloatArray
+
 __all__ = [
     "as_1d_float_array",
     "as_2d_float_array",
@@ -17,8 +19,10 @@ __all__ = [
     "validate_1d_pair",
     "validate_finite_scalar",
     "validate_forecast_vector_and_covariance",
+    "validate_hankel_1d_grid_spacing",
     "validate_integration_axis",
     "validate_integration_params",
+    "validate_interpolation_within_bounds",
     "validate_joint_covariance_blocks",
     "validate_nonnegative_1d_array",
     "validate_nonnegative_scalar",
@@ -28,8 +32,8 @@ __all__ = [
     "validate_positive_strictly_increasing_1d_array",
     "validate_power_spectrum_inputs",
     "validate_redshift_distribution",
-    "validate_redshift_edges",
     "validate_redshift_distribution_support",
+    "validate_redshift_edges",
     "validate_redshift_pair",
     "validate_scale_factor",
     "validate_strictly_increasing",
@@ -515,8 +519,8 @@ def validate_integration_params(params: dict[str, Any]) -> None:
         raise ValueError("z_stepsize must be positive.")
     if float(params["z_min"]) < 0.0:
         raise ValueError("z_min must be non-negative.")
-    if float(params["delta_z_source"]) <= 0.0:
-        raise ValueError("delta_z_source must be positive.")
+    if not isinstance(params["use_hankel_offset"], bool):
+        raise ValueError("use_hankel_offset must be a boolean.")
 
 
 def is_non_negative_integer(value: float | int) -> bool:
@@ -738,3 +742,50 @@ def validate_redshift_distribution_support(
         raise ValueError(f"{name} normalization must be finite and positive.")
 
     return z_use, nz_use, norm
+
+
+def validate_hankel_1d_grid_spacing(
+    input_values: FloatArray,
+    name: str = "k",
+) -> FloatArray:
+    """Validate that the Hankel transform input grid has logarithmic spacing.
+
+    Args:
+        input_values: k or ell grid for the Hankel transform.
+        name: Name of the k or ell grid used in error messages.
+    """
+    x_arr = validate_positive_strictly_increasing_1d_array(input_values, name, min_size=2)
+    
+    lnx = np.log(x_arr)
+    dlnx = np.diff(lnx)
+    if not np.allclose(dlnx, dlnx[0]):
+        raise ValueError(f"{name} must have uniform logarithmic spacing for Hankel transforms.")
+        
+    return x_arr
+
+
+def validate_interpolation_within_bounds(
+    x_eval: Any,
+    x_data: Any,
+    name: str,
+) -> FloatArray:
+    """Validate that interpolation points are within the bounds of the data grid.
+
+    Args:
+        x_eval: Points at which to evaluate the interpolation.
+        x_data: Data points for the interpolation.
+        name: Name of the interpolation variable used in error messages.
+
+    Returns:
+        Validated interpolation points as a float array.
+
+    Raises:
+        ValueError: If the inputs are invalid.
+    """
+    x_eval_arr = as_1d_float_array(x_eval, f"{name}_eval", min_size=1)
+    x_data_arr = as_1d_float_array(x_data, f"{name}_data", min_size=2)
+
+    if not np.all((x_eval_arr >= x_data_arr[0]) & (x_eval_arr <= x_data_arr[-1])):
+        raise ValueError(f"Requested interpolation values for {name} lie outside the data grid.")
+
+    return x_eval_arr

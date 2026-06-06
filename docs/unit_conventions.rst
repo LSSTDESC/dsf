@@ -14,3 +14,15 @@ Internally, different parts of the pipeline follow different conventions:
 
 Unless otherwise stated, radial bins, projected radii, covariance outputs, and
 forecast results should be interpreted in ``Mpc/h``.
+
+
+DeltaSigma units
+----------------
+
+The forecast data vector currently reports :math:`\Delta\Sigma` in
+``Msun / pc^2``. The associated projected-radius coordinate is reported in
+``Mpc/h``.
+
+The covariance calculation uses a ``Sigma_crit`` prefactor intended for
+distances supplied in ``Mpc/h`` and DeltaSigma-like quantities expressed in
+``Msun h / pc^2``.

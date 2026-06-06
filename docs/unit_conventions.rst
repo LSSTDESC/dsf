@@ -12,10 +12,6 @@ Internally, different parts of the pipeline follow different conventions:
 * The forecast builder converts input radii from ``Mpc/h`` to ``Mpc`` before
   calling the CCL-backed data-vector calculation.
 
-Unless otherwise stated, radial bins, projected radii, covariance outputs, and
-forecast results should be interpreted in ``Mpc/h``.
-
-
 DeltaSigma units
 ----------------
 
@@ -26,3 +22,6 @@ The forecast data vector currently reports :math:`\Delta\Sigma` in
 The covariance calculation uses a ``Sigma_crit`` prefactor intended for
 distances supplied in ``Mpc/h`` and DeltaSigma-like quantities expressed in
 ``Msun h / pc^2``.
+
+Unless otherwise stated, radial bins, projected radii, and forecast radius
+grids should be interpreted in ``Mpc/h``.

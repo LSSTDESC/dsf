@@ -44,6 +44,7 @@ installation notes and worked examples will be added as the package matures.
 
    installation
    examples/index
+   unit_conventions
    api/index
 
 Indices and tables

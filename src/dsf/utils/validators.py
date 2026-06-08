@@ -716,7 +716,7 @@ def validate_redshift_distribution_support(
             "after support/window filtering."
         )
 
-    if np.any(nz_use <= 0.0):
+    if np.any(nz_use < 0.0):
         raise ValueError(f"{name} normalization must be finite and positive.")
 
     if trim_edge_points > 0:

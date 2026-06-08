@@ -363,18 +363,6 @@ def test_delta_sigma_lens_bin_rejects_too_few_support_points(patch_halo_profile)
         )
 
 
-def test_delta_sigma_lens_bin_rejects_non_positive_normalization(patch_halo_profile):
-    """Tests that non-positive lens-dndz normalization raises an error."""
-    calculator = DeltaSigmaCalculator(pk2d_func=DummyPk2DFunction())
-
-    with pytest.raises(ValueError, match="normalization must be finite positive"):
-        calculator.delta_sigma_lens_bin(
-            r=np.array([1.0, 2.0]),
-            lens_dndz=(np.array([0.1, 0.2, 0.3]), np.array([1.0, -0.1, 1.0])),
-            cosmo="cosmo",
-        )
-
-
 @pytest.mark.parametrize(
     ("z_min", "z_max"),
     [

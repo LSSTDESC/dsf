@@ -1,8 +1,9 @@
 """Hankel transforms for projected radial statistics.
 
-This module provides the ``HankelTransform`` class, which converts
-Fourier-space spectra into projected radial-space quantities. It is useful for
-computing projected correlation functions, covariance matrices, and higher-order
+This module provides the ``HankelTransformMatrixZeros`` class, which converts
+Fourier-space spectra into projected radial-space quantities using precomputed
+Hankel operator grids along the Bessel zeros. It is useful for computing
+projected correlation functions, covariance matrices, and higher-order
 radial tensors that appear in weak-lensing and Delta Sigma calculations.
 
 The class owns the public validation layer and delegates low-level radial and
@@ -16,8 +17,8 @@ from collections.abc import Iterable
 import numpy as np
 from scipy.special import jv
 
-from dsf.covariance.projection.hankel_utils import (
-    apply_taper_spectrum,
+from dsf.hankel.hankel_transform_base import HankelTransformBase
+from dsf.hankel.hankel_utils import (
     bessel_zeros,
     compute_bin_radial_matrix,
     compute_correlation_matrix,
@@ -33,7 +34,7 @@ from dsf.utils.validators import (
 )
 
 
-class HankelTransform:
+class HankelTransformMatrixZeros(HankelTransformBase):
     """Project Fourier-space spectra into radial-space statistics.
 
     The class builds Bessel-function grids for the requested orders and uses
@@ -73,6 +74,8 @@ class HankelTransform:
         verbose: bool = False,
         max_iterations: int = 100,
     ) -> None:
+        super().__init__()
+
         self.r_min = float(r_min)
         self.r_max = float(r_max)
         self.k_min = float(k_min)
@@ -301,7 +304,7 @@ class HankelTransform:
 
         if taper:
             taper_kwargs = {} if taper_kwargs is None else taper_kwargs
-            spectrum_arr = apply_taper_spectrum(
+            spectrum_arr = self.taper_spectrum(
                 k_arr,
                 spectrum_arr,
                 **taper_kwargs,
@@ -345,10 +348,9 @@ class HankelTransform:
 
         if callable(spectrum):
             values = np.asarray(spectrum(k=target_k, **kwargs), dtype=float)
+        elif k_input is None:
+            raise ValueError("k_input must be supplied for tabulated spectra.")
         else:
-            if k_input is None:
-                raise ValueError("k_input must be supplied for tabulated spectra.")
-
             values = self._evaluate_tabulated_spectrum(
                 k_input=k_input,
                 spectrum=spectrum,
@@ -366,40 +368,6 @@ class HankelTransform:
             raise ValueError("Evaluated spectrum must contain only finite values.")
 
         return values
-
-    def pk_grid(
-        self,
-        k_pk: ArrayLike | None = None,
-        pk: SpectrumInput | None = None,
-        order: float | int = 0,
-        taper: bool = False,
-        taper_kwargs: dict | None = None,
-        **kwargs,
-    ) -> FloatArray:
-        """Return a power spectrum evaluated on a Hankel grid.
-
-        Args:
-            k_pk: Wavenumber grid for tabulated spectra.
-            pk: Power-spectrum values or callable power spectrum.
-            order: Bessel order to use.
-            taper: Whether to suppress low-k and high-k edge power.
-            taper_kwargs: Optional settings for the spectrum taper.
-            **kwargs: Extra arguments passed to callable spectra.
-
-        Returns:
-            Power spectrum evaluated on the internal wavenumber grid.
-        """
-        if pk is None:
-            raise ValueError("pk must be supplied.")
-
-        return self._evaluate_spectrum(
-            pk,
-            order=order,
-            k_input=k_pk,
-            taper=taper,
-            taper_kwargs=taper_kwargs,
-            **kwargs,
-        )
 
     def _project_spectra_to_radial(
         self,
@@ -448,8 +416,8 @@ class HankelTransform:
 
     def projected_correlation(
         self,
-        k_pk: ArrayLike | None = None,
-        pk: SpectrumInput | None = None,
+        ell: ArrayLike | None = None,
+        c_ell: SpectrumInput | None = None,
         order: float | int = 0,
         taper: bool = False,
         taper_kwargs: dict | None = None,
@@ -458,8 +426,8 @@ class HankelTransform:
         """Compute a projected radial statistic from one spectrum.
 
         Args:
-            k_pk: Wavenumber grid for tabulated spectra.
-            pk: Spectrum values or callable spectrum.
+            ell: ell grid for tabulated spectra.
+            c_ell: Spectrum values or callable spectrum.
             order: Bessel order to use.
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
@@ -468,19 +436,19 @@ class HankelTransform:
         Returns:
             Radial grid and projected radial statistic.
         """
-        if pk is None:
-            raise ValueError("pk must be supplied.")
+        if c_ell is None:
+            raise ValueError("c_ell must be supplied.")
 
-        pk_eval = self._evaluate_spectrum(
-            pk,
+        c_ell_eval = self._evaluate_spectrum(
+            c_ell,
             order=order,
-            k_input=k_pk,
+            k_input=ell,
             taper=taper,
             taper_kwargs=taper_kwargs,
             **kwargs,
         )
 
-        return self._project_spectra_to_radial([pk_eval], order)
+        return self._project_spectra_to_radial([c_ell_eval], order)
 
     def spherical_correlation(
         self,
@@ -685,26 +653,3 @@ class HankelTransform:
             raise ValueError("covariance must contain only finite values.")
 
         return compute_diagonal_error(covariance_arr)
-
-    def taper_spectrum(
-        self,
-        k: ArrayLike,
-        pk: ArrayLike,
-        **kwargs,
-    ) -> FloatArray:
-        """Return a smoothly tapered power spectrum.
-
-        Args:
-            k: Wavenumber grid.
-            pk: Power-spectrum values evaluated on ``k``.
-            **kwargs: Optional taper settings.
-
-        Returns:
-            Power spectrum with smooth low-k and high-k suppression.
-        """
-        k_arr = as_1d_float_array(k, "k")
-        pk_arr = as_1d_float_array(pk, "pk")
-
-        validate_power_spectrum_inputs(k_arr, pk_arr)
-
-        return apply_taper_spectrum(k_arr, pk_arr, **kwargs)

@@ -22,7 +22,7 @@ from dsf.utils.converters import (
     redshift_to_scale_factor,
     scale_factor_to_redshift,
 )
-from dsf.utils.hankel_transform_1d import hankel_projected_order_2
+from dsf.hankel.hankel_transform_fftlog import hankel_projected_order_2
 from dsf.utils.integrators import trapezoid_integral
 from dsf.utils.validators import (
     validate_finite_scalar,

@@ -87,45 +87,6 @@ def bessel_zeros(order: float | int, n_zeros: int) -> FloatArray:
     return roots
 
 
-def apply_taper_spectrum(
-    k: FloatArray,
-    pk: FloatArray,
-    large_k_lower: float = 10.0,
-    large_k_upper: float = 100.0,
-    low_k_lower: float = 0.0,
-    low_k_upper: float = 1.0e-5,
-) -> FloatArray:
-    """Return a smoothly tapered power spectrum.
-
-    The taper suppresses power outside the trusted wavenumber range so that
-    projected radial statistics are less sensitive to sharp spectrum cutoffs.
-
-    Args:
-        k: Wavenumber grid.
-        pk: Power-spectrum values evaluated on ``k``.
-        large_k_lower: Wavenumber where high-k suppression begins.
-        large_k_upper: Wavenumber above which the spectrum is set to zero.
-        low_k_lower: Wavenumber below which the spectrum is set to zero.
-        low_k_upper: Wavenumber where low-k suppression ends.
-
-    Returns:
-        Power spectrum with smooth low-k and high-k suppression applied.
-    """
-    pk_out = np.copy(pk)
-
-    high = k > large_k_lower
-    pk_out[high] *= np.cos(
-        (k[high] - large_k_lower) / (large_k_upper - large_k_lower) * np.pi / 2.0
-    )
-    pk_out[k > large_k_upper] = 0.0
-
-    low = k < low_k_upper
-    pk_out[low] *= np.cos((k[low] - low_k_upper) / (low_k_upper - low_k_lower) * np.pi / 2.0)
-    pk_out[k < low_k_lower] = 0.0
-
-    return pk_out
-
-
 def compute_correlation_matrix(covariance: FloatArray) -> FloatArray:
     """Return the correlation matrix associated with a covariance matrix.
 
@@ -262,3 +223,42 @@ def compute_bin_radial_matrix(
     binned[nonzero] = binned_sum[nonzero] / norm[nonzero]
 
     return centers, binned
+
+
+def apply_taper_spectrum(
+    k: FloatArray,
+    pk: FloatArray,
+    large_k_lower: float = 10.0,
+    large_k_upper: float = 100.0,
+    low_k_lower: float = 0.0,
+    low_k_upper: float = 1.0e-5,
+) -> FloatArray:
+    """Return a smoothly tapered power spectrum.
+
+    The taper suppresses power outside the trusted wavenumber range so that
+    projected radial statistics are less sensitive to sharp spectrum cutoffs.
+
+    Args:
+        k: Wavenumber grid.
+        pk: Power-spectrum values evaluated on ``k``.
+        large_k_lower: Wavenumber where high-k suppression begins.
+        large_k_upper: Wavenumber above which the spectrum is set to zero.
+        low_k_lower: Wavenumber below which the spectrum is set to zero.
+        low_k_upper: Wavenumber where low-k suppression ends.
+
+    Returns:
+        Power spectrum with smooth low-k and high-k suppression applied.
+    """
+    pk_out = np.copy(pk)
+
+    high = k > large_k_lower
+    pk_out[high] *= np.cos(
+        (k[high] - large_k_lower) / (large_k_upper - large_k_lower) * np.pi / 2.0
+    )
+    pk_out[k > large_k_upper] = 0.0
+
+    low = k < low_k_upper
+    pk_out[low] *= np.cos((k[low] - low_k_upper) / (low_k_upper - low_k_lower) * np.pi / 2.0)
+    pk_out[k < low_k_lower] = 0.0
+
+    return pk_out

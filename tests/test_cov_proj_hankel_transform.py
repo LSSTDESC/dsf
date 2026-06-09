@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from dsf.covariance.projection.hankel_transform import HankelTransform
+from dsf.hankel.hankel_transform_matrix_zeros import HankelTransform
 
 HANKEL_MODULE = "dsf.covariance.projection.hankel_transform"
 

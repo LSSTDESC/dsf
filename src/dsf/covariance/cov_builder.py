@@ -39,7 +39,7 @@ from dsf.covariance.ingredients.geometry import (
 from dsf.covariance.ingredients.noise import projected_shape_noise, shot_noise
 from dsf.covariance.ingredients.power_spectrum import lens_averaged_matter_power
 from dsf.covariance.ingredients.sigma_crit import effective_squared_sigma_crit
-from dsf.covariance.projection.hankel_transform import HankelTransform
+from dsf.hankel.hankel_transform_matrix_zeros import HankelTransform
 from dsf.utils.converters import (
     resolve_h,
     resolve_omega_m,

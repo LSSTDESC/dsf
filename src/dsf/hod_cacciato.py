@@ -3,6 +3,11 @@ import numpy as np
 from scipy.special import erf, gammaincc, gamma
 import pyccl as ccl
 
+__all__ = [
+    "safe_upper_gamma",
+    "CacciatoHOD"
+]
+
 @np.vectorize(excluded=["a"])
 def safe_upper_gamma(a, x):
     if x <= 0 and a <= 0:
@@ -15,8 +20,8 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
     """
     Inputs: 
         mass_def: Halo mass definition (e.g., '200m' or a MassDef object).
-        cM_rel: Concentration-mass relation (e.g., 'Duffy08' or a Concentration
-        object).  To apply the `eta` multiplicative factor, cM_rel should be a
+        concentration: Concentration-mass relation (e.g., 'Duffy08' or a Concentration
+        object).  To apply the `eta` multiplicative factor, `concentration` should be a
         class wrapped around pyccl.halos.concentration that manages the
         multiplication.
 
@@ -77,7 +82,7 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
         # halo mass def
         mass_def: Union[str, ccl.halos.MassDef], 
         # mass profile
-        cM_rel: Union[str, ccl.halos.Concentration], 
+        concentration: Union[str, ccl.halos.Concentration], 
         # sample bin def
         log_L1, log_L2, 
         # hubble const
@@ -92,13 +97,13 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
         # satellite prof pars
         R_s=1., 
     ):
-        super().__init__(mass_def=mass_def, concentration=cM_rel)
+        super().__init__(mass_def=mass_def, concentration=concentration)
         # disable (set to None) the vanilla HOD parameters not applicable to this CLF.
         self._disable_vanilla_hod_parameters()
         
         # define inputs that don't change throughout the analysis.
         self.hval = hval
-        self.cM = cM_rel
+        self.cM = concentration 
         self.ns_independent = False
         # sample luminosity bin definition
         self.log_L1 = log_L1
@@ -243,7 +248,7 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
         log_M12 = np.log10(M_h) - 12.0
         return self.b_0 + self.b_1 * log_M12 + self.b_2 * log_M12 ** 2
 
-    def _Nc(self, M):
+    def _Nc(self, M, a):
         """
         Input:
             M: Mass in Msun; internally converted to Msun/h
@@ -266,7 +271,8 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
         term_min = (self.log_L1 - log_Lc) / denom
         return 0.5 * (erf(term_max) - erf(term_min))
 
-    def _Ns(self, M):
+    def _Ns(self, M, a):
+        ### Here, adding cosmo and a, but these are not needed. Putting these just to be able to run the delta_sigma_builder
         """
         Input:
             M: Mass in Msun; internally converted to Msun/h

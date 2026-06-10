@@ -21,17 +21,17 @@ from dsf.utils.validators import validate_interpolation_within_bounds
 class HankelTransform:
     """Class for performing Hankel transforms using different algorithms."""
 
-    def __init__(self, method="fftlog", **kwargs) -> None:
+    def __init__(self, backend="fftlog", **kwargs) -> None:
         """Initialize the HankelTransform class."""
-        if method == "fftlog":
+        if backend == "fftlog":
             self.backend = HankelTransformFFTLog(**kwargs)
-        elif method == "matrix_zeros":
+        elif backend == "matrix_zeros":
             self.backend = HankelTransformMatrixZeros(**kwargs)
-        elif method == "matrix_direct":
+        elif backend == "matrix_direct":
             self.backend = HankelTransformMatrixDirect(**kwargs)
         else:
             raise ValueError(
-                f"Unsupported method '{method}'. Use 'fftlog', 'matrix_zeros', or 'matrix_direct'."
+                f"Unsupported backend '{backend}'. Use 'fftlog', 'matrix_zeros', or 'matrix_direct'."
             )
 
     def projected_correlation(
@@ -154,3 +154,29 @@ class HankelTransform:
 
         xi_out = np.interp(r_eval_arr, r_grid, xi_grid)
         return r_eval_arr, np.asarray(xi_out, dtype=float)
+
+    def projected_covariance(
+        self,
+        k_pk: ArrayLike | None = None,
+        pk1: SpectrumInput | None = None,
+        pk2: SpectrumInput | None = None,
+        order: float | int = 0,
+        **kwargs,
+    ) -> tuple[FloatArray, FloatArray]:
+        """Project two spectra into a covariance-like radial statistic."""
+        return self.backend.projected_covariance(
+            k_pk=k_pk,
+            pk1=pk1,
+            pk2=pk2,
+            order=order,
+            **kwargs,
+        )
+
+    def bin_radial_matrix(
+        self,
+        r: ArrayLike,
+        matrix: FloatArray,
+        r_bins: ArrayLike,
+    ) -> tuple[FloatArray, FloatArray]:
+        """Average a radial matrix or tensor into radial bins."""
+        return self.backend.bin_radial_matrix(r=r, matrix=matrix, r_bins=r_bins)

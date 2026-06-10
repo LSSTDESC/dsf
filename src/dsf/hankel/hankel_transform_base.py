@@ -70,3 +70,27 @@ class HankelTransformBase:
             taper_kwargs=taper_kwargs,
             **kwargs,
         )
+
+    def projected_covariance(
+        self,
+        k_pk: ArrayLike | None = None,
+        pk1: SpectrumInput | None = None,
+        pk2: SpectrumInput | None = None,
+        order: float | int = 0,
+        **kwargs,
+    ) -> tuple[FloatArray, FloatArray]:
+        """Project two spectra into a covariance-like radial statistic."""
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support projected_covariance()."
+        )
+
+    def bin_radial_matrix(
+        self,
+        r: ArrayLike,
+        matrix: FloatArray,
+        r_bins: ArrayLike,
+    ) -> tuple[FloatArray, FloatArray]:
+        """Average a radial matrix or tensor into radial bins."""
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support bin_radial_matrix()."
+        )

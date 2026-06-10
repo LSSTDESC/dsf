@@ -230,7 +230,7 @@ def _lens_mag_lss_shear(
         _inner_redshift_integrand(z_arr, ell_arr, cosmo, z_lens, z_source), z_arr, axis=0
     )
 
-    ht_fft = HankelTransform(method="fftlog")
+    ht_fft = HankelTransform(backend="fftlog")
     _, gamma_t = ht_fft.projected_correlation_interpolated(
         theta_arr,
         ell=ell_arr,

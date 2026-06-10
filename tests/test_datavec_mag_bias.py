@@ -31,6 +31,7 @@ def restore_lens_mag_integ_params():
 @pytest.fixture
 def cosmo():
     """Return a small dictionary-like cosmology object for unit tests."""
+
     class _FakeNonlin:
         def __init__(self, val=3.0):
             self.psp = object()
@@ -278,7 +279,7 @@ def test_lens_mag_lss_shear_rejects_too_short_inner_redshift_grid(cosmo):
             z_lens=0.5,
             z_source=1.0,
         )
-        
+
 
 def test_lens_mag_lss_shear_rejects_interpolation_outside_grid(monkeypatch, cosmo):
     """Tests that interpolation outside the ell grid is rejected."""
@@ -290,12 +291,8 @@ def test_lens_mag_lss_shear_rejects_interpolation_outside_grid(monkeypatch, cosm
             dtype=float,
         ),
     )
-    
-    set_lens_mag_integ_params(
-        ell_min=1,
-        ell_max=10,
-        n_ell=2
-    )
+
+    set_lens_mag_integ_params(ell_min=1, ell_max=10, n_ell=2)
 
     with pytest.raises(ValueError, match="lie outside the data grid"):
         _lens_mag_lss_shear(
@@ -317,10 +314,10 @@ def test_lens_mag_lss_shear_rejects_invalid_grids(monkeypatch, ell, theta, cosmo
     """Tests that invalid multipole or angular grids are rejected."""
     monkeypatch.setattr(
         validators,
-        'validate_integration_params',
+        "validate_integration_params",
         lambda: None,
     )
-    
+
     with pytest.raises(ValueError):
         set_lens_mag_integ_params(
             n_ell=len(ell),
@@ -449,6 +446,7 @@ def test_delta_sigma_lens_mag_correction_rejects_invalid_inputs(
             alpha_lens=alpha_lens,
         )
 
+
 @pytest.mark.slow
 def test_delta_sigma_lens_mag_correction_matches_ccl():
     """Tests that delta_sigma_lens_mag_correction agrees with the CCL prediction."""
@@ -460,41 +458,40 @@ def test_delta_sigma_lens_mag_correction_matches_ccl():
 
     ell_ccl = np.geomspace(1e-5, 1e6, 5000)
     r = np.geomspace(1e0, 1e2)
-    theta = np.degrees(r / (1+Z_LENS) / ccl.angular_diameter_distance(cosmo, 1/(1+Z_LENS)))
+    theta = np.degrees(r / (1 + Z_LENS) / ccl.angular_diameter_distance(cosmo, 1 / (1 + Z_LENS)))
 
     z_lens_ccl = np.linspace(0.01, 1.0, 500)
-    nz_lens_ccl = np.exp(-0.5 * ((z_lens_ccl - Z_LENS)/SIGMA_NZ)**2)
+    nz_lens_ccl = np.exp(-0.5 * ((z_lens_ccl - Z_LENS) / SIGMA_NZ) ** 2)
     z_source_ccl = np.linspace(0.5, 1.5, 500)
-    nz_source_ccl = np.exp(-0.5 * ((z_source_ccl - Z_SOURCE)/SIGMA_NZ)**2)
+    nz_source_ccl = np.exp(-0.5 * ((z_source_ccl - Z_SOURCE) / SIGMA_NZ) ** 2)
 
-    t_g = ccl.NumberCountsTracer(cosmo, dndz=(z_lens_ccl, nz_lens_ccl), 
-                                bias=None, 
-                                mag_bias=(z_lens_ccl, ALPHA/2.5 * np.ones_like(nz_lens_ccl)), 
-                                has_rsd=False)
-    t_m = ccl.WeakLensingTracer(cosmo,
-                                dndz=(z_source_ccl, nz_source_ccl),
-                                has_shear=True)
+    t_g = ccl.NumberCountsTracer(
+        cosmo,
+        dndz=(z_lens_ccl, nz_lens_ccl),
+        bias=None,
+        mag_bias=(z_lens_ccl, ALPHA / 2.5 * np.ones_like(nz_lens_ccl)),
+        has_rsd=False,
+    )
+    t_m = ccl.WeakLensingTracer(cosmo, dndz=(z_source_ccl, nz_source_ccl), has_shear=True)
     c_ell_ccl = ccl.angular_cl(cosmo, t_g, t_m, ell_ccl)
-    gammat_ccl = ccl.correlation(cosmo, 
-                                ell=ell_ccl, 
-                                C_ell=c_ell_ccl, 
-                                theta=theta, 
-                                method='FFTLog', 
-                                type='NG')
-    correction_ccl = gammat_ccl / 1e12 * ((1/(1+Z_LENS))**2) * ccl.sigma_critical(cosmo, 
-                                                                        a_lens=1/(1+Z_LENS), 
-                                                                        a_source=1/(1+Z_SOURCE))
+    gammat_ccl = ccl.correlation(
+        cosmo, ell=ell_ccl, C_ell=c_ell_ccl, theta=theta, method="FFTLog", type="NG"
+    )
+    correction_ccl = (
+        gammat_ccl
+        / 1e12
+        * ((1 / (1 + Z_LENS)) ** 2)
+        * ccl.sigma_critical(cosmo, a_lens=1 / (1 + Z_LENS), a_source=1 / (1 + Z_SOURCE))
+    )
 
     set_lens_mag_integ_params(
         ell_min=1e-5,
         ell_max=1e6,
         n_ell=5000,
     )
-    correction_dsf = delta_sigma_lens_mag_correction(r, 
-                                                     1/(1+Z_LENS), 
-                                                     1/(1+Z_SOURCE), 
-                                                     cosmo, 
-                                                     alpha_lens=ALPHA)
-    
+    correction_dsf = delta_sigma_lens_mag_correction(
+        r, 1 / (1 + Z_LENS), 1 / (1 + Z_SOURCE), cosmo, alpha_lens=ALPHA
+    )
+
     # This is just a rough comparison, so require a match only within 3%.
     assert np.allclose(correction_ccl, correction_dsf, rtol=0.03, atol=0)

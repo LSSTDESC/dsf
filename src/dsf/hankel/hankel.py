@@ -1,12 +1,19 @@
-"""DOCSTRING"""
+"""Public layer for all Hankel transform operations.
+
+This module provides the ``HankelTransform`` class, is an interface for
+the ``HankelTransformFFTLog``, ``HankelTransformMatrixDirect``, and
+``HankelTransformMatrixZeros`` classes. It provides public methods to
+compute projected and spherical correlation functions, as well as covariance
+matricies, from these underlying Hankel transform implementations.
+"""
 
 from __future__ import annotations
 
 import numpy as np
 
 from dsf.hankel.hankel_transform_fftlog import HankelTransformFFTLog
-from dsf.hankel.hankel_transform_matrix_zeros import HankelTransformMatrixZeros
 from dsf.hankel.hankel_transform_matrix_direct import HankelTransformMatrixDirect
+from dsf.hankel.hankel_transform_matrix_zeros import HankelTransformMatrixZeros
 from dsf.utils.types import ArrayLike, FloatArray, SpectrumInput
 from dsf.utils.validators import validate_interpolation_within_bounds
 
@@ -47,7 +54,12 @@ class HankelTransform:
         Returns:
             Radial grid and projected radial statistic.
         """
-        return self.backend.projected_correlation(ell=ell, c_ell=c_ell, order=order, **kwargs)
+        return self.backend.projected_correlation(
+            ell=ell,
+            c_ell=c_ell,
+            order=order,
+            **kwargs,
+        )
 
     def spherical_correlation(
         self,
@@ -69,7 +81,12 @@ class HankelTransform:
         Returns:
             Radial grid and spherical radial statistic.
         """
-        return self.backend.spherical_correlation(k_pk=k_pk, pk=pk, order=order, **kwargs)
+        return self.backend.spherical_correlation(
+            k_pk=k_pk,
+            pk=pk,
+            order=order,
+            **kwargs,
+        )
 
     def projected_correlation_interpolated(
         self,
@@ -107,6 +124,8 @@ class HankelTransform:
         k_pk: ArrayLike | None = None,
         pk: SpectrumInput | None = None,
         order: float | int = 0,
+        taper: bool = False,
+        taper_kwargs: dict | None = None,
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
         """Compute a spherical radial statistic from one spectrum at given radial values.
@@ -124,7 +143,12 @@ class HankelTransform:
             Radial grid and spherical radial statistic.
         """
         r_grid, xi_grid = self.backend.spherical_correlation(
-            k_pk=k_pk, pk=pk, order=order, **kwargs
+            k_pk=k_pk,
+            pk=pk,
+            order=order,
+            taper=taper,
+            taper_kwargs=taper_kwargs,
+            **kwargs,
         )
         r_eval_arr = validate_interpolation_within_bounds(r, r_grid, "r")
 

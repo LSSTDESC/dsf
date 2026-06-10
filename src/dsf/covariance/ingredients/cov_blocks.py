@@ -22,7 +22,7 @@ from typing import Any
 
 import numpy as np
 
-from dsf.hankel.hankel_transform_matrix_zeros import HankelTransform
+from dsf.hankel.hankel import HankelTransform
 from dsf.utils.types import ArrayLike
 from dsf.utils.validators import (
     as_1d_float_array,
@@ -76,7 +76,7 @@ def _covariance_on_requested_radius_grid(
     if rp_bin_edges is None:
         return r_arr, cov_arr
 
-    return hankel.bin_radial_matrix(r_arr, cov_arr, rp_bin_edges)
+    return hankel.backend.bin_radial_matrix(r_arr, cov_arr, rp_bin_edges)
 
 
 def delta_sigma_gm_covariance(
@@ -163,7 +163,7 @@ def delta_sigma_gm_covariance(
 
     shape_delta_sigma_noise = shape_noise * sigma_crit_squared_average
 
-    r_ggkk, cov_ggkk = hankel.projected_covariance(
+    r_ggkk, cov_ggkk = hankel.backend.projected_covariance(
         k_pk=k,
         pk1=p_g + shot_noise,
         pk2=p_kappa + shape_delta_sigma_noise,
@@ -172,7 +172,7 @@ def delta_sigma_gm_covariance(
         taper_kwargs=taper_kwargs,
     )
 
-    r_gkgk, cov_gkgk = hankel.projected_covariance(
+    r_gkgk, cov_gkgk = hankel.backend.projected_covariance(
         k_pk=k,
         pk1=p_gk,
         pk2=p_gk,
@@ -253,7 +253,7 @@ def delta_sigma_gg_covariance(
 
     p_g = pk * galaxy_bias**2
 
-    r, cov = hankel.projected_covariance(
+    r, cov = hankel.backend.projected_covariance(
         k_pk=k,
         pk1=p_g + shot_noise,
         pk2=p_g + shot_noise,
@@ -333,7 +333,7 @@ def delta_sigma_gm_gg_cross_covariance(
     p_g = pk * galaxy_bias**2
     p_gk = pk * galaxy_bias * rho_crit * omega_m
 
-    r, cov = hankel.projected_covariance(
+    r, cov = hankel.backend.projected_covariance(
         k_pk=k,
         pk1=p_gk,
         pk2=p_g + shot_noise,

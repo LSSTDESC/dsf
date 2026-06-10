@@ -17,12 +17,12 @@ import numpy as np
 import pyccl as ccl
 from numpy.typing import NDArray
 
+from dsf.hankel.hankel import HankelTransform
 from dsf.utils.converters import (
     hubble_over_c_cubed,
     redshift_to_scale_factor,
     scale_factor_to_redshift,
 )
-from dsf.hankel.hankel_transform_fftlog import hankel_projected_order_2
 from dsf.utils.integrators import trapezoid_integral
 from dsf.utils.validators import (
     validate_finite_scalar,
@@ -229,13 +229,19 @@ def _lens_mag_lss_shear(
     angular_spectrum = trapezoid_integral(
         _inner_redshift_integrand(z_arr, ell_arr, cosmo, z_lens, z_source), z_arr, axis=0
     )
-    gamma_t_spline = hankel_projected_order_2(
-        ell_arr, angular_spectrum, use_offset=bool(_LENS_MAG_INTEG_PARAMS["use_hankel_offset"])
+
+    ht_fft = HankelTransform(method="fftlog")
+    _, gamma_t = ht_fft.projected_correlation_interpolated(
+        theta_arr,
+        ell=ell_arr,
+        c_ell=angular_spectrum,
+        order=2,
+        use_offset=bool(_LENS_MAG_INTEG_PARAMS["use_hankel_offset"]),
     )
 
     prefactor = 9.0 * hubble_over_c_cubed(float(cosmo["h"])) * float(cosmo["Omega_m"]) ** 2 / 4
 
-    return prefactor * gamma_t_spline(theta_arr)
+    return prefactor * gamma_t
 
 
 def delta_sigma_lens_mag_correction(

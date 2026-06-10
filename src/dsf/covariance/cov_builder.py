@@ -39,7 +39,7 @@ from dsf.covariance.ingredients.geometry import (
 from dsf.covariance.ingredients.noise import projected_shape_noise, shot_noise
 from dsf.covariance.ingredients.power_spectrum import lens_averaged_matter_power
 from dsf.covariance.ingredients.sigma_crit import effective_squared_sigma_crit
-from dsf.hankel.hankel_transform_matrix_zeros import HankelTransform
+from dsf.hankel.hankel import HankelTransform
 from dsf.utils.converters import (
     resolve_h,
     resolve_omega_m,
@@ -788,6 +788,7 @@ class DeltaSigmaCovarianceBuilder:
         """
         kwargs = {} if hankel_kwargs is None else dict(hankel_kwargs)
 
+        kwargs.setdefault("backend", "matrix_zeros")
         kwargs.setdefault("r_min", 0.6)
         kwargs.setdefault("r_max", 110.0)
         kwargs.setdefault("k_min", float(self.k[0]))

@@ -285,6 +285,22 @@ def test_hankel_spherical_rejects_nonzero_order():
         hankel_spherical(k, pk, order=2, use_offset=False)
 
 
+def test_projected_covariance_returns_not_implemented():
+    """Test that the FFTLog backend does not support projected_covariance."""
+    transform = HankelTransformFFTLog()
+
+    with pytest.raises(NotImplementedError, match="does not support projected_covariance"):
+        transform.projected_covariance(order=2)
+
+
+def test_projected_skewness_returns_not_implemented():
+    """Test that the FFTLog backend does not support projected_skewness."""
+    transform = HankelTransformFFTLog()
+
+    with pytest.raises(NotImplementedError, match="does not support projected_skewness"):
+        transform.projected_skewness(order=2)
+
+
 @pytest.mark.slow
 def test_hankel_spherical_matches_ccl():
     """Tests that hankel_spherical agrees with the CCL transform."""

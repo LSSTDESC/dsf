@@ -283,23 +283,23 @@ def test_projected_correlation_projects_one_input_spectrum():
     np.testing.assert_allclose(result, expected)
 
 
-def test_spherical_correlation_projects_k_weighted_spectrum():
-    """Test that spherical_correlation projects the k-weighted spectrum."""
-    transform = make_fake_transform()
-    pk = np.array([2.0, 4.0, 8.0])
+# def test_spherical_correlation_projects_k_weighted_spectrum():
+#     """Test that spherical_correlation projects the k-weighted spectrum."""
+#     transform = make_fake_transform()
+#     pk = np.array([2.0, 4.0, 8.0])
 
-    r, result = transform.spherical_correlation(
-        k_pk=np.array([1.0, 2.0, 4.0]),
-        pk=pk,
-        order=0,
-    )
+#     r, result = transform.spherical_correlation(
+#         k_pk=np.array([1.0, 2.0, 4.0]),
+#         pk=pk,
+#         order=0,
+#     )
 
-    weighted_spectrum = pk * transform.k[0]
-    weighted = weighted_spectrum / transform.j_next_at_zeros[0] ** 2
-    expected = np.dot(transform.j[0], weighted) * transform.normalization[0]
+#     weighted_spectrum = pk * transform.k[0]
+#     weighted = weighted_spectrum / transform.j_next_at_zeros[0] ** 2
+#     expected = np.dot(transform.j[0], weighted) * transform.normalization[0]
 
-    np.testing.assert_allclose(r, transform.r[0])
-    np.testing.assert_allclose(result, expected)
+#     np.testing.assert_allclose(r, transform.r[0])
+#     np.testing.assert_allclose(result, expected)
 
 
 def test_projected_covariance_projects_two_input_spectra():
@@ -363,11 +363,19 @@ def test_projected_correlation_requires_power_spectrum():
         transform.projected_correlation(order=0)
 
 
-def test_spherical_correlation_requires_power_spectrum():
-    """Test that spherical_correlation requires a supplied power spectrum."""
+# def test_spherical_correlation_requires_power_spectrum():
+#     """Test that spherical_correlation requires a supplied power spectrum."""
+#     transform = make_fake_transform()
+
+#     with pytest.raises(ValueError, match="pk must be supplied"):
+#         transform.spherical_correlation(order=0)
+
+
+def test_spherical_correlation_returns_not_implemented():
+    """Test that the FFTLog backend does not support spherical_correlation."""
     transform = make_fake_transform()
 
-    with pytest.raises(ValueError, match="pk must be supplied"):
+    with pytest.raises(NotImplementedError, match="does not support spherical_correlation"):
         transform.spherical_correlation(order=0)
 
 

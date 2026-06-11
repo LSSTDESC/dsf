@@ -450,44 +450,44 @@ class HankelTransformMatrixZeros(HankelTransformBase):
 
         return self._project_spectra_to_radial([c_ell_eval], order)
 
-    def spherical_correlation(
-        self,
-        k_pk: ArrayLike | None = None,
-        pk: SpectrumInput | None = None,
-        order: float | int = 0,
-        taper: bool = False,
-        taper_kwargs: dict | None = None,
-        **kwargs,
-    ) -> tuple[FloatArray, FloatArray]:
-        """Compute the k-weighted projected radial statistic.
+    # def spherical_correlation(
+    #     self,
+    #     k_pk: ArrayLike | None = None,
+    #     pk: SpectrumInput | None = None,
+    #     order: float | int = 0,
+    #     taper: bool = False,
+    #     taper_kwargs: dict | None = None,
+    #     **kwargs,
+    # ) -> tuple[FloatArray, FloatArray]:
+    #     """Compute the k-weighted projected radial statistic.
 
-        Args:
-            k_pk: Wavenumber grid for tabulated spectra.
-            pk: Spectrum values or callable spectrum.
-            order: Bessel order to use.
-            taper: Whether to suppress low-k and high-k edge power.
-            taper_kwargs: Optional settings for the spectrum taper.
-            **kwargs: Extra arguments passed to callable spectra.
+    #     Args:
+    #         k_pk: Wavenumber grid for tabulated spectra.
+    #         pk: Spectrum values or callable spectrum.
+    #         order: Bessel order to use.
+    #         taper: Whether to suppress low-k and high-k edge power.
+    #         taper_kwargs: Optional settings for the spectrum taper.
+    #         **kwargs: Extra arguments passed to callable spectra.
 
-        Returns:
-            Radial grid and k-weighted projected radial statistic.
-        """
-        if pk is None:
-            raise ValueError("pk must be supplied.")
+    #     Returns:
+    #         Radial grid and k-weighted projected radial statistic.
+    #     """
+    #     if pk is None:
+    #         raise ValueError("pk must be supplied.")
 
-        pk_eval = self._evaluate_spectrum(
-            pk,
-            order=order,
-            k_input=k_pk,
-            taper=taper,
-            taper_kwargs=taper_kwargs,
-            **kwargs,
-        )
+    #     pk_eval = self._evaluate_spectrum(
+    #         pk,
+    #         order=order,
+    #         k_input=k_pk,
+    #         taper=taper,
+    #         taper_kwargs=taper_kwargs,
+    #         **kwargs,
+    #     )
 
-        return self._project_spectra_to_radial(
-            [pk_eval * self.k[order]],
-            order,
-        )
+    #     return self._project_spectra_to_radial(
+    #         [pk_eval * self.k[order]],
+    #         order,
+    #     )
 
     def projected_covariance(
         self,

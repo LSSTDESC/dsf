@@ -71,6 +71,36 @@ class HankelTransformBase:
             **kwargs,
         )
 
+    def projected_correlation(
+        self,
+        ell: ArrayLike | None = None,
+        c_ell: SpectrumInput | None = None,
+        order: float | int = 0,
+        taper: bool = False,
+        taper_kwargs: dict | None = None,
+        use_offset: bool = False,
+        **kwargs,
+    ) -> tuple[FloatArray, FloatArray]:
+        """Compute a projected radial statistic from one spectrum."""
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support projected_correlation()."
+        )
+
+    def spherical_correlation(
+        self,
+        k_pk: ArrayLike | None = None,
+        pk: SpectrumInput | None = None,
+        order: float | int = 0,
+        taper: bool = False,
+        taper_kwargs: dict | None = None,
+        use_offset: bool = False,
+        **kwargs,
+    ) -> tuple[FloatArray, FloatArray]:
+        """Compute a spherical radial statistic from one spectrum."""
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support spherical_correlation()."
+        )
+
     def projected_covariance(
         self,
         k_pk: ArrayLike | None = None,
@@ -93,4 +123,20 @@ class HankelTransformBase:
         """Average a radial matrix or tensor into radial bins."""
         raise NotImplementedError(
             f"{self.__class__.__name__} does not support bin_radial_matrix()."
+        )
+
+    def projected_skewness(
+        self,
+        k_pk: ArrayLike | None = None,
+        pk1: SpectrumInput | None = None,
+        pk2: SpectrumInput | None = None,
+        pk3: SpectrumInput | None = None,
+        order: float | int = 0,
+        taper: bool = False,
+        taper_kwargs: dict | None = None,
+        **kwargs,
+    ) -> tuple[FloatArray, FloatArray]:
+        """Compute a projected third-order radial tensor from three spectra."""
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support projected_skewness()."
         )

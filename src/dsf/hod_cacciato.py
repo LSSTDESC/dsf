@@ -20,32 +20,58 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
     Args:
         mass_def: Halo mass definition (e.g., '200m' or a MassDef object).
 
-        concentration: Concentration-mass relation (e.g., 'Duffy08' or a Concentration object). To apply the `eta` multiplicative factor, `concentration` should be a class wrapped around `pyccl.halos.concentration` that manages the multiplication.
+        concentration: Concentration-mass relation (e.g., 'Duffy08' or a
+            Concentration object). To apply the `eta` multiplicative factor,
+            `concentration` should be a class wrapped around
+            `pyccl.halos.concentration` that manages the multiplication.
 
-        log_L1/log_L2: :math:`\log_{10}` (luminosity bin edge) of the lens sample being modelled. The edges are defined s.t. :math:`(\log_{10}L_2 > \log_{10}L_1)`
+        log_L1/log_L2: :math:`\log_{10}` (luminosity bin edge) of the lens
+            sample being modelled. The edges are defined s.t. :math:`(\log_{10}L_2
+            > \log_{10}L_1)`
 
     HOD model based on Cacciato+2013 has 9 free parameters as listed below:
 
     .. rubric:: The CLF Parameters
 
-    * **log_L0**: :math:`\log_{10}` of the normalization factor :math:`(L_0)` of the central galaxy luminosity-halo mass scaling relation, :math:`L_c(M)`.
+    * **log_L0**: 
+      :math:`\log_{10}` of the normalization factor :math:`(L_0)`
+      of the central galaxy luminosity-halo mass scaling relation, :math:`L_c(M)`.
 
-    * **log_M1**: :math:`\log_{10}` of the characteristic halo mass scale :math:`(M_1)`, such that :math:`L_c(M) \propto M^{\gamma_1}` for :math:`{\rm halo-mass}, M \ll M_2`.
-    * **gamma_1**: slope of the central galaxy luminosity-halo mass scaling relation, :math:`L_c(M)` at the low-mass end :math:`(M \ll M1)`.
+    * **log_M1**: 
+      :math:`\log_{10}` of the characteristic halo mass scale :math:`(M_1)`,
+      such that :math:`L_c(M) \propto M^{\gamma_1}` for :math:`{\rm halo-mass},
+      M \ll M_2`.
 
-    * **gamma_2**: slope of the central galaxy luminosity-halo mass scaling relation, :math:`L_c(M)` at the high-mass end :math:`(M \gg M1)`.
+    * **gamma_1**: 
+      slope of the central galaxy luminosity-halo mass scaling relation,
+      :math:`L_c(M)` at the low-mass end :math:`(M \ll M1)`.
 
-    * **sigma_c**: scatter in the luminosities of central galaxies in the sample populating a fixed halo mass, :math:`M`.
+    * **gamma_2**: 
+      slope of the central galaxy luminosity-halo mass scaling relation,
+      :math:`L_c(M)` at the high-mass end :math:`(M \gg M1)`.
 
-    * **alpha_s**: faint end of the slope of the satellite galaxy occupation number. Currently, assumed independent of (M,z), but can be generalised.
+    * **sigma_c**: 
+      scatter in the luminosities of central galaxies in the sample populating
+      a fixed halo mass, :math:`M`.
 
-    * **b_0, b_1, b_2**: parameters affecting the overall scaling of the the satellite galaxy HOD/CLF/LF.
+    * **alpha_s**: 
+      faint end of the slope of the satellite galaxy occupation number.
+      Currently, assumed independent of (M,z), but can be generalised.
+
+    * **b_0, b_1, b_2**: 
+      parameters affecting the overall scaling of the the satellite galaxy
+      HOD/CLF/LF.
 
     Additional nusance parameters in the CLF model:
 
-    * **eta**: A multiplicative factor, as described in Cacciato+2013 for parent halo concentration.
+    * **eta**: 
+      A multiplicative factor, as described in Cacciato+2013 for parent halo
+      concentration.
 
-    * **R_s**: A multiplicative factor, alters the concentration of the satellite distribution. R_s=1 corresponds to fiducial case, where satellites density distr. follow the NFW profile of the parent halo.
+    * **R_s**: 
+      A multiplicative factor, alters the concentration of the satellite
+      distribution. R_s=1 corresponds to fiducial case, where satellites
+      density distr. follow the NFW profile of the parent halo.
 
     Note: 
         HODs are unitless. But the characteristic masses and luminosities hold
@@ -184,7 +210,9 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
 
                     c_\mathrm{halo}(M) = (1+\eta) \times c_\mathrm{baseline}(M)
 
-                Here, :math:`c_\mathrm{baseline}` is the c-M relation chosen which gets marginalised over by `eta`.
+                Here, :math:`c_\mathrm{baseline}` is the chosen c-M relation
+                which gets marginalised over by `eta` via the argument
+                `concentration` above.
         """
 
         # Luminosity thresholds (calibrated as h-dependent: log10(L / [h^-2 Lsun]))

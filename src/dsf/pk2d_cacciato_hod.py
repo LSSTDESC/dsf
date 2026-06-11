@@ -1,14 +1,13 @@
 import numpy as np
 import pyccl as ccl
+from modelling import (
+    _validate_pk2d_grids,
+    make_ccl_cosmology,
+)
 from numpy.typing import NDArray
-from hod_cacciato import CacciatoHOD, safe_upper_gamma 
 
 from dsf.data_vector.profiles import density_weighted_power_spectrum
-from modelling import (
-        make_ccl_cosmology,
-        _validate_pk2d_grids,
-)
-
+from dsf.hod_cacciato import CacciatoHOD
 
 __all__ = [
     "MASS_DEF",
@@ -35,7 +34,7 @@ class ScaledConcentration(ccl.halos.Concentration):
         """
         baseline_cM: a pyccl.halos.concentration class
         baseline_cM_kwargs: Arguments for a pyccl.halos.concentration class
-        eta: This multiplies the baseline c-M relation by (1+eta)
+        eta: This multiplies the baseline c-M relation in the form (1+eta)
         """
         self._eta = eta
         self.mass_def = baseline_cM_kwargs.pop("mass_def")
@@ -43,7 +42,8 @@ class ScaledConcentration(ccl.halos.Concentration):
         assert self.mass_def.rho_type == rho_type, "Inconsistent mass definition in concentration"
 
         # Instantiate the baseline model (e.g., Duffy08, Diemer15)
-        self.baseline_relation = baseline_cM(mass_def=self.mass_def, *baseline_cM_kwargs)
+        print(f"Extra baseline concentration parameters: -- {baseline_cM_kwargs} --")
+        self.baseline_relation = baseline_cM(mass_def=self.mass_def, **baseline_cM_kwargs)
         assert rho_type == self.baseline_relation.mass_def.rho_type 
 
         super().__init__(mass_def=self.mass_def)
@@ -96,7 +96,7 @@ def pk2d_cacciato_hod(
     *,
     k_array: NDArray[np.float64],
     a_array: NDArray[np.float64],
-    **hod_kwargs: Any,
+    **hod_kwargs,
 ) -> ccl.Pk2D:
     """Return the HOD galaxy-matter power spectrum for Delta Sigma.
 

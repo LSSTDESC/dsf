@@ -1,7 +1,6 @@
-from typing import Union, Optional
 import numpy as np
-from scipy.special import erf, gammaincc, gamma
 import pyccl as ccl
+from scipy.special import erf, gamma, gammaincc
 
 __all__ = [
     "safe_upper_gamma",
@@ -80,9 +79,9 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
         self,
         *,
         # halo mass def
-        mass_def: Union[str, ccl.halos.MassDef], 
+        mass_def: str | ccl.halos.MassDef, 
         # mass profile
-        concentration: Union[str, ccl.halos.Concentration], 
+        concentration: str | ccl.halos.Concentration, 
         # sample bin def
         log_L1, log_L2, 
         # hubble const
@@ -103,7 +102,7 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
         
         # define inputs that don't change throughout the analysis.
         self.hval = hval
-        self.cM = concentration 
+        #self.cM = concentration #use if needed
         self.ns_independent = False
         # sample luminosity bin definition
         self.log_L1 = log_L1
@@ -272,7 +271,9 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
         return 0.5 * (erf(term_max) - erf(term_min))
 
     def _Ns(self, M, a):
-        ### Here, adding cosmo and a, but these are not needed. Putting these just to be able to run the delta_sigma_builder
+        # Here, adding`a` as a kwarg, but are not needed for this work. Putting
+        # just to be able to run the delta_sigma_builder. Remove it in the
+        # future.
         """
         Input:
             M: Mass in Msun; internally converted to Msun/h

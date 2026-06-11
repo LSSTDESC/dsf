@@ -140,3 +140,13 @@ class HankelTransformBase:
         raise NotImplementedError(
             f"{self.__class__.__name__} does not support projected_skewness()."
         )
+
+    def correlation_matrix(self, covariance: FloatArray) -> FloatArray:
+        """Return the correlation matrix associated with a covariance matrix."""
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support correlation_matrix()."
+        )
+
+    def diagonal_error(self, covariance: FloatArray) -> FloatArray:
+        """Return one-sigma errors from a covariance matrix."""
+        raise NotImplementedError(f"{self.__class__.__name__} does not support diagonal_error().")

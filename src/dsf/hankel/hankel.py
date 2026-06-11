@@ -1,10 +1,20 @@
 """Public layer for all Hankel transform operations.
 
-This module provides the ``HankelTransform`` class, is an interface for
+This module provides the ``HankelTransform`` class, an interface for
 the ``HankelTransformFFTLog``, ``HankelTransformMatrixDirect``, and
 ``HankelTransformMatrixZeros`` classes. It provides public methods to
 compute projected and spherical correlation functions, as well as covariance
 matricies, from these underlying Hankel transform implementations.
+
+Each of the three available backends can be useful for different purposes.
+- ``HankelTransformFFTLog``: Supports projected and spherical 1D correlation functions.
+Fastest option for most 1D applications.
+- ``HankelTransformMatrixZeros``: Supports projected 1D and 2D Hankel transforms using
+zero-crossing methods. Requires fine-tuning of the zero-crossing points upon generation.
+Can exhibit ringing at small scales.
+- ``HankelTransformMatrixDirect``: Supports projected 1D and 2D Hankel transforms using
+direct matrix operator methods. Requires fine-tuning of the k-sampling upon generation.
+Robust against ringing at small scales, but can exhibit minor ringing at large scales.
 """
 
 from __future__ import annotations
@@ -163,7 +173,21 @@ class HankelTransform:
         order: float | int = 0,
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
-        """Project two spectra into a covariance-like radial statistic."""
+        """Compute a projected third-order radial tensor from three spectra.
+
+        Args:
+            k_pk: Wavenumber grid for tabulated spectra.
+            pk1: First spectrum values or callable spectrum.
+            pk2: Second spectrum values or callable spectrum.
+            pk3: Third spectrum values or callable spectrum.
+            order: Bessel order to use.
+            taper: Whether to suppress low-k and high-k edge power.
+            taper_kwargs: Optional settings for the spectrum taper.
+            **kwargs: Extra arguments passed to callable spectra.
+
+        Returns:
+            Radial grid and projected third-order radial tensor.
+        """
         return self.backend.projected_covariance(
             k_pk=k_pk,
             pk1=pk1,
@@ -178,5 +202,36 @@ class HankelTransform:
         matrix: FloatArray,
         r_bins: ArrayLike,
     ) -> tuple[FloatArray, FloatArray]:
-        """Average a radial matrix or tensor into radial bins."""
+        """Average a radial matrix or tensor into radial bins.
+
+        Args:
+            r: Radial grid associated with each axis of ``matrix``.
+            matrix: Radial matrix or tensor to bin.
+            r_bins: Radial bin edges.
+
+        Returns:
+            Radial bin centers and binned matrix or tensor.
+        """
         return self.backend.bin_radial_matrix(r=r, matrix=matrix, r_bins=r_bins)
+
+    def correlation_matrix(self, covariance: FloatArray) -> FloatArray:
+        """Return the correlation matrix associated with a covariance matrix.
+
+        Args:
+            covariance: Covariance matrix.
+
+        Returns:
+            Dimensionless correlation matrix.
+        """
+        return self.backend.correlation_matrix(covariance)
+
+    def diagonal_error(self, covariance: FloatArray) -> FloatArray:
+        """Return one-sigma errors from a covariance matrix.
+
+        Args:
+            covariance: Covariance matrix.
+
+        Returns:
+            Square root of the covariance diagonal.
+        """
+        return self.backend.diagonal_error(covariance)

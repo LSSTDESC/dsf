@@ -15,8 +15,8 @@ from dsf.pk2d_cacciato_hod import pk2d_cacciato_hod
 
 mpl.rcParams["text.usetex"] = "True"
 
-benchmark_indir = "../../benchmarks/data_vector/reference"
-benchmark_figdir = "../../benchmarks/data_vector/figures"
+benchmark_indir = "data_vector/reference"
+benchmark_figdir = "data_vector/figures"
 
 if __name__=="__main__":
 

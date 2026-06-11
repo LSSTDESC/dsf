@@ -1,6 +1,6 @@
 import numpy as np
 import pyccl as ccl
-from modelling import (
+from dsf.modelling import (
     _validate_pk2d_grids,
     make_ccl_cosmology,
 )

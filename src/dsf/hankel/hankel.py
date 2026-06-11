@@ -7,14 +7,16 @@ compute projected and spherical correlation functions, as well as covariance
 matricies, from these underlying Hankel transform implementations.
 
 Each of the three available backends can be useful for different purposes.
-- ``HankelTransformFFTLog``: Supports projected and spherical 1D correlation functions.
-Fastest option for most 1D applications.
-- ``HankelTransformMatrixZeros``: Supports projected 1D and 2D Hankel transforms using
-zero-crossing methods. Requires fine-tuning of the zero-crossing points upon generation.
-Can exhibit ringing at small scales.
-- ``HankelTransformMatrixDirect``: Supports projected 1D and 2D Hankel transforms using
-direct matrix operator methods. Requires fine-tuning of the k-sampling upon generation.
-Robust against ringing at small scales, but can exhibit minor ringing at large scales.
+
+- ``HankelTransformFFTLog``: Supports projected and spherical 1D correlation
+  functions. Fastest option for most 1D applications.
+- ``HankelTransformMatrixZeros``: Supports projected 1D and 2D Hankel
+  transforms using zero-crossing methods. Requires fine-tuning of the
+  zero-crossing points upon generation. Can exhibit ringing at small scales.
+- ``HankelTransformMatrixDirect``: Supports projected 1D and 2D Hankel
+  transforms using direct matrix operator methods. Requires fine-tuning
+  of the k-sampling upon generation. Robust against ringing at small scales,
+  but can exhibit minor ringing at large scales.
 """
 
 from __future__ import annotations

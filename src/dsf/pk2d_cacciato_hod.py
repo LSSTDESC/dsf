@@ -1,13 +1,13 @@
 import numpy as np
 import pyccl as ccl
-from dsf.modelling import (
-    _validate_pk2d_grids,
-    make_ccl_cosmology,
-)
 from numpy.typing import NDArray
 
 from dsf.data_vector.profiles import density_weighted_power_spectrum
 from dsf.hod_cacciato import CacciatoHOD
+from dsf.modelling import (
+    _validate_pk2d_grids,
+    make_ccl_cosmology,
+)
 
 __all__ = [
     "MASS_DEF",

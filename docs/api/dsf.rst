@@ -19,7 +19,9 @@ Submodules
    :maxdepth: 2
 
    dsf.delta_sigma_forecast_builder
+   dsf.hod_cacciato
    dsf.modelling
+   dsf.pk2d_cacciato_hod
 
 Module contents
 ---------------

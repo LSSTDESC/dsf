@@ -16,65 +16,56 @@ def safe_upper_gamma(a, x):
     return (safe_upper_gamma(a + 1, x) - x**a * np.exp(-x)) / a
 
 class CacciatoHOD(ccl.halos.HaloProfileHOD):
-    """
-    Inputs: 
+    r"""
+    Args:
         mass_def: Halo mass definition (e.g., '200m' or a MassDef object).
-        concentration: Concentration-mass relation (e.g., 'Duffy08' or a Concentration
-        object).  To apply the `eta` multiplicative factor, `concentration` should be a
-        class wrapped around pyccl.halos.concentration that manages the
-        multiplication.
 
-        HOD model based on Cacciato et al. (2013) has 9 free parameters as
-        listed below:
-        - log_L1/log_L2: log10(luminosity bin edge) of the lens sample being
-          modelled. (log_L2>log_L1)
-        - log_L0: log10 of the normalization factor (L0) of the central galaxy
-          luminosity-halo mass scaling relation, L_c(M).
-        - log_M1: log10 of the characteristic halo mass scale (M1), such that
-          L_c(M) \prop M^{\gamma_1} for halo-mass, M << M1
-        - gamma_1: slope of the central galaxy luminosity-halo mass scaling
-          relation, L_c(M) at the low-mass end (M << M1).
-        - gamma_2: slope of the central galaxy luminosity-halo mass scaling
-          relation, L_c(M) at the high-mass end (M >> M1).
-        - sigma_c: scatter in the luminosities of central galaxies in the
-          sample populating a fixed halo mass, M.
-        - alpha_s: faint end of the slope of the satellite galaxy occupation
-          number. Currently, assumed independent of (M,z), but can be
-          generalised.
-        - b_0, b_1, b_2: parameters affecting the overall scaling of the the
-          satellite galaxy HOD/CLF/LF.
+        concentration: Concentration-mass relation (e.g., 'Duffy08' or a Concentration object). To apply the `eta` multiplicative factor, `concentration` should be a class wrapped around `pyccl.halos.concentration` that manages the multiplication.
 
-        With additional nusance parameters:
-        - eta: A multiplicative factor, as described in Cacciato+2013 for parent
-          halo concentration
-        - R_s: A multiplicative factor, alters the concentration of the
-          satellite distribution. R_s=1 corresponds to fiducial case, where
-          satellites follow NFW of parent halo.
+        log_L1/log_L2: :math:`\log_{10}` (luminosity bin edge) of the lens sample being modelled. The edges are defined s.t. :math:`(\log_{10}L_2 > \log_{10}L_1)`
+
+    HOD model based on Cacciato+2013 has 9 free parameters as listed below:
+
+    .. rubric:: The CLF Parameters
+
+    * **log_L0**: :math:`\log_{10}` of the normalization factor :math:`(L_0)` of the central galaxy luminosity-halo mass scaling relation, :math:`L_c(M)`.
+
+    * **log_M1**: :math:`\log_{10}` of the characteristic halo mass scale :math:`(M_1)`, such that :math:`L_c(M) \propto M^{\gamma_1}` for :math:`{\rm halo-mass}, M \ll M_2`.
+    * **gamma_1**: slope of the central galaxy luminosity-halo mass scaling relation, :math:`L_c(M)` at the low-mass end :math:`(M \ll M1)`.
+
+    * **gamma_2**: slope of the central galaxy luminosity-halo mass scaling relation, :math:`L_c(M)` at the high-mass end :math:`(M \gg M1)`.
+
+    * **sigma_c**: scatter in the luminosities of central galaxies in the sample populating a fixed halo mass, :math:`M`.
+
+    * **alpha_s**: faint end of the slope of the satellite galaxy occupation number. Currently, assumed independent of (M,z), but can be generalised.
+
+    * **b_0, b_1, b_2**: parameters affecting the overall scaling of the the satellite galaxy HOD/CLF/LF.
+
+    Additional nusance parameters in the CLF model:
+
+    * **eta**: A multiplicative factor, as described in Cacciato+2013 for parent halo concentration.
+
+    * **R_s**: A multiplicative factor, alters the concentration of the satellite distribution. R_s=1 corresponds to fiducial case, where satellites density distr. follow the NFW profile of the parent halo.
 
     Note: 
-
         HODs are unitless. But the characteristic masses and luminosities hold
         the information of units and scalings involved. Here, we require the
-        masses and Luminosities in Msun/h and Lsun/h^2 respectively to make
+        masses and luminosities in :math:`M_\odot/h` and :math:`L_\odot/h^2` respectively to make
         sure that the Cacciato+13 CLF parameters can be directly passed.
 
-        CCL HMF is given as dn/dlog10(m[Msun]), so make sure to work with
-        masses in Msun units out of the HOD definition and use logarithmic base
+        CCL HMF is given as dn/dlog10(m[:math:`M_\odot`]), so make sure to work with
+        masses in :math:`M_\odot` units out of the HOD definition and use logarithmic base
         10 mass bins for integration.
 
-        To use the Cacciato+2013 HOD parameters as is, all the methods expect
-        the mass to be in Msun/h. So an internal conversion of pyCCL's Msun
+        To use the Cacciato+2013 HOD parameters as is, all the methods in this class expect
+        the mass to be in :math:`M_\odot/h`. So an internal conversion of pyCCL's :math:`M_\odot`
         mass is implemented where necessary.
 
         For Cacciato specific usecase, we do not vary free parameters in
         redshift dependent manner.
 
-        eta: multiplicative factor for parent halo concentration
-            set eta=0. to avoid scaling the c-M relation for the parent halo.
-        R_s: multiplicative factor for satellite/subhalo occupation
-            set R_s=1. to populate satellites following the same density distr
-            as the parent's NFW.
     """
+
     def __init__(
         self,
         *,
@@ -161,8 +152,8 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
         self._log10_h = np.log10(hval)
 
     def update_parameters(self, **kwargs):
-        """
-        Inputs: 
+        r"""
+        Args: 
             kwargs: dict of CLF free parameters
 
         Usage:
@@ -186,9 +177,16 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
                 relation as defined in Cacciato. Here, R_s is not a CCL
                 definition of anything.)
             Also,
-                the concentration of the parent halo needs to be modified by a
-                scaling factor (1+eta)
+                the concentration of the parent halo is modified by a
+                `eta` like scaling muneral as,
+
+                .. math::
+
+                    c_\mathrm{halo}(M) = (1+\eta) \times c_\mathrm{baseline}(M)
+
+                Here, :math:`c_\mathrm{baseline}` is the c-M relation chosen which gets marginalised over by `eta`.
         """
+
         # Luminosity thresholds (calibrated as h-dependent: log10(L / [h^-2 Lsun]))
         self.log_L0 = kwargs.get('log_L0', getattr(self, 'log_L0', 9.95))
         # Mass scales (calibrated as h-dependent: log10(M / [h^-1 Msun]))

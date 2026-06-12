@@ -23,10 +23,8 @@ __all__ = [
 
 
 class ScaledConcentration(ccl.halos.Concentration):
-    """
-    A CCL concentration class wrapper that scales a baseline concentration-Mass
-    relation via a free parameter `eta` as (1+eta).
-    """
+    """ A CCL concentration class wrapper that scales a baseline
+    concentration-Mass relation via a free parameter `eta` as (1+eta)."""
 
     name = 'Scaled_cM_Cacciato2013'
 
@@ -41,7 +39,6 @@ class ScaledConcentration(ccl.halos.Concentration):
         
         assert self.mass_def.rho_type == rho_type, "Inconsistent mass definition in concentration"
 
-        # Instantiate the baseline model (e.g., Duffy08, Diemer15)
         print(f"Extra baseline concentration parameters: -- {baseline_cM_kwargs} --")
         self.baseline_relation = baseline_cM(mass_def=self.mass_def, **baseline_cM_kwargs)
         assert rho_type == self.baseline_relation.mass_def.rho_type 
@@ -59,9 +56,12 @@ class ScaledConcentration(ccl.halos.Concentration):
     
     @property
     def eta(self):
+        """float: The concentration-Mass relation modifier parameter that
+        scales it by an overall factor of (1+eta)"""
         return self._eta
     @eta.setter
     def eta(self, eta):
+        """Updates the scaling factor (1+eta) of the c-M relation.""" 
         self._eta = eta
 
 MASS_DEF = ccl.halos.MassDef200m

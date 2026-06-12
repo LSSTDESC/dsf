@@ -43,7 +43,8 @@ class HankelTransform:
             self.backend = HankelTransformMatrixDirect(**kwargs)
         else:
             raise ValueError(
-                f"Unsupported backend '{backend}'. Use 'fftlog', 'matrix_zeros', or 'matrix_direct'."
+                f"""Unsupported backend '{backend}'. 
+                Use 'fftlog', 'matrix_zeros', or 'matrix_direct'."""
             )
 
     def projected_correlation(

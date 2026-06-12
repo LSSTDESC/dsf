@@ -155,7 +155,7 @@ def test_projected_correlation_interpolated_output_exists_and_correct_length(
     theta_eval,
     expected_len,
 ):
-    """Tests that projected_correlation_interpolated has shape ``(len(theta_eval), len(theta_eval))``."""
+    """Tests that projected_correlation_interpolated has shape ``(len(theta), len(theta))``."""
     ht_fft = HankelTransform(backend="fftlog")
     theta_vals, gamma_vals = ht_fft.projected_correlation_interpolated(
         theta_eval,
@@ -209,7 +209,7 @@ def test_spherical_correlation_interpolated_rejects_interpolation_outside_bounds
     pk,
     r_eval,
 ):
-    """Tests that spherical_correlation_interpolated rejects r outside the interpolation grid."""
+    """Tests that spherical_correlation_interpolated rejects r outside grid."""
     with pytest.raises(ValueError):
         ht_fft = HankelTransform(backend="fftlog")
         _, xi_vals = ht_fft.spherical_correlation_interpolated(
@@ -235,7 +235,7 @@ def test_projected_correlation_interpolated_rejects_interpolation_outside_bounds
     c_ell,
     theta_eval,
 ):
-    """Tests that projected_correlation_interpolated rejects theta outside the interpolation grid."""
+    """Tests that projected_correlation_interpolated rejects theta outside grid."""
     with pytest.raises(ValueError):
         ht_fft = HankelTransform(backend="fftlog")
         _, gamma_vals = ht_fft.projected_correlation_interpolated(

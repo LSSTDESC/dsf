@@ -1,22 +1,20 @@
 import numpy as np
 import pyccl as ccl
-from scipy.special import erf, gamma, gammaincc
+from scipy.special import erf
+
+from dsf.utils.special_func import safe_upper_inc_gamma
 
 __all__ = [
-    "safe_upper_gamma",
     "CacciatoHOD"
 ]
 
-@np.vectorize(excluded=["a"])
-def safe_upper_gamma(a, x):
-    if x <= 0 and a <= 0:
-        return np.inf
-    if a > 0:
-        return gammaincc(a, x) * gamma(a)
-    return (safe_upper_gamma(a + 1, x) - x**a * np.exp(-x)) / a
-
 class CacciatoHOD(ccl.halos.HaloProfileHOD):
     r"""
+    This class implements the galaxy-halo connection in the HOD framework based
+    on the Conditional Luminosity Function (CLF) model of Cacciato et al. 2013.
+    This framework is designed to model galaxy samples defined by luminosity
+    bins.
+    
     Args:
         mass_def: Halo mass definition (e.g., '200m' or a MassDef object).
 
@@ -65,13 +63,21 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
     Additional nusance parameters in the CLF model:
 
     * **eta**: 
-      A multiplicative factor, as described in Cacciato+2013 for parent halo
-      concentration.
+      A multiplicative factor, as described in Cacciato+2013, which modifies
+      the parent halo concentration as follows:
+
+      .. math::
+
+          c_\mathrm{halo}(M) = (1+\eta) \times c_\mathrm{baseline}(M)
+
+      Here, :math:`c_\mathrm{baseline}` is the chosen c-M relation
+      which gets marginalised-over by `eta`. `eta` acts via the c-M wrapper class
+      passed above to the `concentration` parameter.
 
     * **R_s**: 
       A multiplicative factor, alters the concentration of the satellite
       distribution. R_s=1 corresponds to fiducial case, where satellites
-      density distr. follow the NFW profile of the parent halo.
+      density distribution follows the NFW profile of the parent halo.
 
     Note: 
         HODs are unitless. But the characteristic masses and luminosities hold
@@ -102,7 +108,7 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
         # sample bin def
         log_L1, log_L2, 
         # hubble const
-        hval=0.739, 
+        h=0.739, 
         # CLF pars
         log_L0=9.95, log_M1=11.24, 
         gamma_1=3.18, gamma_2=0.245, 
@@ -118,7 +124,7 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
         self._disable_vanilla_hod_parameters()
         
         # define inputs that don't change throughout the analysis.
-        self.hval = hval
+        self.h = h
         #self.cM = concentration #use if needed
         self.ns_independent = False
         # sample luminosity bin definition
@@ -152,9 +158,7 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
 
     @log_L1.setter
     def log_L1(self, log_L1):
-        """
-        update faint end of sample luminosity bin log_L1
-        """
+        """Update faint end of sample luminosity bin log_L1"""
         self._log_L1 = log_L1
 
     @property
@@ -163,22 +167,23 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
 
     @log_L2.setter
     def log_L2(self, log_L2):
-        """
-        update bright end of sample luminosity bin log_L2
-        """
+        """Update bright end of sample luminosity bin log_L2"""
         self._log_L2 = log_L2
 
     @property
-    def hval(self):
-        return self._hval
-    @hval.setter
-    def hval(self, hval):
-        self._hval = hval
-        # cache log10(h) whenever hval is altered.
-        self._log10_h = np.log10(hval)
+    def h(self):
+        return self._h
+    @h.setter
+    def h(self, h):
+        """Update the value of Hubble parameter"""
+        self._h = h
+        # cache log10(h) whenever h is altered.
+        self._log10_h = np.log10(h)
 
     def update_parameters(self, **kwargs):
-        r"""
+        r"""Helper method to update either a selective set of CLF parameters or
+        all of them at once.
+
         Args: 
             kwargs: dict of CLF free parameters
 
@@ -194,25 +199,14 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
             same as the previous instantiation by passing just one parameter in
             kwargs dict.
 
-            To match the Cacciato parametrization:
-            set 
+        Note:
+            To match the Cacciato parametrization, set -
                 bg=bg_0, i.e., bg_p = 0,
                 bmax=1, i.e., bmax_0=1, bmax_p=0
-            redefine, 
+            and redefine, 
                 1/b_g = R_s (R_s is a multiplicative factor to the fiducial c-M
                 relation as defined in Cacciato. Here, R_s is not a CCL
                 definition of anything.)
-            Also,
-                the concentration of the parent halo is modified by a
-                `eta` like scaling muneral as,
-
-                .. math::
-
-                    c_\mathrm{halo}(M) = (1+\eta) \times c_\mathrm{baseline}(M)
-
-                Here, :math:`c_\mathrm{baseline}` is the chosen c-M relation
-                which gets marginalised over by `eta` via the argument
-                `concentration` above.
         """
 
         # Luminosity thresholds (calibrated as h-dependent: log10(L / [h^-2 Lsun]))
@@ -240,8 +234,9 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
 
     def _log_Lc(self, M_h):
         """
-        Input:
+        Args:
             M_h: Mass in Msun/h
+
         Returns:
             Characteristic central luminosity in Lsun/h^2
         """
@@ -288,7 +283,7 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
             [L-dL, L+dL] populated in a halo of mass M.
         """
         # internal conversion to Msun/h
-        M = M * self.hval
+        M = M * self.h
 
         log_Lc = self._log_Lc(M)
         denom = np.sqrt(2) * self.sigma_c
@@ -314,15 +309,15 @@ class CacciatoHOD(ccl.halos.HaloProfileHOD):
             between [L-dL, L+dL] populated in a halo of mass M.
         """
         # internal conversion to Msun/h
-        M = M * self.hval
+        M = M * self.h
 
         phi_star_s = 10 ** self._log_phi_star_s(M)
         log_Ls = self._log_L_star_s(M) #Lsun/h^2
         shape = (self.alpha_s + 1) / 2.0
         x_min = 2.0 * (self.log_L1 - log_Ls)
         x_max = 2.0 * (self.log_L2 - log_Ls)
-        integral_min = safe_upper_gamma(shape, 10 ** x_min)
-        integral_max = safe_upper_gamma(shape, 10 ** x_max)
+        integral_min = safe_upper_inc_gamma(shape, 10 ** x_min)
+        integral_max = safe_upper_inc_gamma(shape, 10 ** x_max)
         return (phi_star_s / 2.0) * (integral_min - integral_max)
 
 

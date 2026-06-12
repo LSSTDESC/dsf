@@ -9,6 +9,7 @@ Submodules
 
    dsf.utils.converters
    dsf.utils.integrators
+   dsf.utils.special_func
    dsf.utils.thread_limits
    dsf.utils.types
    dsf.utils.validators

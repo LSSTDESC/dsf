@@ -24,8 +24,8 @@ __all__ = [
 
 class ScaledConcentration(ccl.halos.Concentration):
     """
-    A CCL concentration class wrapper that multiplies a baseline
-    concentration relation by a free parameter (1+eta).
+    A CCL concentration class wrapper that scales a baseline concentration-Mass
+    relation via a free parameter `eta` as (1+eta).
     """
 
     name = 'Scaled_cM_Cacciato2013'

@@ -23,7 +23,7 @@ if __name__=="__main__":
     magfaint, magbright = -20,-21
     log_L1 = np.log10(magnitude_to_luminosity(magfaint)) #log10( L1 / [Lsun/h^2] )
     log_L2 = np.log10(magnitude_to_luminosity(magbright)) #log10( L2 / [Lsun/h^2] )
-    hodparams = dict(log_L1=log_L1, log_L2=log_L2, hval=cosmo_pars['h'], **cacciato_med_pars)
+    hodparams = dict(log_L1=log_L1, log_L2=log_L2, h=cosmo_pars['h'], **cacciato_med_pars)
 
     print(cosmo_pars)
     cosmo = ccl.Cosmology(**cosmo_pars)
@@ -80,8 +80,13 @@ if __name__=="__main__":
     # Get the benchmarking data: Mandelbaum 2006
     import pandas as pd
     # note the data units for ESD:hMsun/pc^2, r:kpc/h
-    df = pd.read_csv(f"{benchmark_indir}/esd_data_points_mandelbaum2006.csv", comment="#")
-    err = df["esd_high"] - df["esd_low"] # data errorbar
+    ddf = pd.read_csv(f"{benchmark_indir}/L4_esd_data_points_mandelbaum2006_webplotdigitizer.csv", comment="#")
+    err = ddf["esd_high"] - ddf["esd_low"] # data errorbar
+
+    # theory prediction from Mandelbaum+2005
+    df = pd.read_csv(f"{benchmark_indir}/rebin.lum.all.L4.lowfdev.csv", sep=" ", comment="#")
+    # real data
+    tdf = pd.read_csv(f"{benchmark_indir}/fitavgsig.hh.all.L4.lowfdev.csv", sep=" ", comment="#")
     # -----------------------------------------------
     
     colors = cmr.take_cmap_colors(
@@ -100,38 +105,37 @@ if __name__=="__main__":
     )
     
     ax.plot(
-        r,
-        delta_sigma,
+        r*cosmo_pars['h'],  # Mpc/h
+        delta_sigma/cosmo_pars['h'], # hMsun/pc^2
         color=colors[0],
         marker="o",
         markersize=6,
         label=rf"single redshift, $z_l={z_lens:.2f}$",
     )
     
-    print(cosmo_pars['h'])
-    print(np.c_[df["r"]/1000, df["r"]/1000/cosmo_pars['h']])
-    print(np.c_[df["esd_mid"], df["esd_mid"]*cosmo_pars['h']])
-    
-    #ax.errorbar(
-    #    df["r"]/1000/cosmo_pars['h'],
-    #    df["esd_mid"]*cosmo_pars['h'],
-    #    yerr=err*cosmo_pars['h'],
-    #    label="Mandelbaum+2006(Webplotdigitizer)"
-    #)
-    
-    # ignoring the h-factor conversion between DSF and Mandelbaum dataset
-    # it might be possible that only delta_sigma predication is off by an h
-    # factor. But the radius units are already in Mpc.
     ax.errorbar(
-        df["r"]/1000/cosmo_pars['h'],
-        df["esd_mid"],
+        ddf["r"]/1000, # Mpc/h
+        ddf["esd"], # hMsun/pc^2
         yerr=err,
         label="Mandelbaum+2006\n(Webplotdigitizer)"
     )
+
+    ax.errorbar(
+        df.r/1000, # Mpc/h
+        df.esd, # hMsun/pc^2
+        yerr=df.err,
+        label="L4 data\n(Mandelbaum+2006)"
+    )
+
+    ax.plot(
+        tdf.r, # Mpc/h
+        tdf.esd, # hMsun/pc^2
+        label="fitavgsig L4\n(Mandelbaum+2006)"
+    )
     
     ax.scatter(
-        r,
-        delta_sigma_bin,
+        r*cosmo_pars['h'], # Mpc/h
+        delta_sigma_bin/cosmo_pars['h'], # hMsun/pc^2
         color=colors[2],
         s=50,
         label="lens-bin averaged",
@@ -141,7 +145,7 @@ if __name__=="__main__":
     ax.set_xscale("log")
     ax.set_yscale("log")
     
-    ax.set_ylabel(r"$\Delta\Sigma(R)\ [M_\odot / {\rm pc}^2]$", fontsize=15)
+    ax.set_ylabel(r"$\Delta\Sigma(R)\ [hM_\odot / {\rm pc}^2]$", fontsize=15)
     ax.tick_params(axis="both", which="major", labelsize=13)
     ax.tick_params(axis="both", which="minor", labelsize=11)
     ax.legend(fontsize=13, frameon=False, title=r"$M_r-5\log h \in [-21,-20]$")
@@ -155,7 +159,7 @@ if __name__=="__main__":
     
     ax_res.set_xscale("log")
     ax_res.set_ylabel("ratio", fontsize=15)
-    ax_res.set_xlabel(r"$R\ [{\rm Mpc}]$", fontsize=15)
+    ax_res.set_xlabel(r"$R\ [{\rm Mpc}/h]$", fontsize=15)
     ax_res.tick_params(axis="both", which="major", labelsize=13)
     ax_res.tick_params(axis="both", which="minor", labelsize=11)
     

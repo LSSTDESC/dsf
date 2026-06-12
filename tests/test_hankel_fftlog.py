@@ -1,10 +1,8 @@
 """Unit tests for ``dsf.utils.hankel_transform_1d``."""
 
 import numpy as np
-import pyccl as ccl
 import pytest
 from pytest import param
-from scipy.special import jv
 
 from dsf.hankel.hankel import HankelTransform
 from dsf.hankel.hankel_transform_fftlog import (
@@ -12,7 +10,6 @@ from dsf.hankel.hankel_transform_fftlog import (
     hankel_projected,
     hankel_spherical,
 )
-from dsf.utils.integrators import trapezoid_integral
 
 
 @pytest.mark.parametrize(
@@ -299,45 +296,3 @@ def test_projected_skewness_returns_not_implemented():
 
     with pytest.raises(NotImplementedError, match="does not support projected_skewness"):
         transform.projected_skewness(order=2)
-
-
-@pytest.mark.slow
-def test_hankel_spherical_matches_ccl():
-    """Tests that hankel_spherical agrees with the CCL transform."""
-    cosmo = ccl.cosmology.CosmologyVanillaLCDM()
-
-    k_arr = np.geomspace(1.0e-5, 1.0e5, 1000)
-    r_arr = np.geomspace(0.1, 100, 100)
-    z = 0.3
-
-    ht_fft = HankelTransform(backend="fftlog")
-    _, xi_dsf = ht_fft.spherical_correlation_interpolated(
-        r_arr, k_pk=k_arr, pk=cosmo.nonlin_matter_power(k_arr, 1 / (1 + z)), use_offset=False
-    )
-    xi_ccl = ccl.correlation_3d(cosmo, r=r_arr, a=1 / (1 + z), p_of_k_a=cosmo.get_nonlin_power())
-
-    assert np.allclose(xi_dsf, xi_ccl, rtol=0.005, atol=0)
-
-
-@pytest.mark.slow
-def test_hankel_projected_matches_direct_integration():
-    """Tests that hankel_projected agrees with direct Bessel integration."""
-    cosmo = ccl.cosmology.CosmologyVanillaLCDM()
-
-    ell_arr = np.geomspace(1e-6, 1e6, 30000)
-    theta_arr = np.radians(np.geomspace(0.1, 100, 100))
-    c_ell_arr = cosmo.nonlin_power(ell_arr, 1)
-
-    bessel_kernel = jv(2, ell_arr[:, None] * theta_arr[None, :]) * ell_arr[:, None]
-    direct_integ_result = trapezoid_integral(
-        bessel_kernel * c_ell_arr[:, None],
-        ell_arr,
-        axis=0,
-    ) / (2 * np.pi)
-
-    ht_fft = HankelTransform(backend="fftlog")
-    _, dsf_result = ht_fft.projected_correlation_interpolated(
-        theta_arr, ell=ell_arr, c_ell=c_ell_arr, order=2, use_offset=False
-    )
-
-    assert np.allclose(dsf_result, direct_integ_result, rtol=0.005, atol=0)

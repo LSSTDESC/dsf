@@ -28,6 +28,7 @@ from dsf.utils.types import ArrayLike, FloatArray, SpectrumInput
 from dsf.utils.validators import (
     as_1d_float_array,
     validate_1d_pair,
+    validate_interpolation_within_bounds,
     validate_positive_scalar,
     validate_power_spectrum_inputs,
     validate_strictly_increasing,
@@ -302,6 +303,13 @@ class HankelTransformMatrixZeros(HankelTransformBase):
             pk_name="spectrum",
         )
 
+        try:
+            validate_interpolation_within_bounds(self.k[order], k_arr, "matrix k grid")
+        except ValueError as e:
+            raise ValueError(
+                "The tabulated k-values of the spectrum do not cover the full matrix grid."
+            ) from e
+
         if taper:
             taper_kwargs = {} if taper_kwargs is None else taper_kwargs
             spectrum_arr = self.taper_spectrum(
@@ -315,8 +323,6 @@ class HankelTransformMatrixZeros(HankelTransformBase):
                 self.k[order],
                 k_arr,
                 spectrum_arr,
-                left=0.0,
-                right=0.0,
             ),
             dtype=float,
         )
@@ -600,6 +606,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
 
         validate_strictly_increasing(r_arr, "r")
         validate_strictly_increasing(r_bins_arr, "r_bins")
+        validate_interpolation_within_bounds(r_bins_arr, r_arr, "r_bins")
 
         if np.any(r_bins_arr <= 0.0):
             raise ValueError("r_bins must contain only positive values.")

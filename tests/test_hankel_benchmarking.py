@@ -145,12 +145,11 @@ def test_hankel_projected_covariance_agrees_between_zeros_and_direct():
         orders=[2],
     )
 
-    ell = ht_matz.backend.k[2]
-
+    ell_z = ht_matz.backend.k[2]
     r_gkgk_z, cov_gkgk_z = ht_matz.projected_covariance(
-        k_pk=ell,
-        pk1=cosmo.nonlin_power(ell, a),
-        pk2=cosmo.nonlin_power(ell, a),
+        k_pk=ell_z,
+        pk1=cosmo.nonlin_power(ell_z, a),
+        pk2=cosmo.nonlin_power(ell_z, a),
         order=2,
     )
     r_matz, cov_matz = ht_matz.bin_radial_matrix(r_gkgk_z, cov_gkgk_z, r_out * cosmo["h"])
@@ -159,17 +158,18 @@ def test_hankel_projected_covariance_agrees_between_zeros_and_direct():
         backend="matrix_direct",
         r_min=np.min(theta_arr),
         r_max=np.max(theta_arr),
-        k_min=8.0e-2,
+        k_min=5.0e-2,
         k_max=1.0e3,
         n_k=5000,
         n_r=2000,
         orders=[2],
     )
 
+    ell_d = ht_matd.backend.k[2]
     r_gkgk_d, cov_gkgk_d = ht_matd.projected_covariance(
-        k_pk=ell,
-        pk1=cosmo.nonlin_power(ell, a),
-        pk2=cosmo.nonlin_power(ell, a),
+        k_pk=ell_d,
+        pk1=cosmo.nonlin_power(ell_d, a),
+        pk2=cosmo.nonlin_power(ell_d, a),
         order=2,
     )
     r_matd, cov_matd = ht_matd.bin_radial_matrix(r_gkgk_d, cov_gkgk_d, r_out * cosmo["h"])

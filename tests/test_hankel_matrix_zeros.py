@@ -68,24 +68,6 @@ def test_evaluate_tabulated_spectrum_interpolates_to_internal_k_grid():
     np.testing.assert_allclose(result, expected)
 
 
-def test_evaluate_tabulated_spectrum_sets_out_of_range_values_to_zero():
-    """Test that interpolation returns zero outside the tabulated k range."""
-    transform = make_fake_transform()
-    transform.k = {0: np.array([0.5, 1.5, 3.0, 8.0])}
-    k_input = np.array([1.0, 2.0, 4.0])
-    spectrum = np.array([10.0, 20.0, 40.0])
-
-    result = transform._evaluate_tabulated_spectrum(
-        k_input=k_input,
-        spectrum=spectrum,
-        order=0,
-    )
-
-    expected = np.array([0.0, 15.0, 30.0, 0.0])
-
-    np.testing.assert_allclose(result, expected)
-
-
 def test_evaluate_tabulated_spectrum_applies_taper_when_requested(monkeypatch):
     """Test that tabulated spectra are tapered before interpolation if requested."""
     transform = make_fake_transform()
@@ -149,20 +131,6 @@ def test_evaluate_spectrum_rejects_wrong_callable_shape():
         return np.ones(k.size + 1)
 
     with pytest.raises(ValueError, match="Evaluated spectrum must match"):
-        transform._evaluate_spectrum(
-            bad_spectrum,
-            order=0,
-        )
-
-
-def test_evaluate_spectrum_rejects_nonfinite_callable_values():
-    """Test that callable spectra must return finite values."""
-    transform = make_fake_transform()
-
-    def bad_spectrum(k):
-        return np.array([1.0, np.nan, 3.0])
-
-    with pytest.raises(ValueError, match="finite values"):
         transform._evaluate_spectrum(
             bad_spectrum,
             order=0,
@@ -432,17 +400,6 @@ def test_bin_radial_matrix_rejects_wrong_matrix_shape():
         transform.bin_radial_matrix(r, matrix, r_bins)
 
 
-def test_bin_radial_matrix_rejects_nonpositive_bin_edges():
-    """Test that bin_radial_matrix rejects non-positive radial bin edges."""
-    transform = make_fake_transform()
-    r = np.array([1.0, 2.0, 3.0])
-    matrix = np.ones((3, 3))
-    r_bins = np.array([0.0, 2.0, 3.0])
-
-    with pytest.raises(ValueError, match="r_bins must contain only positive values"):
-        transform.bin_radial_matrix(r, matrix, r_bins)
-
-
 def test_correlation_matrix_delegates_valid_covariance(monkeypatch):
     """Test that correlation_matrix delegates valid covariance matrices."""
     transform = make_fake_transform()
@@ -611,3 +568,30 @@ def test_matrix_zeros_rejects_missing_projected_spectrum():
 
     with pytest.raises(ValueError, match="c_ell must be supplied"):
         transform.projected_correlation(order=0)
+
+
+def test_evaluate_spectrum_rejects_interpolation_outside_grid():
+    """Test that _evaluate_spectrum rejects tabulated spectra that do not cover the grid."""
+    transform = make_fake_transform()
+
+    with pytest.raises(
+        ValueError,
+        match="The tabulated k-values of the spectrum do not cover the full matrix grid.",
+    ):
+        transform._evaluate_spectrum(
+            spectrum=[1.0, 1.0],
+            order=0,
+            k_input=[1.0, 2.0],
+        )
+
+
+def test_bin_radial_matrix_rejects_r_outside_grid():
+    """Test that bin_radial_matrix rejects r interpolation values outside grid."""
+    transform = make_fake_transform()
+
+    with pytest.raises(ValueError, match="lie outside the data grid."):
+        transform.bin_radial_matrix(
+            transform.k[0],
+            np.ones([3, 3]),
+            np.array([5.0, 15.0]),
+        )

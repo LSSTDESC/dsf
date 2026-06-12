@@ -755,12 +755,12 @@ def validate_hankel_1d_grid_spacing(
         name: Name of the k or ell grid used in error messages.
     """
     x_arr = validate_positive_strictly_increasing_1d_array(input_values, name, min_size=2)
-    
+
     lnx = np.log(x_arr)
     dlnx = np.diff(lnx)
     if not np.allclose(dlnx, dlnx[0]):
         raise ValueError(f"{name} must have uniform logarithmic spacing for Hankel transforms.")
-        
+
     return x_arr
 
 

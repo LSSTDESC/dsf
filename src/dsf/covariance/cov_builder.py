@@ -797,11 +797,15 @@ class DeltaSigmaCovarianceBuilder:
             "orders",
             tuple(sorted({self.order_gm, self.order_gg, self.order_cross})),
         )
-        kwargs.setdefault("n_zeros", 28000)
-        kwargs.setdefault("n_zeros_step", 1000)
-        kwargs.setdefault("prune_r", None)
-        kwargs.setdefault("verbose", False)
-        kwargs.setdefault("max_iterations", 1000)
+        if kwargs["backend"] == "matrix_direct":
+            kwargs.setdefault("n_r", 3000)
+            kwargs.setdefault("n_k", 3000)
+        elif kwargs["backend"] == "matrix_zeros":
+            kwargs.setdefault("n_zeros", 28000)
+            kwargs.setdefault("n_zeros_step", 1000)
+            kwargs.setdefault("prune_r", None)
+            kwargs.setdefault("verbose", False)
+            kwargs.setdefault("max_iterations", 1000)
 
         return HankelTransform(**kwargs)
 

@@ -1,4 +1,11 @@
+# call signature: 
+# ipython -i plot_cacciato_esd.py cacciato_esd.png 0 0 ==> cacciato_esd.png
+# ipython -i plot_cacciato_esd.py cacciato_esd.png 0 1 ==> cacciato_esd_shifted_yval.png
+# ipython -i plot_cacciato_esd.py cacciato_esd_log.png 1 0 ==> cacciato_esd_log.png
+# ipython -i plot_cacciato_esd.py cacciato_esd_log.png 1 1 ==> cacciato_esd_log_shifted_yval.png
+
 import sys
+from pathlib import Path
 
 import cmasher as cmr
 import matplotlib as mpl
@@ -10,6 +17,7 @@ from data_vector.reference.cacciato_inputs import (
     cosmo_pars,
     magnitude_to_luminosity,
 )
+from data_vector.reference.obs_data_for_cacciato import obs_data_vector
 
 from dsf.data_vector.delta_sigma_builder import DeltaSigmaCalculator
 from dsf.pk2d_cacciato_hod import pk2d_cacciato_hod
@@ -22,9 +30,17 @@ benchmark_figdir = "data_vector/figures"
 if __name__=="__main__":
 
     fname = None
+    shift_h_factor = False
     if len(sys.argv) > 1:
-        fname = f"{benchmark_figdir}/{sys.argv[1]}"
+        fname = Path(sys.argv[1])
         plot_log = bool(int(sys.argv[2]))
+        shift_h_factor = bool(int(sys.argv[3]))
+
+    if shift_h_factor:
+        fname = fname.stem + f"_shifted_yval{fname.suffix}"
+
+    fname = Path(f"{benchmark_figdir}/{fname}")
+    print(fname)
 
     magfaint, magbright = -20,-21
     log_L1 = np.log10(magnitude_to_luminosity(magfaint)) #log10( L1 / [Lsun/h^2] )
@@ -35,9 +51,9 @@ if __name__=="__main__":
     cosmo = ccl.Cosmology(**cosmo_pars)
     
     # prepare inputs for ESD calculation
-    # 0.04 - 2 Mpc/h in 12 bins
-    r = np.geomspace(0.04/cosmo_pars['h'], 2.0/cosmo_pars['h'], 12)
-
+    # equivalent numbers for 0.04 - 2 in Mpc/h in 12 bins
+    r = np.geomspace(0.04/cosmo_pars['h'], 2.0/cosmo_pars['h'], 12) #Mpc
+ 
     z_lens = 0.1
     a_lens = 1.0 / (1.0 + z_lens)
     
@@ -127,7 +143,7 @@ if __name__=="__main__":
         dd_y_err_upper = np.log10(ddf.esd + err) - dd_y
         dd_y_err = np.array([dd_y_err_lower, dd_y_err_upper])
 
-        # data
+        # data: only blue gal data
         d_x = np.log10(df["r"]/1000)
         d_y = np.log10(df.esd)
         #d_y_err = np.log10(df.err)
@@ -135,37 +151,65 @@ if __name__=="__main__":
         d_y_err_lower = d_y - np.log10(df.esd - df.err)
         d_y_err_upper = np.log10(df.esd + df.err) - d_y
         d_y_err = np.array([d_y_err_lower, d_y_err_upper])
+
+        # full sample data
+        f_x = np.log10(obs_data_vector.r/1000)
+        f_y = np.log10(obs_data_vector.esd)
+        f_y_err_lower = f_y - np.log10(obs_data_vector.esd - obs_data_vector.err)
+        f_y_err_upper = np.log10(obs_data_vector.esd + obs_data_vector.err) - f_y
+        f_y_err = np.array([f_y_err_lower, f_y_err_upper])
+
         # fit to data
         dfit_x = np.log10(tdf.r)
         dfit_y = np.log10(tdf.esd)
+
         #DSF model
         t_x = np.log10(r*cosmo_pars['h']) #Mpc/h
         t_y = np.log10(delta_sigma/cosmo_pars['h'])
         t_bin_x = np.log10(r*cosmo_pars['h']) #Mpc/h
         t_bin_y = np.log10(delta_sigma_bin/cosmo_pars['h'])
 
+        if shift_h_factor:
+            # this is just a debugging step
+            # assume units already in hMsun/pc^2
+            t_y = np.log10(delta_sigma) 
+            t_bin_y = np.log10(delta_sigma_bin)
+
         xscale = "linear"
         yscale = "linear"
         xlabel = r"$\log_{10}\left[ R/ (h^{-1}{\rm Mpc}) \right]$"
         ylabel = r"$\log_{10}\left[ \Delta\Sigma(R)/\ (h{\rm M_\odot {pc}^{-2}}) \right]$"
-
     else:
         # webplotdigitizer
         dd_x = ddf["r"]/1000
         dd_y = ddf["esd"]
         dd_y_err = err
-        # data
+
+        # data: only blue gal data
         d_x = df["r"]/1000
         d_y = df.esd
         d_y_err = df.err
+
+        # full sample data
+        f_x = obs_data_vector.r/1000
+        f_y = obs_data_vector.esd
+        f_y_err = obs_data_vector.err
+
         # fit to data
         dfit_x = tdf.r
         dfit_y = tdf.esd
+
         # theory
         t_x = r*cosmo_pars['h']
         t_y = delta_sigma/cosmo_pars['h']
         t_bin_x = r*cosmo_pars['h']
         t_bin_y = delta_sigma_bin/cosmo_pars['h']
+
+        if shift_h_factor:
+            # this is just a debugging step
+            # assume units already in hMsun/pc^2
+            t_y = delta_sigma
+            t_bin_y = delta_sigma_bin
 
         xscale = "log"
         yscale = "log"
@@ -198,20 +242,28 @@ if __name__=="__main__":
         label="Mandelbaum+2006\n(Webplotdigitizer)"
     )
 
+    ## data
+    #ax.errorbar(
+    #    d_x, # Mpc/h
+    #    d_y, # hMsun/pc^2
+    #    yerr=d_y_err,
+    #    label="L4 data\n(Mandelbaum+2006)"
+    #)
+
     # data
     ax.errorbar(
-        d_x, # Mpc/h
-        d_y, # hMsun/pc^2
-        yerr=d_y_err,
-        label="L4 data\n(Mandelbaum+2006)"
+        f_x, # Mpc/h
+        f_y, # hMsun/pc^2
+        yerr=f_y_err,
+        label="full L4 data\n(Mandelbaum+2006)"
     )
 
-    # fit to data
-    ax.plot(
-        dfit_x, # Mpc/h
-        dfit_y, # hMsun/pc^2
-        label="fitavgsig L4\n(Mandelbaum+2006)"
-    )
+    ## fit to data
+    #ax.plot(
+    #    dfit_x, # Mpc/h
+    #    dfit_y, # hMsun/pc^2
+    #    label="fitavgsig L4\n(Mandelbaum+2006)"
+    #)
     
     ax.set_yscale(yscale)
     ax.set_ylabel(ylabel, fontsize=15)

@@ -5,7 +5,11 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pyccl as ccl
-from data_vector.reference.cacciato_inputs import cacciato_med_pars, cosmo_pars, magnitude_to_luminosity
+from data_vector.reference.cacciato_inputs import (
+    cacciato_med_pars,
+    cosmo_pars,
+    magnitude_to_luminosity,
+)
 
 from dsf.data_vector.delta_sigma_builder import DeltaSigmaCalculator
 from dsf.pk2d_cacciato_hod import pk2d_cacciato_hod
@@ -84,7 +88,10 @@ if __name__=="__main__":
     # Get the benchmarking data: Mandelbaum 2006
     import pandas as pd
     # note the data units for ESD:hMsun/pc^2, r:kpc/h
-    ddf = pd.read_csv(f"{benchmark_indir}/L4_esd_data_points_mandelbaum2006_webplotdigitizer.csv", comment="#")
+    ddf = pd.read_csv(
+            f"{benchmark_indir}/L4_esd_data_points_mandelbaum2006_webplotdigitizer.csv"
+            , comment="#"
+    )
     err = ddf["esd_high"] - ddf["esd_low"] # data errorbar
 
     # theory prediction from Mandelbaum+2005

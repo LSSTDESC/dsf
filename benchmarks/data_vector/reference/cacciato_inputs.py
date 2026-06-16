@@ -24,7 +24,8 @@ cacciato_med_pars = dict(
     b_2=-0.217,  # unitless -- needs grid rescaling for Msun/h -> Msun
 )
 
-# to use units which do not have h factors, you will have to redefine M12 function itself. A mere scaling of b parameters can't capture that.
+# to use units which do not have h factors, you will have to redefine M12
+# function itself. A mere scaling of b parameters can't capture that.
 #def get_h_dep_cacciato_pars(hval=None):
 #    # remove h-independence to work with CCL
 #    p = cacciato_med_pars
@@ -45,7 +46,7 @@ cacciato_med_pars = dict(
 
 # luminosity bins used in Cacciato+2013
 mag_edges = np.linspace(-23, -17, 7)
-mag_bins = np.array(list(zip(mag_edges[:-1], mag_edges[1:])))
+mag_bins = np.array(list(zip(mag_edges[:-1], mag_edges[1:], strict=True)))
 
 # Note: Cacciato compiles data vectors from different studies, as a result,
 # they used different samples (roughly similar) for clustering, lensing and LF

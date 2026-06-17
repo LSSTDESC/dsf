@@ -1,0 +1,87 @@
+# # ======================================================================================
+# Mandelbaum et al. (2006) Luminosity Bin Mapping
+# Reference Paper: MNRAS, 368, 715 (https://ui.adsabs.harvard.edu/abs/2006MNRAS.368..715M)
+# Data Repository: https://github.com/rmandelb/mandelbaum-data/tree/master/halomass-2006
+# ======================================================================================
+
+dir: "data_vector/reference/cacciato2013"
+
+L1:
+  magnitude_bounds:
+    faint_limit: -17.0
+    bright_limit: -18.0
+  mean_redshift: 0.032
+  total_object_count: 10047
+  files:
+    high_fdev: "rebin.lum.all.L1.highfdev.dat"
+    low_fdev: "rebin.lum.all.L1.lowfdev.dat"
+
+L2:
+  magnitude_bounds:
+    faint_limit: -18.0
+    bright_limit: -19.0
+  mean_redshift: 0.047
+  total_object_count: 29730
+  files:
+    high_fdev: "rebin.lum.all.L2.highfdev.dat"
+    low_fdev: "rebin.lum.all.L2.lowfdev.dat"
+
+L3:
+  magnitude_bounds:
+    faint_limit: -19.0
+    bright_limit: -20.0
+  mean_redshift: 0.071
+  total_object_count: 85766
+  files:
+    high_fdev: "rebin.lum.all.L3.highfdev.dat"
+    low_fdev: "rebin.lum.all.L3.lowfdev.dat"
+
+L4:
+  magnitude_bounds:
+    faint_limit: -20.0
+    bright_limit: -21.0
+  mean_redshift: 0.1
+  total_object_count: 141976
+  files:
+    high_fdev: "rebin.lum.all.L4.highfdev.dat"
+    low_fdev: "rebin.lum.all.L4.lowfdev.dat"
+
+L5f:
+  magnitude_bounds:
+    faint_limit: -21.0
+    bright_limit: -21.5
+  mean_redshift: 0.14
+  total_object_count: 60994
+  files:
+    high_fdev: "rebin.lum.all.L5faint.highfdev.dat"
+    low_fdev: "rebin.lum.all.L5faint.lowfdev.dat"
+
+L5b:
+  magnitude_bounds:
+    faint_limit: -21.5
+    bright_limit: -22.0
+  mean_redshift: 0.17
+  total_object_count: 34920
+  files:
+    high_fdev: "rebin.lum.all.L5bright.highfdev.dat"
+    low_fdev: "rebin.lum.all.L5bright.lowfdev.dat"
+
+L6f:
+  magnitude_bounds:
+    faint_limit: -22.0
+    bright_limit: -22.5
+  mean_redshift: 0.20
+  total_object_count: 13067
+  files:
+    high_fdev: "rebin.lum.all.L6faint.highfdev.dat"
+    low_fdev: "rebin.lum.all.L6faint.lowfdev.dat"
+
+L6b:
+  magnitude_bounds:
+    faint_limit: -22.5
+    bright_limit: -23.0
+  mean_redshift: 0.22
+  total_object_count: 2933
+  files:
+    high_fdev: "rebin.lum.all.L6bright.highfdev.dat"
+    low_fdev: "rebin.lum.all.L6bright.lowfdev.dat"

@@ -12,22 +12,25 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pyccl as ccl
-from data_vector.reference.cacciato_inputs import (
+from cacciato_validation.cacciato_inputs import (
     cacciato_med_pars,
     cosmo_pars,
     magnitude_to_luminosity,
 )
-from data_vector.reference.obs_data_for_cacciato import obs_data_vector
+from cacciato_validation.obs_data_for_cacciato import get_full_sample_esd, config
 
 from dsf.data_vector.delta_sigma_builder import DeltaSigmaCalculator
 from dsf.pk2d_cacciato_hod import pk2d_cacciato_hod
 
 mpl.rcParams["text.usetex"] = "True"
 
-benchmark_indir = "data_vector/reference"
+benchmark_indir = config["dir"]
 benchmark_figdir = "data_vector/figures"
 
 if __name__=="__main__":
+
+    # This string completely defines the Cacciato sample on interest
+    lumbin = "L6f"
 
     fname = None
     shift_h_factor = False
@@ -37,12 +40,18 @@ if __name__=="__main__":
         shift_h_factor = bool(int(sys.argv[3]))
 
     if shift_h_factor:
-        fname = fname.stem + f"_shifted_yval{fname.suffix}"
+        fname = fname.stem + f"_{lumbin}" + f"_shifted_yval{fname.suffix}"
 
     fname = Path(f"{benchmark_figdir}/{fname}")
     print(fname)
 
-    magfaint, magbright = -20,-21
+    magfaint = config[lumbin]["magnitude_bounds"]["faint_limit"]
+    magbright= config[lumbin]["magnitude_bounds"]["bright_limit"]
+    file_high = config[lumbin]["files"]["high_fdev"]
+    file_low = config[lumbin]["files"]["low_fdev"]
+    z_lens = config[lumbin]["mean_redshift"]
+    a_lens = 1.0 / (1.0 + z_lens)
+
     log_L1 = np.log10(magnitude_to_luminosity(magfaint)) #log10( L1 / [Lsun/h^2] )
     log_L2 = np.log10(magnitude_to_luminosity(magbright)) #log10( L2 / [Lsun/h^2] )
     hodparams = dict(log_L1=log_L1, log_L2=log_L2, h=cosmo_pars['h'], **cacciato_med_pars)
@@ -54,9 +63,6 @@ if __name__=="__main__":
     # equivalent numbers for 0.04 - 2 in Mpc/h in 12 bins
     r = np.geomspace(0.04/cosmo_pars['h'], 2.0/cosmo_pars['h'], 12) #Mpc
  
-    z_lens = 0.1
-    a_lens = 1.0 / (1.0 + z_lens)
-    
     k_array = np.geomspace(1.0e-3, 60.0, 90)
     a_array = np.linspace(0.3, 1.0, 16)
     
@@ -93,8 +99,8 @@ if __name__=="__main__":
         r=r,
         lens_dndz=(z, n_z),
         cosmo=cosmo,
-        z_min=0.05,
-        z_max=0.15,
+        z_min=z_lens-z_lens/2,
+        z_max=z_lens+z_lens/2,
     )
     # compare the binned calculation with that at one redshift
     ratio = delta_sigma_bin / delta_sigma
@@ -157,6 +163,7 @@ if __name__=="__main__":
         #dfit_y = np.log10(tdf.esd)
 
         # full sample data: Mandelbaum+2006
+        obs_data_vector = get_full_sample_esd(benchmark_indir, file_high, file_low)
         f_x = np.log10(obs_data_vector.r/1000)
         rmask = (f_x > -1.5)
         f_x = f_x[rmask]
@@ -260,6 +267,8 @@ if __name__=="__main__":
         f_y, # hMsun/pc^2
         yerr=f_y_err,
         capsize=4,
+        marker = "o",
+        ls = "-",
         label="full L4 data\n(Mandelbaum+2006)"
     )
 
@@ -272,7 +281,7 @@ if __name__=="__main__":
     
     ax.set_yscale(yscale)
     ax.set_ylabel(ylabel, fontsize=15)
-    ax.legend(fontsize=10, frameon=False, title=r"$M_r-5\log h \in [-21,-20]$")
+    ax.legend(fontsize=10, frameon=False, title=r"$M_r-5\log h \in [%0.1f, %0.1f]$"%(magfaint,magbright))
     
     ax_res.axhline(1.0, color="lightgray", linewidth=1.4, linestyle="--")
     ax_res.plot(
@@ -302,7 +311,7 @@ if __name__=="__main__":
     
     fig.subplots_adjust(left=0.18, right=0.97, bottom=0.15, top=0.94)
     
-    outfname = fname if fname is not None else f"{benchmark_figdir}/cacciato_esd.png"
+    outfname = fname if fname is not None else f"{benchmark_figdir}/cacciato_esd_{lumbin}.png"
     plt.savefig(outfname, bbox_inches="tight", dpi=200)
     print("saved figure at ", outfname)
 

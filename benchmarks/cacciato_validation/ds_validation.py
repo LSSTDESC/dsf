@@ -8,16 +8,11 @@ from scipy.interpolate import InterpolatedUnivariateSpline as ius
 import cosmology as cc
 import hod as h
 
-from cacciato_inputs import (
-    cacciato_med_pars,
-    cosmo_pars,
-    magnitude_to_luminosity,
-)
+# prepare CLF class and dsf prediction to compare against AUM
 from obs_data_for_cacciato import get_full_sample_esd, config
-
-from dsf.data_vector.delta_sigma_builder import DeltaSigmaCalculator
-from dsf.pk2d_cacciato_hod import pk2d_cacciato_hod
+from predict_dsf_ds_for_cacciato_sample import predict_ds_from_dsf
 from dsf.hod_cacciato import CacciatoHOD
+from dsf.pk2d_cacciato_hod import MASS_DEF, CONCENTRATION
 
 def getdblarr(r):
     temp=h.doubleArray(r.size)
@@ -25,8 +20,8 @@ def getdblarr(r):
         temp[i]=r[i]
     return temp
 
-def initializeHOD(Om0=Om0, w0=-1, wa=0, Omk=0.0, hval=hval, 
-        Omb=Omb, th=2.726, s8=s8, nspec=nspec,\
+def initializeHOD(Om0=0.278, w0=-1, wa=0, Omk=0.0, hval=0.739, 
+        Omb=0.041730, th=2.726, s8=0.763, nspec=0.978,\
         ximax=log10(8.0), cfac=1.0,\
         #irrelevant factors below
         logMmin=13.0, siglogM=0.5, logMsat=14.0, alpsat=1.0,\
@@ -62,77 +57,98 @@ def put_spline(xx, yy, ext=1):
     #ext=3 of ‘const’, return the boundary value
     return ius(xx, yy, ext=ext)
 
+def validate_HOD_interpolation(LMhalo, Ncen, Nsat, aa, ius_Ncen, ius_Nsat, ylim=None):
+    """This function validates the interpolation bahaviour of AUM and scipy
+    agaist the analytical value produce by the CacciatoHOD class."""
+
+    test_mh_vals = np.linspace(9,15,50)
+    print(f"interpolated log mass\n{LMhalo}\nmass to test the spline:\n{test_mh_vals}")
+
+    # aum based HOD values at test halo masses
+    aum_Ncen = np.array([aa.ncen(x) for x in test_mh_vals])
+    aum_Nsat = np.array([aa.nsat(x) for x in test_mh_vals])
+
+    fig,ax = plt.subplots()
+    # plot from scipy interp
+    ax.plot(10**LMhalo, Ncen, ls="-", label="Ncen analytical") #Msun/h masses
+    ax.plot(10**test_mh_vals, ius_Ncen(test_mh_vals), ls="--", label="scipy Ncen interp") #Msun/h masses
+    ax.plot(10**test_mh_vals, aum_Ncen, "o", ms=5, mfc="None", label="Ncen aum interp") #Msun/h masses
+
+    ax.plot(10**LMhalo, Nsat, ls="-", label="Nsat analytical")
+    ax.plot(10**test_mh_vals, ius_Nsat(test_mh_vals), ls="--", label="scipy Nsat interp")
+    ax.plot(10**test_mh_vals, aum_Nsat, "o", ms=5, mfc="None", label="Nsat aum interp")
+
+    print( "Central HOD difference:\n", aum_Ncen, np.max(aum_Ncen-ius_Ncen(test_mh_vals)) )
+    print( "Satellite HOD difference:\n", aum_Nsat, np.max(aum_Nsat-ius_Ncen(test_mh_vals)) )
+
+    plt.yscale("log")
+    plt.xscale("log")
+    #plt.ylim(yrange)
+    plt.grid(True, ls='--', alpha=0.5)
+    plt.legend()
+    plt.ylabel(r"$\langle N \rangle$")
+    plt.xlabel(r"$M_{\rm halo}/(h^{-1}{\rm M_\odot})$")
+    if ylim is not None and isinstance(ylim, tuple):
+        plt.ylim(*ylim)
+    else:
+        plt.ylim(1e-8, 1e3)
+    plt.savefig(f"{benchmark_figdir}/cacciato_hod_scipy_aum_interpolation_check.png", bbox_inches="tight", dpi=240)
+
 if __name__=="__main__":
 
     import matplotlib as mpl
     import matplotlib.pyplot as plt
     mpl.rcParams["text.usetex"] = "True"
 
-    thisdir = Path(__file__).resolve.parent
-    benchmark_figdir = thisdir / "data_vector/figures"
+    thisdir = Path(__file__).resolve().parent
+    benchmark_figdir = thisdir.parent / "data_vector/figures/cacciato2013"
 
+    # Cacciato sample work on
+    lumbin = "L4"
+    dsf_prediciton = predict_ds_from_dsf(lumbin, config)
+    locals().update(dsf_prediciton)
     # define the defaults
     Om0 = cosmo_pars.get("Omega_c", None)
     hval = cosmo_pars.get("h", None)
     Omb = cosmo_pars.get("Omega_b", None)
     s8 = cosmo_pars.get("sigma8", None)
     nspec = cosmo_pars.get("n_s", None)
-
     # Halo masses in Msun/h
     LMhalo = np.linspace(9,15,100)
+
+    # Initialize CacciatoHOD
+    chod = CacciatoHOD(
+            mass_def=MASS_DEF, #unused
+            concentration=CONCENTRATION, #unused 
+            **hodpars
+    )
+
+    # get HOD from CLF model
+    # ----------------------
     # Artificially scaling the halo masses to nullify an additional h-factor
     # adjustment inside the cacciato_hod class.
-    LMhalo /= hval
+    Ncen = chod._Nc(10**(LMhalo)/hval)
+    ncidx = (Ncen>0)
+    if (~ncidx).sum()>0: print("Central HOD cleaning required before interpolation stage.")
+    Ncen[~ncidx] = 0.0
+    print("Ncen after cleaning:\n", Ncen)
+    assert ncidx.sum()>3, "Need more than 3 data points to interpolate"
+    Nsat = chod._Ns(10**(LMhalo)/hval)
+    nsidx = (Nsat>0)
+    if (~nsidx).sum()>0: print("Satellite HOD cleaning required before interpolation stage.")
+    Nsat[~nsidx] = 0.0
+    print("Nsat after cleaning:\n", Nsat)
+    assert nsidx.sum()>3, "Need more than 3 data points to interpolate"
 
-    # Cacciato sample work on
-    lumbin = "L4"
-    magfaint = config[lumbin]["magnitude_bounds"]["faint_limit"]
-    magbright= config[lumbin]["magnitude_bounds"]["bright_limit"]
-    file_high = config[lumbin]["files"]["high_fdev"]
-    file_low = config[lumbin]["files"]["low_fdev"]
-    z_lens = config[lumbin]["mean_redshift"]
-    a_lens = 1.0 / (1.0 + z_lens)
-
-    log_L1 = np.log10(magnitude_to_luminosity(magfaint)) #log10( L1 / [Lsun/h^2] )
-    log_L2 = np.log10(magnitude_to_luminosity(magbright)) #log10( L2 / [Lsun/h^2] )
-    hodparams = dict(log_L1=log_L1, log_L2=log_L2, h=cosmo_pars['h'], **cacciato_med_pars)
-
-    print(cosmo_pars)
-    cosmo = ccl.Cosmology(**cosmo_pars)
-
-
-
-
-
-    args = dict(LMcut=11.75, sigma=0.58, gamma=4.12, one_by_Q=1/100, pmax=0.33, 
-                LM1=13.53, alpha=1.0, kappa=1.0
-                )
-
-    print(args)
-
-    fig,ax = plt.subplots()
-    mhC, Ncen, indexC, ius_Ncen = cenHOD_skew_normal(args, LMhalo, test_spline=True)
-    mhS, Nsat, indexS, ius_Nsat = satHOD_PowerLawLMcut(args, LMhalo, test_spline=True)
-
+    # initialize AUM and pass the HOD
     aa = initializeHOD()
     aa.hod_free()
-    aa.init_Nc_spl(getdblarr(mhC[indexC]), getdblarr(log10(Ncen[indexC])), indexC[indexC].size)
-    aa.init_Ns_spl(getdblarr(mhS[indexS]), getdblarr(log10(Nsat[indexS])), indexS[indexS].size)
-    #print(mhC[indexC].min(), mhC[indexC].max())
-    #print(mhS[indexS].min(), mhS[indexS].max())
-    aum_Ncen = np.array([aa.ncen(x) for x in mhC])
-    aum_Nsat = np.array([aa.nsat(x) for x in mhS])
-    ax.plot(10**mhC, aum_Ncen, "o", ms=5, mfc="None", label="Ncen aum interp")
-    ax.plot(10**mhS, aum_Nsat, "o", ms=5, mfc="None", label="Ncen aum interp")
-    print( aum_Ncen, np.max(aum_Ncen-ius_Ncen(mhC)) )
-    print( aum_Nsat, np.max(aum_Nsat-ius_Ncen(mhS)) )
-    plt.yscale("log")
-    plt.xscale("log")
-    #plt.ylim(yrange)
-    plt.grid(True, ls='--', alpha=0.5)
-    plt.legend()
-    plt.ylabel(r"$\langle N \rangle_{\rm HMQ}$")
-    plt.xlabel(r"$M_{\rm halo}$")
-    plt.savefig(f"hod_scipy_aum_interpolation_check.png", bbox_inches="tight", dpi=240)
+    aa.init_Nc_spl(getdblarr(LMhalo[ncidx]), getdblarr(log10(Ncen[ncidx])), ncidx[ncidx].size)
+    aa.init_Ns_spl(getdblarr(LMhalo[nsidx]), getdblarr(log10(Nsat[nsidx])), nsidx[nsidx].size)
 
+    # initialize the scipy based spline for HOD validation
+    ius_Ncen = put_spline(LMhalo[ncidx], Ncen[ncidx])
+    ius_Nsat = put_spline(LMhalo[nsidx], Nsat[nsidx])
+    validate_HOD_interpolation(LMhalo, Ncen, Nsat, aa, ius_Ncen, ius_Nsat)
 
+    # Next work on ESD comparison

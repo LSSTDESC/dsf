@@ -1,6 +1,6 @@
 import numpy as np
 import pyccl as ccl
-from cacciato_validation.cacciato_inputs import (
+from cacciato_inputs import (
     cacciato_med_pars,
     cosmo_pars,
     magnitude_to_luminosity,
@@ -79,7 +79,7 @@ def predict_ds_from_dsf(lumbin, config):
             file_low=file_low, file_high=file_high, \
             z_lens=z_lens, cosmo_pars=cosmo_pars, \
             delta_sigma=delta_sigma, delta_sigma_bin=delta_sigma_bin, \
-            ratio=ratio, r=r,
+            ratio=ratio, r=r, hodpars = hodparams, \
     )
 
     return output

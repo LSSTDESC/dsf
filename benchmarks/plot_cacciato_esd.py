@@ -100,21 +100,21 @@ if __name__=="__main__":
     ratio = delta_sigma_bin / delta_sigma
     ratio_y_label = r"$\Delta\Sigma_{\rm bin} / \Delta\Sigma$"
     
-    # -----------------------------------------------
-    # Get the benchmarking data: Mandelbaum 2006
-    import pandas as pd
-    # note the data units for ESD:hMsun/pc^2, r:kpc/h
-    ddf = pd.read_csv(
-            f"{benchmark_indir}/L4_esd_data_points_mandelbaum2006_webplotdigitizer.csv"
-            , comment="#"
-    )
-    err = ddf["esd_high"] - ddf["esd_low"] # data errorbar
+    ## -----------------------------------------------
+    ## Get the benchmarking data: Mandelbaum 2006
+    #import pandas as pd
+    ## note the data units for ESD:hMsun/pc^2, r:kpc/h
+    #ddf = pd.read_csv(
+    #        f"{benchmark_indir}/L4_esd_data_points_mandelbaum2006_webplotdigitizer.csv"
+    #        , comment="#"
+    #)
+    #err = ddf["esd_high"] - ddf["esd_low"] # data errorbar
 
-    # theory prediction from Mandelbaum+2005
-    df = pd.read_csv(f"{benchmark_indir}/rebin.lum.all.L4.lowfdev.csv", sep=" ", comment="#")
-    # real data
-    tdf = pd.read_csv(f"{benchmark_indir}/fitavgsig.hh.all.L4.lowfdev.csv", sep=" ", comment="#")
-    # -----------------------------------------------
+    ## theory prediction from Mandelbaum+2005
+    #df = pd.read_csv(f"{benchmark_indir}/rebin.lum.all.L4.lowfdev.csv", sep=" ", comment="#")
+    ## real data
+    #tdf = pd.read_csv(f"{benchmark_indir}/fitavgsig.hh.all.L4.lowfdev.csv", sep=" ", comment="#")
+    ## -----------------------------------------------
     
     colors = cmr.take_cmap_colors(
         "viridis",
@@ -134,34 +134,36 @@ if __name__=="__main__":
     )
 
     if plot_log:
-        # webplotdigitizer
-        dd_x = np.log10(ddf["r"]/1000)
-        dd_y = np.log10(ddf["esd"])
-        #dd_y_err = np.log10(err)
-        #dd_y_err = np.log10(ddf["esd"]+err/2) - np.log10(ddf["esd"]-err/2)
-        dd_y_err_lower = dd_y - np.log10(ddf.esd - err)
-        dd_y_err_upper = np.log10(ddf.esd + err) - dd_y
-        dd_y_err = np.array([dd_y_err_lower, dd_y_err_upper])
+        ## webplotdigitizer
+        #dd_x = np.log10(ddf["r"]/1000)
+        #dd_y = np.log10(ddf["esd"])
+        ##dd_y_err = np.log10(err)
+        ##dd_y_err = np.log10(ddf["esd"]+err/2) - np.log10(ddf["esd"]-err/2)
+        #dd_y_err_lower = dd_y - np.log10(ddf.esd - err)
+        #dd_y_err_upper = np.log10(ddf.esd + err) - dd_y
+        #dd_y_err = np.array([dd_y_err_lower, dd_y_err_upper])
 
-        # data: only blue gal data
-        d_x = np.log10(df["r"]/1000)
-        d_y = np.log10(df.esd)
-        #d_y_err = np.log10(df.err)
-        #d_y_err = np.log10(df.esd+df.err/2) - np.log10(df.esd-df.err/2)
-        d_y_err_lower = d_y - np.log10(df.esd - df.err)
-        d_y_err_upper = np.log10(df.esd + df.err) - d_y
-        d_y_err = np.array([d_y_err_lower, d_y_err_upper])
+        ## data: only blue gal data
+        #d_x = np.log10(df["r"]/1000)
+        #d_y = np.log10(df.esd)
+        ##d_y_err = np.log10(df.err)
+        ##d_y_err = np.log10(df.esd+df.err/2) - np.log10(df.esd-df.err/2)
+        #d_y_err_lower = d_y - np.log10(df.esd - df.err)
+        #d_y_err_upper = np.log10(df.esd + df.err) - d_y
+        #d_y_err = np.array([d_y_err_lower, d_y_err_upper])
 
-        # full sample data
+        ## fit to data
+        #dfit_x = np.log10(tdf.r)
+        #dfit_y = np.log10(tdf.esd)
+
+        # full sample data: Mandelbaum+2006
         f_x = np.log10(obs_data_vector.r/1000)
-        f_y = np.log10(obs_data_vector.esd)
+        rmask = (f_x > -1.5)
+        f_x = f_x[rmask]
+        f_y = np.log10(obs_data_vector.esd)[rmask]
         f_y_err_lower = f_y - np.log10(obs_data_vector.esd - obs_data_vector.err)
         f_y_err_upper = np.log10(obs_data_vector.esd + obs_data_vector.err) - f_y
-        f_y_err = np.array([f_y_err_lower, f_y_err_upper])
-
-        # fit to data
-        dfit_x = np.log10(tdf.r)
-        dfit_y = np.log10(tdf.esd)
+        f_y_err = np.array([f_y_err_lower[rmask], f_y_err_upper[rmask]])
 
         #DSF model
         t_x = np.log10(r*cosmo_pars['h']) #Mpc/h
@@ -180,24 +182,26 @@ if __name__=="__main__":
         xlabel = r"$\log_{10}\left[ R/ (h^{-1}{\rm Mpc}) \right]$"
         ylabel = r"$\log_{10}\left[ \Delta\Sigma(R)/\ (h{\rm M_\odot {pc}^{-2}}) \right]$"
     else:
-        # webplotdigitizer
-        dd_x = ddf["r"]/1000
-        dd_y = ddf["esd"]
-        dd_y_err = err
+        ## webplotdigitizer
+        #dd_x = ddf["r"]/1000
+        #dd_y = ddf["esd"]
+        #dd_y_err = err
 
-        # data: only blue gal data
-        d_x = df["r"]/1000
-        d_y = df.esd
-        d_y_err = df.err
+        ## data: only blue gal data
+        #d_x = df["r"]/1000
+        #d_y = df.esd
+        #d_y_err = df.err
 
-        # full sample data
+        ## fit to data
+        #dfit_x = tdf.r
+        #dfit_y = tdf.esd
+
+        # full sample data: Mandelbaum+2006
         f_x = obs_data_vector.r/1000
-        f_y = obs_data_vector.esd
-        f_y_err = obs_data_vector.err
-
-        # fit to data
-        dfit_x = tdf.r
-        dfit_y = tdf.esd
+        rmask = np.log10(obs_data_vector.r/1000)>-1.5
+        f_x = f_x[rmask]
+        f_y = obs_data_vector.esd[rmask]
+        f_y_err = obs_data_vector.err[rmask]
 
         # theory
         t_x = r*cosmo_pars['h']
@@ -234,13 +238,13 @@ if __name__=="__main__":
         zorder=3,
     )
 
-    # webplotdigitizer
-    ax.errorbar(
-        dd_x, # Mpc/h
-        dd_y, # hMsun/pc^2
-        yerr=dd_y_err,
-        label="Mandelbaum+2006\n(Webplotdigitizer)"
-    )
+    ## webplotdigitizer
+    #ax.errorbar(
+    #    dd_x, # Mpc/h
+    #    dd_y, # hMsun/pc^2
+    #    yerr=dd_y_err,
+    #    label="Mandelbaum+2006\n(Webplotdigitizer)"
+    #)
 
     ## data
     #ax.errorbar(
@@ -255,6 +259,7 @@ if __name__=="__main__":
         f_x, # Mpc/h
         f_y, # hMsun/pc^2
         yerr=f_y_err,
+        capsize=4,
         label="full L4 data\n(Mandelbaum+2006)"
     )
 

@@ -20,7 +20,7 @@ def get_full_sample_esd(file_high, file_low):
     # Adding a small epsilon to prevent division by zero just in case
     df_combined["weight"] = 1.0 / (df_combined["err"] ** 2 + 1e-20)
 
-    # 3. Compute the inverse-variance weighted average grouped by radius 'r'
+    # Compute the inverse-variance weighted average grouped by radius 'r'
     # Formula: Combined_ESD = Sum(esd * w) / Sum(w)
     df_combined["weighted_esd"] = df_combined["esd"] * df_combined["weight"]
 
@@ -29,7 +29,7 @@ def get_full_sample_esd(file_high, file_low):
     final_r = grouped["r"].values
     final_esd = (grouped["weighted_esd"] / grouped["weight"]).values
 
-    # 4. Calculate the combined error propagate for inverse variance: 1 / sqrt(Sum(w))
+    # Calculate the combined error propagate for inverse variance: 1 / sqrt(Sum(w))
     final_err = (1.0 / np.sqrt(grouped["weight"])).values
 
     # Create a clean summary dataframe

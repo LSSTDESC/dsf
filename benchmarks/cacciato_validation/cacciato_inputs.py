@@ -44,16 +44,14 @@ cacciato_med_pars = dict(
 #        b_2=p["b_2"] # unitless - re-define M12 to use halo masses in Msun 
 #    )
 
-# luminosity bins used in Cacciato+2013
-mag_edges = np.linspace(-23, -17, 7)
-mag_bins = np.array(list(zip(mag_edges[:-1], mag_edges[1:], strict=True)))
-
 # Note: Cacciato compiles data vectors from different studies, as a result,
 # they used different samples (roughly similar) for clustering, lensing and LF
 # measurements.  But they model chi-square contribution of each of the data
 # vectors using the summary info of respective samples.  Only in the end they
 # joinly maximize the likelihood!  The below listed summary stats are from the
 # clustering sample (I. Zehavi 2011)
+mag_edges = np.linspace(-23, -17, 7)
+mag_bins = np.array(list(zip(mag_edges[:-1], mag_edges[1:], strict=True)))
 sampleinfo = dict(
     mag_bins=mag_bins,
     zmins=np.array([0.011, 0.017, 0.027, 0.042, 0.066, 0.103]),

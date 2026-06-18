@@ -106,6 +106,20 @@ def validate_HOD_interpolation(LMhalo, Ncen, Nsat, aa, ius_Ncen, ius_Nsat, ylim=
             bbox_inches="tight", dpi=240
     )
 
+def aum_deltaSig_predict(aa, rp, z, renewz=False):
+    esdbins = rp.size
+    #prepare containers of rp and esd
+    esdrp = getdblarr(rp)
+    esd   = getdblarr(np.zeros(esdbins))
+    aa.ESD(z,esdbins,esdrp,esd,esdbins+12,renewz)
+    return getnparr(esd,esdbins)
+
+def getnparr(r,n):
+    temp=np.zeros(n)
+    for i in range(n):
+        temp[i]=r[i]
+    return temp
+
 if __name__=="__main__":
 
     import matplotlib as mpl
@@ -120,15 +134,21 @@ if __name__=="__main__":
     dsf_prediciton = predict_ds_from_dsf(lumbin, config)
     cosmo_pars = dsf_prediciton["cosmo_pars"]
     hodpars = dsf_prediciton["hodpars"]
+    dsf_ds = dsf_prediciton["delta_sigma"]
+    magfaint = dsf_prediciton["magfaint"]
+    magbright = dsf_prediciton["magbright"]
 
     # define the defaults
-    Om0 = cosmo_pars.get("Omega_c", None)
-    hval = cosmo_pars.get("h", None)
-    Omb = cosmo_pars.get("Omega_b", None)
-    s8 = cosmo_pars.get("sigma8", None)
-    nspec = cosmo_pars.get("n_s", None)
+    Om0 = cosmo_pars["Omega_c"]
+    hval = cosmo_pars["h"]
+    Omb = cosmo_pars["Omega_b"]
+    s8 = cosmo_pars["sigma8"]
+    nspec = cosmo_pars["n_s"]
     # Halo masses in Msun/h
     LMhalo = np.linspace(9,15,100)
+    # for Delta Sig calc
+    z_lens = dsf_prediciton["z_lens"]
+    r = dsf_prediciton["r"] *hval #Mpc/h
 
     # Initialize CacciatoHOD
     chod = CacciatoHOD(
@@ -165,6 +185,26 @@ if __name__=="__main__":
     # initialize the scipy based spline for HOD validation
     ius_Ncen = put_spline(LMhalo[ncidx], Ncen[ncidx])
     ius_Nsat = put_spline(LMhalo[nsidx], Nsat[nsidx])
-    validate_HOD_interpolation(LMhalo, Ncen, Nsat, aa, ius_Ncen, ius_Nsat)
+    # validate_HOD_interpolation(LMhalo, Ncen, Nsat, aa, ius_Ncen, ius_Nsat)
 
     # Next, work on ESD comparison
+    aum_esd = aum_deltaSig_predict(aa, r, z_lens)
+
+    fig,ax = plt.subplots()
+    # assuming dsf_ds is in Msun/pc^2
+    #ax.plot(r, dsf_ds/hval, label="DSF prediction")
+    # assuming dsf_ds is in hMsun/pc^2
+    ax.plot(r, dsf_ds, label="DSF prediction")
+    ax.plot(r, aum_esd, "-o", mfc="None", label="AUM prediction")
+    plt.yscale("log")
+    plt.xscale("log")
+    plt.grid(True, ls='--', alpha=0.5)
+    ax.legend(fontsize=10, frameon=False, title=r"%s: $M_r-5\log h \in [%0.1f, %0.1f]$"%(lumbin, magfaint,magbright) + "\n" + rf"$z_l={z_lens:.2f}$")
+    xlabel = r"$R \, \left[h^{-1}{\rm Mpc}\right]$"
+    ylabel = r"$\Delta\Sigma(R)\ [h {\rm M_\odot {pc}^{-2}}]$"
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    plt.savefig(
+            f"{benchmark_figdir}/{lumbin}_cacciato_esd_validation_aum_vs_dsf.png",
+            bbox_inches="tight", dpi=240
+    )

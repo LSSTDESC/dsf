@@ -32,8 +32,9 @@ if __name__=="__main__":
         plot_log = bool(int(sys.argv[2]))
         shift_h_factor = bool(int(sys.argv[3]))
 
+    fname = fname.stem + f"_{lumbin}" + fname.suffix
     if shift_h_factor:
-        fname = fname.stem + f"_{lumbin}" + f"_shifted_yval{fname.suffix}"
+        fname = fname.stem + f"_shifted_yval{fname.suffix}"
 
     fname = Path(f"{benchmark_figdir}/{fname}")
     print(fname)
@@ -60,9 +61,9 @@ if __name__=="__main__":
         gridspec_kw={"height_ratios": [3.0, 1.0], "hspace": 0.08},
     )
 
+    obs_data_vector = get_full_sample_esd(benchmark_indir, file_high, file_low)
     if plot_log:
         # full sample data: Mandelbaum+2006
-        obs_data_vector = get_full_sample_esd(benchmark_indir, file_high, file_low)
         f_x = np.log10(obs_data_vector.r/1000)
         rmask = (f_x > -1.5)
         f_x = f_x[rmask]
@@ -110,7 +111,7 @@ if __name__=="__main__":
         xscale = "log"
         yscale = "log"
         xlabel = r"$R/ (h^{-1}{\rm Mpc})$"
-        ylabel = r"$\Delta\Sigma(R)\ [h / {\rm M_\odot {pc}^2}]$"
+        ylabel = r"$\Delta\Sigma(R)\ [h{\rm M_\odot {pc}^{-2}}]$"
     
     ax.plot(
         t_x,  # Mpc/h

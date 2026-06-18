@@ -20,7 +20,7 @@ def getdblarr(r):
         temp[i]=r[i]
     return temp
 
-def initializeHOD(Om0=0.278, w0=-1, wa=0, Omk=0.0, hval=0.739, 
+def initialize_aum_hod(Om0=0.278, w0=-1, wa=0, Omk=0.0, hval=0.739, 
         Omb=0.041730, th=2.726, s8=0.763, nspec=0.978,\
         ximax=0.90309, cfac=1.0,\
         #irrelevant factors below
@@ -57,9 +57,9 @@ def put_spline(xx, yy, ext=1):
     #ext=3 of ‘const’, return the boundary value
     return ius(xx, yy, ext=ext)
 
-def validate_HOD_interpolation(LMhalo, Ncen, Nsat, aa, ius_Ncen, ius_Nsat, ylim=None):
+def validate_HOD_interpolation(LMhalo, Ncen, Nsat, aa, ius_Ncen, ius_Nsat, ylim=None, lumbin=""):
     """This function validates the interpolation bahaviour of AUM and scipy
-    agaist the analytical value produce by the CacciatoHOD class."""
+    agaist the analytical value produced by the CacciatoHOD class."""
 
     test_mh_vals = np.linspace(9,15,50)
     print(f"interpolated log mass\n{LMhalo}\nmass to test the spline:\n{test_mh_vals}")
@@ -92,7 +92,6 @@ def validate_HOD_interpolation(LMhalo, Ncen, Nsat, aa, ius_Ncen, ius_Nsat, ylim=
 
     plt.yscale("log")
     plt.xscale("log")
-    #plt.ylim(yrange)
     plt.grid(True, ls='--', alpha=0.5)
     plt.legend()
     plt.ylabel(r"$\langle N \rangle$")
@@ -102,7 +101,7 @@ def validate_HOD_interpolation(LMhalo, Ncen, Nsat, aa, ius_Ncen, ius_Nsat, ylim=
     else:
         plt.ylim(1e-8, 1e3)
     plt.savefig(
-            f"{benchmark_figdir}/cacciato_hod_scipy_aum_interpolation_check.png",
+            f"{benchmark_figdir}/cacciato_{lumbin}_hod_scipy_aum_interpolation_check.png",
             bbox_inches="tight", dpi=240
     )
 
@@ -120,17 +119,7 @@ def getnparr(r,n):
         temp[i]=r[i]
     return temp
 
-if __name__=="__main__":
-
-    import matplotlib as mpl
-    import matplotlib.pyplot as plt
-    mpl.rcParams["text.usetex"] = "True"
-
-    thisdir = Path(__file__).resolve().parent
-    benchmark_figdir = thisdir.parent / "data_vector/figures/cacciato2013"
-
-    # Cacciato sample work on
-    lumbin = "L4"
+def main(lumbin, config, validate_hod=True, validate_esd=True):
     dsf_prediciton = predict_ds_from_dsf(lumbin, config)
     cosmo_pars = dsf_prediciton["cosmo_pars"]
     hodpars = dsf_prediciton["hodpars"]
@@ -177,7 +166,7 @@ if __name__=="__main__":
     assert nsidx.sum()>3, "Need more than 3 data points to interpolate"
 
     # initialize AUM and pass the HOD
-    aa = initializeHOD()
+    aa = initialize_aum_hod(Om0=Om0, hval=hval, Omb=Omb, s8=s8, nspec=nspec)
     aa.hod_free()
     aa.init_Nc_spl(getdblarr(LMhalo[ncidx]), getdblarr(log10(Ncen[ncidx])), ncidx[ncidx].size)
     aa.init_Ns_spl(getdblarr(LMhalo[nsidx]), getdblarr(log10(Nsat[nsidx])), nsidx[nsidx].size)
@@ -185,31 +174,59 @@ if __name__=="__main__":
     # initialize the scipy based spline for HOD validation
     ius_Ncen = put_spline(LMhalo[ncidx], Ncen[ncidx])
     ius_Nsat = put_spline(LMhalo[nsidx], Nsat[nsidx])
-    # validate_HOD_interpolation(LMhalo, Ncen, Nsat, aa, ius_Ncen, ius_Nsat)
+    if validate_HOD_interpolation:
+        validate_HOD_interpolation(LMhalo, Ncen, Nsat, aa, ius_Ncen, ius_Nsat, lumbin=lumbin)
 
     # Next, work on ESD comparison
     aum_esd = aum_deltaSig_predict(aa, r, z_lens)
 
-    fig,ax = plt.subplots()
-    # assuming dsf_ds is in Msun/pc^2
-    #ax.plot(r, dsf_ds/hval, label="DSF prediction")
-    # assuming dsf_ds is in hMsun/pc^2
-    ax.plot(r, dsf_ds, label="DSF prediction")
-    ax.plot(r, aum_esd, "-o", mfc="None", label="AUM prediction")
-    plt.yscale("log")
-    plt.xscale("log")
-    plt.grid(True, ls='--', alpha=0.5)
-    ax.legend(
-            fontsize=10, 
-            frameon=False, 
-            title=rf"{lumbin}: $M_r-5\log h \in [{magfaint:0.1f}, {magbright:0.1f}]$"\
-                    + "\n" + rf"$z_l={z_lens:.2f}$"
-            )
-    xlabel = r"$R \, \left[h^{-1}{\rm Mpc}\right]$"
-    ylabel = r"$\Delta\Sigma(R)\ [h {\rm M_\odot {pc}^{-2}}]$"
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    plt.savefig(
-            f"{benchmark_figdir}/{lumbin}_cacciato_esd_validation_aum_vs_dsf.png",
-            bbox_inches="tight", dpi=240
-    )
+    if validate_esd:
+        fig,ax = plt.subplots()
+        # assuming dsf_ds is in Msun/pc^2
+        #ax.plot(r, dsf_ds/hval, label="DSF prediction")
+        # assuming dsf_ds is in hMsun/pc^2
+        ax.plot(r, dsf_ds, label="DSF prediction")
+        ax.plot(r, aum_esd, "-o", mfc="None", label="AUM prediction")
+        plt.yscale("log")
+        plt.xscale("log")
+        plt.grid(True, ls='--', alpha=0.5)
+        ax.legend(
+                fontsize=10, 
+                frameon=False, 
+                title=rf"{lumbin}: $M_r-5\log h \in [{magfaint:0.1f}, {magbright:0.1f}]$"\
+                        + "\n" + rf"$z_l={z_lens:.2f}$"
+                )
+        xlabel = r"$R \, \left[h^{-1}{\rm Mpc}\right]$"
+        ylabel = r"$\Delta\Sigma(R)\ [h {\rm M_\odot {pc}^{-2}}]$"
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        plt.savefig(
+                f"{benchmark_figdir}/cacciato_{lumbin}_esd_validation_aum_vs_dsf.png",
+                bbox_inches="tight", dpi=240
+        )
+
+    # Here the unit of ds_dsf is assumed to be as returned (or as reported in
+    # the DSF docs): Msun_per_pc2 This this is exactly what I'm trying to test.
+    # So be aware that units of DSF is under scrutiny at this point.
+    aumdict = {"r_Mpc_per_h": r, "ds_hMsun_per_pc2_aum": aum_esd}
+    dsfdict = {"r_Mpc": dsf_prediciton["r"], "ds_dsf": dsf_ds}
+    return aumdict, dsfdict
+
+if __name__=="__main__":
+
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+    mpl.rcParams["text.usetex"] = "True"
+
+    thisdir = Path(__file__).resolve().parent
+    benchmark_figdir = thisdir.parent / "data_vector/figures/cacciato2013"
+
+    # # ---- input is here -----
+    # # Cacciato sample work on
+    # lumbin = "L4"
+    # # ------------------------
+    # main(lumbin, config, validate_hod=True, validate_esd=True)
+
+    for lumbin in ["L2", "L3", "L4", "L5f", "L5b", "L6f"]:
+        print(f"working on {lumbin}...")
+        main(lumbin, config, validate_hod=True, validate_esd=True)

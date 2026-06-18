@@ -199,7 +199,12 @@ if __name__=="__main__":
     plt.yscale("log")
     plt.xscale("log")
     plt.grid(True, ls='--', alpha=0.5)
-    ax.legend(fontsize=10, frameon=False, title=r"%s: $M_r-5\log h \in [%0.1f, %0.1f]$"%(lumbin, magfaint,magbright) + "\n" + rf"$z_l={z_lens:.2f}$")
+    ax.legend(
+            fontsize=10, 
+            frameon=False, 
+            title=rf"{lumbin}: $M_r-5\log h \in [{magfaint:0.1f}, {magbright:0.1f}]$"\
+                    + "\n" + rf"$z_l={z_lens:.2f}$"
+            )
     xlabel = r"$R \, \left[h^{-1}{\rm Mpc}\right]$"
     ylabel = r"$\Delta\Sigma(R)\ [h {\rm M_\odot {pc}^{-2}}]$"
     ax.set_xlabel(xlabel)

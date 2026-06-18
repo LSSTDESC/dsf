@@ -1,8 +1,8 @@
 from pathlib import Path
 
-import yaml
 import numpy as np
 import pandas as pd
+import yaml
 
 __all__ = [ "get_full_sample_esd", "config" ] 
 
@@ -10,7 +10,7 @@ __all__ = [ "get_full_sample_esd", "config" ]
 def load_luminosity_config(yaml_path):
     """Loads the YAML configuration file."""
     try:
-        with open(yaml_path, "r") as file:
+        with open(yaml_path) as file:
             return yaml.safe_load(file)
     except FileNotFoundError:
         print(f"Error: The file {yaml_path} was not found.")

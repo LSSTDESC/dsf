@@ -1,18 +1,18 @@
-import sys
 from pathlib import Path
-import numpy as np
-from numpy import log10
-from scipy.interpolate import InterpolatedUnivariateSpline as ius
 
 # The code representative of Cacciato work: AUM
-import cosmology as cc
 import hod as h
+import numpy as np
+from numpy import log10
 
 # prepare CLF class and dsf prediction to compare against AUM
-from obs_data_for_cacciato import get_full_sample_esd, config
+from obs_data_for_cacciato import config
 from predict_dsf_ds_for_cacciato_sample import predict_ds_from_dsf
+from scipy.interpolate import InterpolatedUnivariateSpline as ius
+
 from dsf.hod_cacciato import CacciatoHOD
-from dsf.pk2d_cacciato_hod import MASS_DEF, CONCENTRATION
+from dsf.pk2d_cacciato_hod import CONCENTRATION, MASS_DEF
+
 
 def getdblarr(r):
     temp=h.doubleArray(r.size)
@@ -22,7 +22,7 @@ def getdblarr(r):
 
 def initializeHOD(Om0=0.278, w0=-1, wa=0, Omk=0.0, hval=0.739, 
         Omb=0.041730, th=2.726, s8=0.763, nspec=0.978,\
-        ximax=log10(8.0), cfac=1.0,\
+        ximax=0.90309, cfac=1.0,\
         #irrelevant factors below
         logMmin=13.0, siglogM=0.5, logMsat=14.0, alpsat=1.0,\
         logMcut=13.5, csbycdm=1.0, fac=1.0
@@ -70,9 +70,18 @@ def validate_HOD_interpolation(LMhalo, Ncen, Nsat, aa, ius_Ncen, ius_Nsat, ylim=
 
     fig,ax = plt.subplots()
     # plot from scipy interp
-    ax.plot(10**LMhalo, Ncen, ls="-", label="Ncen analytical") #Msun/h masses
-    ax.plot(10**test_mh_vals, ius_Ncen(test_mh_vals), ls="--", label="scipy Ncen interp") #Msun/h masses
-    ax.plot(10**test_mh_vals, aum_Ncen, "o", ms=5, mfc="None", label="Ncen aum interp") #Msun/h masses
+    ax.plot(
+            10**LMhalo, Ncen, 
+            ls="-", label="Ncen analytical"
+            ) #Msun/h masses
+    ax.plot(
+            10**test_mh_vals, ius_Ncen(test_mh_vals), 
+            ls="--", label="scipy Ncen interp"
+            ) #Msun/h masses
+    ax.plot(
+            10**test_mh_vals, aum_Ncen, 
+            "o", ms=5, mfc="None", 
+            label="Ncen aum interp") #Msun/h masses
 
     ax.plot(10**LMhalo, Nsat, ls="-", label="Nsat analytical")
     ax.plot(10**test_mh_vals, ius_Nsat(test_mh_vals), ls="--", label="scipy Nsat interp")
@@ -92,7 +101,10 @@ def validate_HOD_interpolation(LMhalo, Ncen, Nsat, aa, ius_Ncen, ius_Nsat, ylim=
         plt.ylim(*ylim)
     else:
         plt.ylim(1e-8, 1e3)
-    plt.savefig(f"{benchmark_figdir}/cacciato_hod_scipy_aum_interpolation_check.png", bbox_inches="tight", dpi=240)
+    plt.savefig(
+            f"{benchmark_figdir}/cacciato_hod_scipy_aum_interpolation_check.png",
+            bbox_inches="tight", dpi=240
+    )
 
 if __name__=="__main__":
 
@@ -106,7 +118,9 @@ if __name__=="__main__":
     # Cacciato sample work on
     lumbin = "L4"
     dsf_prediciton = predict_ds_from_dsf(lumbin, config)
-    locals().update(dsf_prediciton)
+    cosmo_pars = dsf_prediciton["cosmo_pars"]
+    hodpars = dsf_prediciton["hodpars"]
+
     # define the defaults
     Om0 = cosmo_pars.get("Omega_c", None)
     hval = cosmo_pars.get("h", None)
@@ -129,13 +143,15 @@ if __name__=="__main__":
     # adjustment inside the cacciato_hod class.
     Ncen = chod._Nc(10**(LMhalo)/hval)
     ncidx = (Ncen>0)
-    if (~ncidx).sum()>0: print("Central HOD cleaning required before interpolation stage.")
+    if (~ncidx).sum()>0: 
+        print("Central HOD cleaning required before interpolation stage.")
     Ncen[~ncidx] = 0.0
     print("Ncen after cleaning:\n", Ncen)
     assert ncidx.sum()>3, "Need more than 3 data points to interpolate"
     Nsat = chod._Ns(10**(LMhalo)/hval)
     nsidx = (Nsat>0)
-    if (~nsidx).sum()>0: print("Satellite HOD cleaning required before interpolation stage.")
+    if (~nsidx).sum()>0: 
+        print("Satellite HOD cleaning required before interpolation stage.")
     Nsat[~nsidx] = 0.0
     print("Nsat after cleaning:\n", Nsat)
     assert nsidx.sum()>3, "Need more than 3 data points to interpolate"
@@ -151,4 +167,4 @@ if __name__=="__main__":
     ius_Nsat = put_spline(LMhalo[nsidx], Nsat[nsidx])
     validate_HOD_interpolation(LMhalo, Ncen, Nsat, aa, ius_Ncen, ius_Nsat)
 
-    # Next work on ESD comparison
+    # Next, work on ESD comparison

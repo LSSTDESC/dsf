@@ -5,6 +5,7 @@ from cacciato_inputs import (
     cosmo_pars,
     magnitude_to_luminosity,
 )
+
 from dsf.data_vector.delta_sigma_builder import DeltaSigmaCalculator
 from dsf.pk2d_cacciato_hod import pk2d_cacciato_hod
 

@@ -1,6 +1,6 @@
 import numpy as np
 import pyccl as ccl
-from cacciato_inputs import (
+from .cacciato_inputs import (
     cacciato_med_pars,
     cosmo_pars,
     magnitude_to_luminosity,

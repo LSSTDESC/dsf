@@ -2,17 +2,20 @@ from pathlib import Path
 
 # The code representative of Cacciato work: AUM
 import hod as h
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 from numpy import log10
 
 # prepare CLF class and dsf prediction to compare against AUM
-from obs_data_for_cacciato import config
-from predict_dsf_ds_for_cacciato_sample import predict_ds_from_dsf
+from .obs_data_for_cacciato import config
+from .predict_dsf_ds_for_cacciato_sample import predict_ds_from_dsf
 from scipy.interpolate import InterpolatedUnivariateSpline as ius
 
 from dsf.hod_cacciato import CacciatoHOD
 from dsf.pk2d_cacciato_hod import CONCENTRATION, MASS_DEF
 
+mpl.rcParams["text.usetex"] = "True"
 
 def getdblarr(r):
     temp=h.doubleArray(r.size)
@@ -57,7 +60,11 @@ def put_spline(xx, yy, ext=1):
     #ext=3 of ‘const’, return the boundary value
     return ius(xx, yy, ext=ext)
 
-def validate_HOD_interpolation(LMhalo, Ncen, Nsat, aa, ius_Ncen, ius_Nsat, ylim=None, lumbin=""):
+def validate_HOD_interpolation(
+        LMhalo, Ncen, Nsat, 
+        aa, ius_Ncen, ius_Nsat, 
+        ylim=None, lumbin="", figdir="./"
+    ):
     """This function validates the interpolation bahaviour of AUM and scipy
     agaist the analytical value produced by the CacciatoHOD class."""
 
@@ -101,7 +108,7 @@ def validate_HOD_interpolation(LMhalo, Ncen, Nsat, aa, ius_Ncen, ius_Nsat, ylim=
     else:
         plt.ylim(1e-8, 1e3)
     plt.savefig(
-            f"{benchmark_figdir}/cacciato_{lumbin}_hod_scipy_aum_interpolation_check.png",
+            f"{figdir}/cacciato_{lumbin}_hod_scipy_aum_interpolation_check.png",
             bbox_inches="tight", dpi=240
     )
 
@@ -119,7 +126,14 @@ def getnparr(r,n):
         temp[i]=r[i]
     return temp
 
-def main(lumbin, config, validate_hod=True, validate_esd=True):
+def main(
+        lumbin, config, 
+        validate_hod=True, 
+        validate_esd=True, 
+        verbose=True, 
+        return_dsf_vars=False, 
+        figdir="./"
+    ):
     dsf_prediciton = predict_ds_from_dsf(lumbin, config)
     cosmo_pars = dsf_prediciton["cosmo_pars"]
     hodpars = dsf_prediciton["hodpars"]
@@ -155,15 +169,17 @@ def main(lumbin, config, validate_hod=True, validate_esd=True):
     if (~ncidx).sum()>0: 
         print("Central HOD cleaning required before interpolation stage.")
     Ncen[~ncidx] = 0.0
-    print("Ncen after cleaning:\n", Ncen)
     assert ncidx.sum()>3, "Need more than 3 data points to interpolate"
     Nsat = chod._Ns(10**(LMhalo)/hval)
     nsidx = (Nsat>0)
     if (~nsidx).sum()>0: 
         print("Satellite HOD cleaning required before interpolation stage.")
     Nsat[~nsidx] = 0.0
-    print("Nsat after cleaning:\n", Nsat)
     assert nsidx.sum()>3, "Need more than 3 data points to interpolate"
+
+    if verbose:
+        print("Ncen after cleaning:\n", Ncen)
+        print("Nsat after cleaning:\n", Nsat)
 
     # initialize AUM and pass the HOD
     aa = initialize_aum_hod(Om0=Om0, hval=hval, Omb=Omb, s8=s8, nspec=nspec)
@@ -175,7 +191,11 @@ def main(lumbin, config, validate_hod=True, validate_esd=True):
     ius_Ncen = put_spline(LMhalo[ncidx], Ncen[ncidx])
     ius_Nsat = put_spline(LMhalo[nsidx], Nsat[nsidx])
     if validate_HOD_interpolation:
-        validate_HOD_interpolation(LMhalo, Ncen, Nsat, aa, ius_Ncen, ius_Nsat, lumbin=lumbin)
+        validate_HOD_interpolation(
+                LMhalo, Ncen, Nsat, 
+                aa, ius_Ncen, ius_Nsat, 
+                lumbin=lumbin, figdir=figdir
+        )
 
     # Next, work on ESD comparison
     aum_esd = aum_deltaSig_predict(aa, r, z_lens)
@@ -210,13 +230,12 @@ def main(lumbin, config, validate_hod=True, validate_esd=True):
     # So be aware that units of DSF is under scrutiny at this point.
     aumdict = {"r_Mpc_per_h": r, "ds_hMsun_per_pc2_aum": aum_esd}
     dsfdict = {"r_Mpc": dsf_prediciton["r"], "ds_dsf": dsf_ds}
-    return aumdict, dsfdict
+    if return_dsf_vars:
+        return aumdict, dsfdict, dsf_prediciton
+    else:
+        return aumdict, dsfdict
 
 if __name__=="__main__":
-
-    import matplotlib as mpl
-    import matplotlib.pyplot as plt
-    mpl.rcParams["text.usetex"] = "True"
 
     thisdir = Path(__file__).resolve().parent
     benchmark_figdir = thisdir.parent / "data_vector/figures/cacciato2013"
@@ -229,4 +248,4 @@ if __name__=="__main__":
 
     for lumbin in ["L2", "L3", "L4", "L5f", "L5b", "L6f"]:
         print(f"working on {lumbin}...")
-        main(lumbin, config, validate_hod=True, validate_esd=True)
+        main(lumbin, config, validate_hod=True, validate_esd=True, figdir=benchmark_figdir)

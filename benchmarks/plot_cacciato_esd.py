@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from cacciato_validation.obs_data_for_cacciato import get_full_sample_esd, config
-from cacciato_validation.predict_dsf_ds_for_cacciato_sample import predict_ds_from_dsf
+from cacciato_validation.ds_validation import main
 
 mpl.rcParams["text.usetex"] = "True"
 
@@ -22,9 +22,6 @@ benchmark_figdir = "data_vector/figures/cacciato2013"
 
 if __name__=="__main__":
 
-    # This string completely defines the Cacciato sample on interest
-    lumbin = "L2"
-
     fname = None
     shift_h_factor = False
     if len(sys.argv) > 1:
@@ -32,15 +29,19 @@ if __name__=="__main__":
         plot_log = bool(int(sys.argv[2]))
         shift_h_factor = bool(int(sys.argv[3]))
 
-    fname = fname.stem + f"_{lumbin}" + fname.suffix
+    # This string completely defines the Cacciato sample on interest
+    lumbin = "L6f"
+
+    fname = Path(fname.stem + f"_{lumbin}" + fname.suffix)
     if shift_h_factor:
         fname = fname.stem + f"_shifted_yval{fname.suffix}"
 
     fname = Path(f"{benchmark_figdir}/{fname}")
     print(fname)
 
-    # get prediction from DSF
-    dsf_output = predict_ds_from_dsf(lumbin, config)
+    # get prediction from DSF and AUM
+    # Note: dsfdict is fully contained in dsf_output
+    aumdict, dsfdict, dsf_output = main(lumbin, config, validate_hod=False, validate_esd=False, verbose=True, return_dsf_vars=True, figdir=benchmark_figdir)
     locals().update(dsf_output)
     ratio_y_label = r"$\Delta\Sigma_{\rm bin} / \Delta\Sigma$"
 
@@ -78,6 +79,10 @@ if __name__=="__main__":
         t_bin_x = np.log10(r*cosmo_pars['h']) #Mpc/h
         t_bin_y = np.log10(delta_sigma_bin/cosmo_pars['h'])
 
+        #AUM model
+        aum_x = np.log10(aumdict["r_Mpc_per_h"])
+        aum_y = np.log10(aumdict["ds_hMsun_per_pc2_aum"])
+
         if shift_h_factor:
             # this is just a debugging step
             # assume units already in hMsun/pc^2
@@ -102,6 +107,10 @@ if __name__=="__main__":
         t_bin_x = r*cosmo_pars['h']
         t_bin_y = delta_sigma_bin/cosmo_pars['h']
 
+        #AUM model
+        aum_x = aumdict["r_Mpc_per_h"]
+        aum_y = aumdict["ds_hMsun_per_pc2_aum"]
+
         if shift_h_factor:
             # this is just a debugging step
             # assume units already in hMsun/pc^2
@@ -112,16 +121,26 @@ if __name__=="__main__":
         yscale = "log"
         xlabel = r"$R/ (h^{-1}{\rm Mpc})$"
         ylabel = r"$\Delta\Sigma(R)\ [h{\rm M_\odot {pc}^{-2}}]$"
+
+    # aum model
+    ax.plot(
+        aum_x,  # Mpc/h
+        aum_y, # hMsun/pc^2
+        color=colors[0],
+        marker="o",
+        markersize=6,
+        label=r"AUM prediction",
+    )
     
+    # dsf model
     ax.plot(
         t_x,  # Mpc/h
         t_y, # hMsun/pc^2
-        color=colors[0],
+        color=colors[1],
         marker="o",
         markersize=6,
         label=rf"single redshift, $z_l={z_lens:.2f}$",
     )
-    
     ax.scatter(
         t_bin_x, # Mpc/h
         t_bin_y, # hMsun/pc^2

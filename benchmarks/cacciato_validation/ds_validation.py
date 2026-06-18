@@ -6,14 +6,14 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy import log10
-
-# prepare CLF class and dsf prediction to compare against AUM
-from .obs_data_for_cacciato import config
-from .predict_dsf_ds_for_cacciato_sample import predict_ds_from_dsf
 from scipy.interpolate import InterpolatedUnivariateSpline as ius
 
 from dsf.hod_cacciato import CacciatoHOD
 from dsf.pk2d_cacciato_hod import CONCENTRATION, MASS_DEF
+
+# prepare CLF class and dsf prediction to compare against AUM
+from .obs_data_for_cacciato import config
+from .predict_dsf_ds_for_cacciato_sample import predict_ds_from_dsf
 
 mpl.rcParams["text.usetex"] = "True"
 

@@ -11,9 +11,8 @@ import cmasher as cmr
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-
-from cacciato_validation.obs_data_for_cacciato import get_full_sample_esd, config
 from cacciato_validation.ds_validation import main
+from cacciato_validation.obs_data_for_cacciato import config, get_full_sample_esd
 
 mpl.rcParams["text.usetex"] = "True"
 
@@ -41,8 +40,24 @@ if __name__=="__main__":
 
     # get prediction from DSF and AUM
     # Note: dsfdict is fully contained in dsf_output
-    aumdict, dsfdict, dsf_output = main(lumbin, config, validate_hod=False, validate_esd=False, verbose=True, return_dsf_vars=True, figdir=benchmark_figdir)
-    locals().update(dsf_output)
+    aumdict, dsfdict, dsf_output = main(
+            lumbin, config, 
+            validate_hod=False, validate_esd=False, 
+            verbose=True, return_dsf_vars=True, 
+            figdir=benchmark_figdir
+    )
+    # locals().update(dsf_output)
+    ratio = dsf_output["ratio"]
+    magfaint = dsf_output["magfaint"]
+    magbright = dsf_output["magbright"]
+    delta_sigma = dsf_output["delta_sigma"]
+    file_low = dsf_output["file_low"]
+    file_high = dsf_output["file_high"]
+    z_lens = dsf_output["z_lens"]
+    cosmo_pars = dsf_output["cosmo_pars"]
+    delta_sigma_bin = dsf_output["delta_sigma_bin"]
+    r = dsf_output["r"]
+
     ratio_y_label = r"$\Delta\Sigma_{\rm bin} / \Delta\Sigma$"
 
     colors = cmr.take_cmap_colors(
@@ -163,7 +178,10 @@ if __name__=="__main__":
 
     ax.set_yscale(yscale)
     ax.set_ylabel(ylabel, fontsize=15)
-    ax.legend(fontsize=10, frameon=False, title=r"$M_r-5\log h \in [%0.1f, %0.1f]$"%(magfaint,magbright))
+    ax.legend(
+            fontsize=10, frameon=False, 
+            title=rf"$M_r-5\log h \in [{magfaint:0.1f}, {magbright:0.1f}]$"
+    )
     
     ax_res.axhline(1.0, color="lightgray", linewidth=1.4, linestyle="--")
     ax_res.plot(

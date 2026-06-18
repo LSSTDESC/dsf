@@ -18,7 +18,7 @@ from cacciato_validation.predict_dsf_ds_for_cacciato_sample import predict_ds_fr
 mpl.rcParams["text.usetex"] = "True"
 
 benchmark_indir = config["dir"]
-benchmark_figdir = "data_vector/figures"
+benchmark_figdir = "data_vector/figures/cacciato2013"
 
 if __name__=="__main__":
 
@@ -38,6 +38,7 @@ if __name__=="__main__":
     fname = Path(f"{benchmark_figdir}/{fname}")
     print(fname)
 
+    # get prediction from DSF
     dsf_output = predict_ds_from_dsf(lumbin, config)
     locals().update(dsf_output)
     ratio_y_label = r"$\Delta\Sigma_{\rm bin} / \Delta\Sigma$"

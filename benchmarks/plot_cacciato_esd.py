@@ -29,7 +29,7 @@ if __name__=="__main__":
         shift_h_factor = bool(int(sys.argv[3]))
 
     # This string completely defines the Cacciato sample on interest
-    lumbin = "L2"
+    lumbin = "L6f"
 
     fname = Path(fname.stem + f"_{lumbin}" + fname.suffix)
     if shift_h_factor:
@@ -78,15 +78,30 @@ if __name__=="__main__":
     )
 
     obs_data_vector = get_full_sample_esd(benchmark_indir, file_high, file_low)
+    xval = obs_data_vector.r.values/1000
+    yval = obs_data_vector.esd.values
+    err = obs_data_vector.err.values
     if plot_log:
         # full sample data: Mandelbaum+2006
-        f_x = np.log10(obs_data_vector.r/1000)
+        f_x = np.log10(xval)
         rmask = (f_x > -1.5)
         f_x = f_x[rmask]
-        f_y = np.log10(obs_data_vector.esd)[rmask]
-        f_y_err_lower = f_y - np.log10(obs_data_vector.esd - obs_data_vector.err)
-        f_y_err_upper = np.log10(obs_data_vector.esd + obs_data_vector.err) - f_y
-        f_y_err = np.array([f_y_err_lower[rmask], f_y_err_upper[rmask]])
+        f_y = np.log10(yval)[rmask]
+
+        # --- extract the error bars ---
+        fig_dummy, ax_dummy = plt.subplots()
+        container = ax_dummy.errorbar(f_x, yval[rmask], yerr=err[rmask])
+        ax_dummy.set_yscale('log')
+        lines = container[2][0].get_segments()
+        plt.close(fig_dummy)
+        y_min = np.array([line[0, 1] for line in lines]) 
+        y_max = np.array([line[1, 1] for line in lines])
+        f_y_err_lower = f_y - np.log10(y_min)
+        f_y_err_upper = np.log10(y_max) - f_y
+        # Force any NaN/Negative values from the log zero floor to a safe visual constant
+        f_y_err_lower = np.where(np.isnan(f_y_err_lower) | (f_y_err_lower < 0), 1.0, f_y_err_lower)
+        f_y_err_upper = np.where(np.isnan(f_y_err_upper) | (f_y_err_upper < 0), 1.0, f_y_err_upper)
+        f_y_err = np.array([f_y_err_lower, f_y_err_upper])
 
         #DSF model
         t_x = np.log10(r*cosmo_pars['h']) #Mpc/h
@@ -108,13 +123,14 @@ if __name__=="__main__":
         yscale = "linear"
         xlabel = r"$\log_{10}\left[ R/ (h^{-1}{\rm Mpc}) \right]$"
         ylabel = r"$\log_{10}\left[ \Delta\Sigma(R)/\ (h{\rm M_\odot {pc}^{-2}}) \right]$"
+        ylim =  (-0.1, 2.5)
     else:
         # full sample data: Mandelbaum+2006
-        f_x = obs_data_vector.r/1000
-        rmask = np.log10(obs_data_vector.r/1000)>-1.5
+        f_x = xval
+        rmask = np.log10(f_x)>-1.5
         f_x = f_x[rmask]
-        f_y = obs_data_vector.esd[rmask]
-        f_y_err = obs_data_vector.err[rmask]
+        f_y = yval[rmask]
+        f_y_err = err[rmask]
 
         # theory
         t_x = r*cosmo_pars['h']
@@ -172,7 +188,7 @@ if __name__=="__main__":
         yerr=f_y_err,
         capsize=4,
         marker = "o",
-        ls = "-",
+        ls = "none",
         label=f"{lumbin} data\n(Mandelbaum+2006)"
     )
 
@@ -200,14 +216,15 @@ if __name__=="__main__":
         ax_res.xaxis.set_major_locator(MultipleLocator(0.5))
         ax.yaxis.set_minor_locator(MultipleLocator(0.1))
         ax.yaxis.set_major_locator(MultipleLocator(0.5))
+        ax.set_ylim(ylim)
     ax.tick_params(axis='both', which='major', length=8, labelsize=13, direction="in")
-    ax.tick_params(axis='both', which='minor', length=6, labelsize=11, direction="in")
+    ax.tick_params(axis='both', which='minor', length=4, labelsize=11, direction="in")
     ax.tick_params(axis='y', which='both', direction="in", right=True)
     ax.grid(True, which="both", ls="--", alpha=0.3)
 
     ax_res.tick_params(axis='x', which='both', direction="in", top=True)
     ax_res.tick_params(axis='both', which='major', length=8, labelsize=13, direction="in")
-    ax_res.tick_params(axis='both', which='minor', length=6, labelsize=11, direction="in")
+    ax_res.tick_params(axis='both', which='minor', length=4, labelsize=11, direction="in")
     
     fig.subplots_adjust(left=0.18, right=0.97, bottom=0.15, top=0.94)
     

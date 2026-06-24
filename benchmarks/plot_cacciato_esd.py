@@ -29,7 +29,7 @@ if __name__=="__main__":
         shift_h_factor = bool(int(sys.argv[3]))
 
     # This string completely defines the Cacciato sample on interest
-    lumbin = "L6f"
+    lumbin = "L2"
 
     fname = Path(fname.stem + f"_{lumbin}" + fname.suffix)
     if shift_h_factor:
@@ -173,7 +173,7 @@ if __name__=="__main__":
         capsize=4,
         marker = "o",
         ls = "-",
-        label="full L4 data\n(Mandelbaum+2006)"
+        label=f"{lumbin} data\n(Mandelbaum+2006)"
     )
 
     ax.set_yscale(yscale)

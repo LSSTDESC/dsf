@@ -29,7 +29,6 @@ from dsf.utils.validators import (
 )
 
 from .sigma_crit import (
-    effective_sigma_crit_squared,
     effective_squared_sigma_crit,
     sigma_crit_inverse_comoving,
 )

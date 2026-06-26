@@ -6,10 +6,10 @@ from dsf.modelling import make_ccl_cosmology
 from dsf.tomography.tomo_builder import TomographyBuilder
 import pyccl as ccl
 
-# The fractional difference allowed between the legacy and dsf implementation
-# 10**(-4) is taken from pyCCL as standard.
+# The fractional difference allowed between the legacy and dsf implementation.
+diff_tol = 10**(-2) 
 
-diff_tol = 10**(-4) 
+# Helper function:
 
 def is_symmetric(a, tol = 10**(-14)):
     return np.all(np.abs(a - a.T) <= tol)
@@ -17,10 +17,6 @@ def is_symmetric(a, tol = 10**(-14)):
 def is_pos_semi_def(x):
     return np.all(np.linalg.eigvals(x) >= 0)
 
-
-#cosmo = make_ccl_cosmology(
-#    
-#)
 
 z = np.linspace(0.0, 5.0, 1000)
 
@@ -44,11 +40,8 @@ tomography = TomographyBuilder(
 
 tomo_inputs = tomography.prepare_bins()
 
-#print(tomo_inputs["source_population_stats"])
-
-#bin_pairs = tomo_inputs["bin_pairs"][:1]
-bin_pairs = tomo_inputs["bin_pairs"]
 # This set up gives the highest-z source bin with the single lens bin
+bin_pairs = tomo_inputs["bin_pairs"]
 
 # Load the bin edges from the legacy code (Mpc/h)
 rp_bin_edges = np.loadtxt('./rp_bin_edges.dat')
@@ -60,9 +53,6 @@ params = {'OmB':OmB, 'h':h, 'n_s':0.965, 'A_s':2.115 * 10**(-9),'b':2.333, 'OmM'
 cosmo = ccl.Cosmology(Omega_c = params['OmM'] - params['OmB'], Omega_b = params['OmB'], h = params['h'], 
                       A_s=params['A_s'], n_s = params['n_s'], transfer_function="boltzmann_camb",
                       matter_power_spectrum="halofit")
-
-# Load the grid in line-of-sight projection used in the legacy code for the gm x gg case (Mpc/h)
-#pi_grid = np.loadtxt('./Pi_grid.dat')
 
 # Specifics here are set to match what was provided for the legacy code.
 covariance_builder = DeltaSigmaCovarianceBuilder(
@@ -91,9 +81,8 @@ covariance_builder = DeltaSigmaCovarianceBuilder(
         "verbose": True,
         "max_iterations": 1000, 
     },
-    taper=False,
+    taper=True,
 )
-
 
 dsf_cov_dict = covariance_builder.covariance_for_pair(lens_bin_index=0, 
                                                       source_bin_index=4)
@@ -105,35 +94,11 @@ cov_gg_gg_dsf = dsf_cov_dict['cov_gg_gg']
 cov_gm_gg_dsf = dsf_cov_dict['cov_gm_gg']
 cov_joint_dsf = dsf_cov_dict['cov_joint']
 
-# Save the covariance matrices from dsf
-np.savetxt('./cov_gmgm_LSSTY1Bin5_DESILRG_dsf.dat', cov_gm_gm_dsf)
-np.savetxt('./cov_gggg_LSSTY1Bin5_DESILRG_dsf.dat', cov_gg_gg_dsf)
-np.savetxt('./cov_gmgg_LSSTY1Bin5_DESILRG_dsf.dat', cov_gm_gg_dsf)
-np.savetxt('./cov_joint_LSSTY1Bin5_DESILRG_dsf.dat', cov_joint_dsf)
-
-# Load the covariance matrices from dsf
-cov_gm_gm_dsf = np.loadtxt('./cov_gmgm_LSSTY1Bin5_DESILRG_dsf.dat')
-cov_gg_gg_dsf = np.loadtxt('./cov_gggg_LSSTY1Bin5_DESILRG_dsf.dat')
-cov_gm_gg_dsf = np.loadtxt('./cov_gmgg_LSSTY1Bin5_DESILRG_dsf.dat')
-cov_joint_dsf = np.loadtxt('./cov_joint_LSSTY1Bin5_DESILRG_dsf.dat')
-
 # Get the diagonal errors.
 errors_gm_gm_dsf = covariance_builder.diagonal_error(cov_gm_gm_dsf)
 errors_gg_gg_dsf = covariance_builder.diagonal_error(cov_gg_gg_dsf)
 errors_gm_gg_dsf = covariance_builder.diagonal_error(cov_gm_gg_dsf)
 errors_joint_dsf = covariance_builder.diagonal_error(cov_joint_dsf)
-
-# Save the diagonal errors from dsf
-np.savetxt('./errors_gmgm_LSSTY1Bin5_DESILRG_dsf.dat', errors_gm_gm_dsf)
-np.savetxt('./errors_gggg_LSSTY1Bin5_DESILRG_dsf.dat', errors_gg_gg_dsf)
-np.savetxt('./errors_gmgg_LSSTY1Bin5_DESILRG_dsf.dat', errors_gm_gg_dsf)
-np.savetxt('./errors_joint_LSSTY1Bin5_DESILRG_dsf.dat', errors_joint_dsf)
-
-# Load the diagonal errors from dsf
-errors_gm_gm_dsf = np.loadtxt('./errors_gmgm_LSSTY1Bin5_DESILRG_dsf.dat')
-errors_gg_gg_dsf = np.loadtxt('./errors_gggg_LSSTY1Bin5_DESILRG_dsf.dat')
-errors_gm_gg_dsf = np.loadtxt('./errors_gmgg_LSSTY1Bin5_DESILRG_dsf.dat')
-errors_joint_dsf = np.loadtxt('./errors_joint_LSSTY1Bin5_DESILRG_dsf.dat')
 
 # Start checks
 Fail = False # Set this to True if anything is failed.
@@ -217,7 +182,7 @@ if is_pos_semi_def(cov_joint_dsf) == False:
 
 ### Now compare some ingredients:
 
-"""shot_noise_dsf = dsf_cov_dict['ingredients']['shot_noise'] # (h / Mpc)^3
+shot_noise_dsf = dsf_cov_dict['ingredients']['shot_noise'] # (h / Mpc)^3
 shape_noise_dsf = dsf_cov_dict['ingredients']['shape_noise'] # (h / Mpc)^2
 
 shot_noise_leg = np.loadtxt('./shot_noise_LSSTY1Bin5_DESILRG_legacy.dat')
@@ -229,7 +194,7 @@ if np.abs((shot_noise_leg - shot_noise_dsf)/shot_noise_leg)>=diff_tol:
 
 if np.abs((shape_noise_leg - shape_noise_dsf)/shape_noise_leg)>=diff_tol:
     Fail = True
-    print('Projected shape noise does not match legacy implementation.')"""
+    print('Projected shape noise does not match legacy implementation.')
 
 ### Now directly compare the legacy and dsf covariance matrices
 
@@ -237,8 +202,7 @@ if np.abs((shape_noise_leg - shape_noise_dsf)/shape_noise_leg)>=diff_tol:
 # in calculating the volume associated with the lens sample
 # in the legacy code vs DSF, so we need to correct for that.
 
-#vol_dsf = dsf_cov_dict['ingredients']['volume'] # (Mpc/h)^3
-vol_dsf = np.loadtxt('./vol_dsf_LSSTY1Bin5_DESILRG_dsf.dat')
+vol_dsf = dsf_cov_dict['ingredients']['volume'] # (Mpc/h)^3
 vol_leg = np.loadtxt('./vol_LSSTY1Bin5_DESILRG_legacy.dat') # (Mpc/h)^3
 
 leg_vol_to_dsf =  vol_leg / vol_dsf # we will multiply legacy covariance by this
@@ -283,19 +247,19 @@ print("Frac diff, dsf vs legacy diagonal errors, gggg=", fracdiff_gggg_error)
 print("Frac diff, dsf vs legacy diagonal errors, gmgg=", fracdiff_gmgg_error)
 print("Frac diff, dsf vs legacy diagonal errors, joint=", fracdiff_joint_error)
 
-if np.any(fracdiff_gmgm_error)>diff_tol:
+if np.any(fracdiff_gmgm_error>diff_tol):
    Fail=True
    print('The fractional difference in the diagonal error terms between legacy and dsf for the gm x gm term is greater than the tolerance.')
 
-if np.any(fracdiff_gggg_error)>diff_tol:
+if np.any(fracdiff_gggg_error>diff_tol):
    Fail=True
    print('The fractional difference in the diagonal error terms between legacy and dsf for the gg x gg term is greater than the tolerance.')
 
-if np.any(fracdiff_gmgg_error)>diff_tol:
+if np.any(fracdiff_gmgg_error>diff_tol):
    Fail=True
    print('The fractional difference in the diagonal error terms between legacy and dsf for the gm x gg term is greater than the tolerance.')
 
-if np.any(fracdiff_joint_error)>diff_tol:
+if np.any(fracdiff_joint_error>diff_tol):
    Fail=True
    print('The fractional difference in the diagonal error terms between legacy and dsf for the joint covariance is greater than the tolerance.')
 

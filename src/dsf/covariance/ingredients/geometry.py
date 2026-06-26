@@ -30,6 +30,7 @@ from dsf.utils.validators import (
 
 from .sigma_crit import (
     effective_sigma_crit_squared,
+    effective_squared_sigma_crit,
     sigma_crit_inverse_comoving,
 )
 
@@ -388,7 +389,7 @@ def gm_lensing_window(
         chi_interp = comoving_distance_h(cosmo, z_interp, h=h)
 
     sigma_crit_average = np.sqrt(
-        effective_sigma_crit_squared(
+        effective_squared_sigma_crit(
             cosmo,
             z_lens=z_lens_arr,
             nz_lens=nz_lens_arr,

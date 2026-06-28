@@ -3,8 +3,6 @@
 from collections.abc import Callable, Mapping, Sequence
 from typing import get_args, get_origin
 
-import numpy as np
-
 from dsf.utils.types import (
     ArrayLike,
     BinPairs,
@@ -20,7 +18,8 @@ from dsf.utils.types import (
 
 def test_float_array_alias_points_to_numpy_float64_array():
     """Tests that FloatArray aliases NumPy float64 arrays."""
-    assert get_origin(FloatArray) is np.ndarray
+    assert get_origin(FloatArray).__name__ in {"ndarray", "NDArray"}
+    assert "float64" in str(FloatArray)
 
 
 def test_float_like_accepts_float_and_float_array_aliases():

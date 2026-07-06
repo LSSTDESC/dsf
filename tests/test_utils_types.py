@@ -20,7 +20,12 @@ from dsf.utils.types import (
 
 def test_float_array_alias_points_to_numpy_float64_array():
     """Tests that FloatArray aliases NumPy float64 arrays."""
-    assert get_origin(FloatArray) is np.ndarray
+    origin = get_origin(FloatArray)
+
+    if origin is not np.ndarray:
+        origin = get_origin(origin)
+
+    assert origin is np.ndarray
 
 
 def test_float_like_accepts_float_and_float_array_aliases():

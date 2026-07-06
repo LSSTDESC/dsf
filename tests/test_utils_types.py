@@ -3,6 +3,8 @@
 from collections.abc import Callable, Mapping, Sequence
 from typing import get_args, get_origin
 
+import numpy as np
+
 from dsf.utils.types import (
     ArrayLike,
     BinPairs,

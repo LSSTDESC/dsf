@@ -18,6 +18,7 @@ forecasts, HOD or SHMR parameter forecasts, and later Fisher/DALI comparisons.
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
@@ -32,6 +33,12 @@ from dsf.utils.validators import (
     validate_forecast_vector_and_covariance,
     validate_parameter_names,
 )
+
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
 
 __all__ = [
     "DeltaSigmaForecastBuilder",

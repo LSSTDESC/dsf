@@ -38,7 +38,7 @@ from dsf.covariance.ingredients.geometry import (
 )
 from dsf.covariance.ingredients.noise import projected_shape_noise, shot_noise
 from dsf.covariance.ingredients.power_spectrum import lens_averaged_matter_power
-from dsf.covariance.ingredients.sigma_crit import effective_sigma_crit_squared
+from dsf.covariance.ingredients.sigma_crit import effective_squared_sigma_crit
 from dsf.covariance.projection.hankel_transform import HankelTransform
 from dsf.utils.converters import (
     resolve_h,
@@ -744,7 +744,7 @@ class DeltaSigmaCovarianceBuilder:
             gm_window=self.gm_window,
         )
 
-        sigma_crit_squared_average = effective_sigma_crit_squared(
+        sigma_crit_squared_average = effective_squared_sigma_crit(
             self.cosmo,
             z_lens=self.z_lens,
             nz_lens=lens["nz_lens"],

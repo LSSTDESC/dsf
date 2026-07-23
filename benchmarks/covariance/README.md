@@ -26,7 +26,6 @@ To run the benchmark, just run `python benchmark_covariance_scripy.py`. This wil
 
 `cov_gggg_LSSTY1Bin5_DESILRG_legacy.dat` contains the covariance of Delta Sigma gg from the legacy code, using projected radial bins defined by rp_bin_edges/centres, in units `Msun^2 h^2 / pc^4`.
 
-
 `cov_gmgg_LSSTY1Bin5_DESILRG_legacy.dat` contains the cross-covariance of Delta Sigma gm x Delta Sigma gg from the legacy code, using projected radial bins defined by rp_bin_edges/centres, in units `Msun^2 h^2 / pc^4`.
 
 `cov_joint_LSSTY1Bin5_DESILRG_legacy.dat` contains the joint covariance of Delta Sigma gm x gm, gm x gg, and gg x gg from the legacy code, using projected radial bins defined by rp_bin_edges/centres, in units `Msun^2 h^2 / pc^4`.

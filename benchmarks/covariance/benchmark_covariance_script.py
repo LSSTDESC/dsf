@@ -5,6 +5,7 @@ from dsf.covariance.cov_builder import DeltaSigmaCovarianceBuilder
 from dsf.modelling import make_ccl_cosmology
 from dsf.tomography.tomo_builder import TomographyBuilder
 import pyccl as ccl
+import pytest
 
 # The fractional difference allowed between the legacy and dsf implementation.
 diff_tol = 10**(-2) 
@@ -105,80 +106,30 @@ Fail = False # Set this to True if anything is failed.
 
 #### Do basic matrix sanity checks
 
-# Check matrices do not contains NaNs:
-if np.any(np.isnan(cov_gm_gm_dsf)):
-   Fail = True
-   print('The gm x gm covariance contains at least one NaN')
-
-if np.any(np.isnan(cov_gg_gg_dsf)):
-   Fail = True
-   print('The gg x gg covariance contains at least one NaN')
-
-if np.any(np.isnan(cov_gm_gg_dsf)):
-   Fail = True
-   print('The gm x gg covariance contains at least one NaN')
-
-if np.any(np.isnan(cov_joint_dsf)):
-   Fail = True
-   print('The joint covariance contains at least one NaN')
-
-# Check matrices do not contains infs:
-if np.any(np.isinf(cov_gm_gm_dsf)):
-   Fail = True
-   print('The gm x gm covariance contains at least one inf')
-
-if np.any(np.isinf(cov_gg_gg_dsf)):
-   Fail = True
-   print('The gg x gg covariance contains at least one inf')
-
-if np.any(np.isinf(cov_gm_gg_dsf)):
-   Fail = True
-   print('The gm x gg covariance contains at least one inf')
-
-if np.any(np.isinf(cov_joint_dsf)):
-   Fail = True
-   print('The joint covariance contains at least one inf')
-
+# Check matrices do not contains NaNs or infs
+def test_finite():
+   assert np.all(np.isfinite(cov_gm_gm_dsf)) 
+   assert np.all(np.isfinite(cov_gg_gg_dsf))
+   assert np.all(np.isfinite(cov_gm_gg_dsf))
+   assert np.all(np.isfinite(cov_joint_dsf))
 
 # Make sure the covariances are symmetric
 # Note we don't use diff_tol here because this
 # is a basic numerical check.
 
-if is_symmetric(cov_gm_gm_dsf, tol=10**(-12)) == False:
-   Fail = True
-   print('The gm x gm covariance is not symmetric.')
-
-if is_symmetric(cov_gg_gg_dsf, tol=10**(-12)) == False:
-   Fail = True
-   print('The gg x gg covariance is not symmetric.')
-
-if is_symmetric(cov_gm_gg_dsf, tol=10**(-12)) == False:
-   Fail = True
-   print('The gm x gg covariance is not symmetric.')
-
-if is_symmetric(cov_joint_dsf, tol=10**(-12)) == False:
-   Fail = True
-   print('The joint covariance is not symmetric.')
+def test_symmetric():
+   assert is_symmetric(cov_gm_gm_dsf, tol=10**(-12))
+   assert is_symmetric(cov_gg_gg_dsf, tol=10**(-12))
+   assert is_symmetric(cov_gm_gg_dsf, tol=10**(-12))
+   assert is_symmetric(cov_joint_dsf, tol=10**(-12))
 
 # Make sure the covariances are positive semi-definite.
 
-if is_pos_semi_def(cov_gm_gm_dsf) == False:
-   Fail = True
-   print('The gm x gm covariance is not positive semi-definite.')
-
-if is_pos_semi_def(cov_gg_gg_dsf) == False:
-   Fail = True
-   print('The gg x gg covariance is not positive semi-definite.')
-
-if is_pos_semi_def(cov_gm_gg_dsf) == False:
-   Fail = True
-   print('The gm x gg covariance is not positive semi-definite.')
-
-
-if is_pos_semi_def(cov_joint_dsf) == False:
-   Fail = True
-   print('The joint covariance is not positive semi-definite.')
-
+def test_pos_semi_def():
+   assert is_pos_semi_def(cov_gm_gm_dsf)
+   assert is_pos_semi_def(cov_gg_gg_dsf)
+   assert is_pos_semi_def(cov_gm_gg_dsf)
+   assert is_pos_semi_def(cov_joint_dsf)
 
 ### Now compare some ingredients:
 
@@ -188,13 +139,9 @@ shape_noise_dsf = dsf_cov_dict['ingredients']['shape_noise'] # (h / Mpc)^2
 shot_noise_leg = np.loadtxt('./shot_noise_LSSTY1Bin5_DESILRG_legacy.dat')
 shape_noise_leg = np.loadtxt('./shape_noise_LSSTY1Bin5_DESILRG_legacy.dat')
 
-if np.abs((shot_noise_leg - shot_noise_dsf)/shot_noise_leg)>=diff_tol:
-    Fail = True
-    print('Projected shot noise does not match legacy implementation.')
-
-if np.abs((shape_noise_leg - shape_noise_dsf)/shape_noise_leg)>=diff_tol:
-    Fail = True
-    print('Projected shape noise does not match legacy implementation.')
+def test_shot_shape_noise():
+   assert np.abs((shot_noise_leg - shot_noise_dsf)/shot_noise_leg)<diff_tol
+   assert np.abs((shape_noise_leg - shape_noise_dsf)/shape_noise_leg)<diff_tol
 
 ### Now directly compare the legacy and dsf covariance matrices
 
@@ -220,48 +167,20 @@ errors_gm_gg_leg = np.sqrt(np.diag(cov_gm_gg_leg))
 errors_joint_leg = np.sqrt(np.diag(cov_joint_leg))
 
 # Check shapes match
-
-if cov_gm_gm_dsf.shape != cov_gm_gm_leg.shape:
-   Fail = True
-   print('The gm x gm dsf and legacy covariances are different shapes.')
-
-if cov_gm_gg_dsf.shape != cov_gm_gg_leg.shape:
-   Fail = True
-   print('The gm x gg dsf and legacy covariances are different shapes.')
-
-if cov_gg_gg_dsf.shape != cov_gg_gg_leg.shape:
-   Fail = True
-   print('The gg x gg dsf and legacy covariances are different shapes.')
-
-if cov_joint_dsf.shape != cov_joint_leg.shape:
-   Fail = True
-   print('The joint dsf and legacy covariances are different shapes.')
+def test_array_shapes():
+   assert cov_gm_gm_dsf.shape == cov_gm_gm_leg.shape
+   assert cov_gm_gg_dsf.shape == cov_gm_gg_leg.shape
+   assert cov_gg_gg_dsf.shape == cov_gg_gg_leg.shape
+   assert cov_joint_dsf.shape == cov_joint_leg.shape
 
 # Check diagonal errors
 fracdiff_gmgm_error = np.abs((errors_gm_gm_dsf - errors_gm_gm_leg) / errors_gm_gm_leg)
 fracdiff_gggg_error = np.abs((errors_gg_gg_dsf - errors_gg_gg_leg) / errors_gg_gg_leg)
 fracdiff_gmgg_error = np.abs((errors_gm_gg_dsf - errors_gm_gg_leg) / errors_gm_gg_leg)
 fracdiff_joint_error = np.abs((errors_joint_dsf - errors_joint_leg) / errors_joint_leg)
-print("Frac diff, dsf vs legacy diagonal errors, gmgm=", fracdiff_gmgm_error)
-print("Frac diff, dsf vs legacy diagonal errors, gggg=", fracdiff_gggg_error)
-print("Frac diff, dsf vs legacy diagonal errors, gmgg=", fracdiff_gmgg_error)
-print("Frac diff, dsf vs legacy diagonal errors, joint=", fracdiff_joint_error)
 
-if np.any(fracdiff_gmgm_error>diff_tol):
-   Fail=True
-   print('The fractional difference in the diagonal error terms between legacy and dsf for the gm x gm term is greater than the tolerance.')
-
-if np.any(fracdiff_gggg_error>diff_tol):
-   Fail=True
-   print('The fractional difference in the diagonal error terms between legacy and dsf for the gg x gg term is greater than the tolerance.')
-
-if np.any(fracdiff_gmgg_error>diff_tol):
-   Fail=True
-   print('The fractional difference in the diagonal error terms between legacy and dsf for the gm x gg term is greater than the tolerance.')
-
-if np.any(fracdiff_joint_error>diff_tol):
-   Fail=True
-   print('The fractional difference in the diagonal error terms between legacy and dsf for the joint covariance is greater than the tolerance.')
-
-if Fail == False:
-   print('The covariance benchmark passed!')
+def test_diag_errors_agree():
+   assert np.all(fracdiff_gmgm_error<diff_tol)
+   assert np.all(fracdiff_gggg_error<diff_tol)
+   assert np.all(fracdiff_gmgg_error<diff_tol)
+   assert np.all(fracdiff_joint_error<diff_tol)

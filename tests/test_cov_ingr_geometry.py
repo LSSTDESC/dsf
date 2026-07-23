@@ -278,7 +278,7 @@ def test_gm_lensing_window_uses_supplied_pi_grid(monkeypatch, cosmo):
     patch_linear_comoving_distance(monkeypatch, factor=1000.0)
 
     monkeypatch.setattr(
-        f"{MODULE}.effective_sigma_crit_squared",
+        f"{MODULE}.effective_squared_sigma_crit",
         lambda *args, **kwargs: 4.0,
     )
 
@@ -314,7 +314,7 @@ def test_gm_lensing_window_builds_default_symmetric_pi_grid(monkeypatch, cosmo):
     patch_linear_comoving_distance(monkeypatch, factor=1000.0)
 
     monkeypatch.setattr(
-        f"{MODULE}.effective_sigma_crit_squared",
+        f"{MODULE}.effective_squared_sigma_crit",
         lambda *args, **kwargs: 4.0,
     )
 

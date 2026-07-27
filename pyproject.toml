@@ -68,6 +68,7 @@ docs = [
   "sphinx-copybutton",
   "sphinx-design",
   "sphinx-multiversion",
+  "sphinxcontrib-bibtex",
   "furo",
   { include-group = "dev" },
 ]
@@ -100,7 +101,7 @@ exclude = [
 [tool.coverage.run]
 branch = true
 parallel = true
-source = ["src"]
+source = ["dsf"]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -185,7 +186,7 @@ commands = [
   [
     "pytest",
     "-q",
-    "--cov=src",
+    "--cov=dsf",
     "--cov-branch",
     "--cov-report=term-missing:skip-covered",
     { replace = "posargs", extend = true },

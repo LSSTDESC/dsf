@@ -1,7 +1,36 @@
-## Citation
+cff-version: 1.2.0
+message: >-
+  If you use DSF in academic work, please cite the software using the
+  metadata below and acknowledge the LSST Dark Energy Science Collaboration.
+title: DSF
+type: software
 
-If you use DSF in academic work, please cite the relevant DSF paper or software release once available,
- and acknowledge the LSST Dark Energy Science Collaboration.
+authors:
+  - family-names: Šarčević
+    given-names: Nikolina
+    alias: Niko Šarčević
+    orcid: "https://orcid.org/0000-0001-7301-6415"
+  - family-names: Levine
+    given-names: Benjamin C.
+    alias: Ben Levine
+    orcid: "https://orcid.org/0000-0001-8000-1959"
 
-DSF is authored by Nikolina Sarcevic, Ben Levine, and contributors, and is developed within
-the LSST Dark Energy Science Collaboration.
+abstract: >-
+  DSF is a modelling package for projected galaxy-galaxy lensing observables,
+  with a focus on Delta Sigma data vectors, covariance ingredients, tomography
+  choices, and LSST DESC forecasting workflows.
+
+repository-code: "https://github.com/LSSTDESC/dsf"
+url: "https://lsstdesc.org/dsf/"
+license: BSD-3-Clause
+
+version: 0.1.0
+date-released: 2026-07-27
+
+keywords:
+  - cosmology
+  - weak lensing
+  - galaxy-galaxy lensing
+  - Delta Sigma
+  - forecasting
+  - LSST DESC

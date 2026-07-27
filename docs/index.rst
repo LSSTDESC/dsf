@@ -7,6 +7,25 @@ DSF is a modelling package for projected galaxy-galaxy lensing observables,
 with a focus on :math:`\Delta\Sigma` data vectors, covariance ingredients,
 tomography choices, and LSST DESC forecasting workflows.
 
+The primary observable modelled by DSF is the excess surface density,
+defined as
+
+.. math::
+
+   \Delta\Sigma(R)
+   =
+   \overline{\Sigma}(<R)
+   -
+   \Sigma(R)
+   =
+   \Sigma_{\rm crit}\,\gamma_t(R),
+
+where :math:`\Sigma(R)` is the projected surface mass density,
+:math:`\overline{\Sigma}(<R)` is the mean projected surface density enclosed
+within projected radius :math:`R`, :math:`\Sigma_{\rm crit}` is the critical
+surface density, and :math:`\gamma_t(R)` is the tangential shear
+:cite:p:`Mandelbaum_2005`.
+
 The package is currently in early development. Interfaces, examples, and
 recommended workflows may change as the codebase is expanded and validated.
 
@@ -45,7 +64,13 @@ installation notes and worked examples will be added as the package matures.
    installation
    examples/index
    unit_conventions
+   contributing
    api/index
+
+References
+----------
+
+.. bibliography::
 
 Indices and tables
 ------------------

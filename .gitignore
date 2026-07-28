@@ -18,3 +18,4 @@ notebooks/plots/*.png
 notebooks/plots/*.pdf
 notebooks/logs/
 docs/_generated/
+/.coverage

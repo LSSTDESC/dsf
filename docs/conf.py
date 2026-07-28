@@ -23,8 +23,11 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx_copybutton",
     "sphinx_design",
+    "sphinxcontrib.bibtex",
     "matplotlib.sphinxext.plot_directive",
 ]
+
+bibtex_bibfiles = ["references.bib"]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "api/modules.rst"]

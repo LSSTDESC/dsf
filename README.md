@@ -12,12 +12,19 @@ and LSST DESC forecasting workflows.
 
 The package is currently in early development.
 
-## Authors
+## Contacts
+
+For questions about DSF or contributing to the project, please contact:
 
 - [Niko Sarcevic](https://github.com/nikosarcevic) — [email](mailto:nikolina.sarcevic@gmail.com)
 - [Ben Levine](https://github.com/bclevine) — [email](mailto:benjamin.c.levine@stonybrook.edu)
 
-DSF is developed within the LSST Dark Energy Science Collaboration.
+DSF is developed collaboratively within the LSST Dark Energy Science
+Collaboration. Contributions are welcome.
+
+See the [contributing and development guide](https://lsstdesc.org/dsf/contributing.html)
+for information about contributing, the development team, and the development
+workflow.
 
 ## Installation
 

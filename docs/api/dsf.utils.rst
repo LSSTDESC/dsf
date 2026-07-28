@@ -8,6 +8,7 @@ Submodules
    :maxdepth: 2
 
    dsf.utils.converters
+   dsf.utils.hankel_transform_1d
    dsf.utils.integrators
    dsf.utils.thread_limits
    dsf.utils.types

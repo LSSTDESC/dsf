@@ -140,25 +140,11 @@ Build the documentation for the main branch and release versions with:
 Generated documentation is written to ``docs/_build``. New documentation pages
 should also be added to the appropriate Sphinx ``toctree``.
 
-Development team
-----------------
+Contributors
+------------
 
 DSF is developed collaboratively within the LSST Dark Energy Science
-Collaboration.
+Collaboration together with contributions from the wider community.
 
-Project maintainers
-~~~~~~~~~~~~~~~~~~~
-
-- Niko Šarčević
-- Ben Levine
-
-Contributors
-~~~~~~~~~~~~
-
-- Dani Leonard
-- Navin Chaurasiya
-- Carlos Garcia-Garcia
-
-This list reflects the current development team and may evolve as DSF
-continues to grow. Contributions are also recorded through the repository
-history and acknowledged in software releases.
+A current list of contributors is available on the
+`GitHub contributors page <https://github.com/LSSTDESC/dsf/graphs/contributors>`__.

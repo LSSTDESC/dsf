@@ -181,18 +181,17 @@ class HankelTransform:
         order: float | int = 0,
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
-        """Compute a projected third-order radial tensor from three spectra.
+        """Compute a projected covariance matrix from two spectra.
 
         Args:
             k_pk: Wavenumber grid for tabulated spectra.
             pk1: First spectrum values or callable spectrum.
             pk2: Second spectrum values or callable spectrum.
-            pk3: Third spectrum values or callable spectrum.
             order: Bessel order to use.
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
-            Radial grid and projected third-order radial tensor.
+            Radial grid and projected covariance matrix.
         """
         return self.backend.projected_covariance(
             k_pk=k_pk,

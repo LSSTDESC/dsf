@@ -125,6 +125,8 @@ class HankelTransform:
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
         """Compute a projected radial statistic from one spectrum at given theta values.
+            The statistic is interpolated linearly from the internal Hankel grid to the
+            requested theta values.
 
         Args:
             theta: Theta values for interpolation (in radians).
@@ -157,6 +159,8 @@ class HankelTransform:
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
         """Compute a spherical radial statistic from one spectrum at given radial values.
+            The statistic is interpolated linearly from the internal Hankel grid to the
+            requested radial values.
 
         Args:
             r: radial values for interpolation (in Mpc).

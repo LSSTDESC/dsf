@@ -253,8 +253,8 @@ def apply_taper_spectrum(
     Raises:
         ValueError: If the upper limit of a taper is not larger than the lower limit.
     """
-    k = as_1d_float_array(k)
-    pk_out = as_1d_float_array(pk)
+    k = as_1d_float_array(k, "k")
+    pk_out = np.copy(as_1d_float_array(pk, "pk"))
 
     validate_nonnegative_scalar(large_k_lower, "large_k_lower")
     validate_nonnegative_scalar(large_k_upper, "large_k_upper")

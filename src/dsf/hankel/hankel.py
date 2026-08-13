@@ -132,7 +132,7 @@ class HankelTransform:
             ell=ell, c_ell=c_ell, order=order, **kwargs
         )
 
-        validate_positive_strictly_increasing_1d_array(theta_grid)
+        validate_positive_strictly_increasing_1d_array(theta_grid, "theta_grid")
         theta_eval_arr = validate_interpolation_within_bounds(
             theta, theta_grid, "theta"
         )
@@ -167,7 +167,7 @@ class HankelTransform:
             **kwargs,
         )
 
-        validate_positive_strictly_increasing_1d_array(r_grid)
+        validate_positive_strictly_increasing_1d_array(r_grid, "r_grid")
         r_eval_arr = validate_interpolation_within_bounds(r, r_grid, "r")
 
         xi_out = np.interp(r_eval_arr, r_grid, xi_grid)

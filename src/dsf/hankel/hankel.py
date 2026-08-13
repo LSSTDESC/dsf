@@ -91,8 +91,6 @@ class HankelTransform:
             k_pk: Wavenumber grid for tabulated spectra (in 1/Mpc).
             pk: Spectrum values or callable spectrum.
             order: Bessel order to use.
-            taper: Whether to suppress low-k and high-k edge power.
-            taper_kwargs: Optional settings for the spectrum taper.
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
@@ -120,8 +118,6 @@ class HankelTransform:
             ell: ell grid for tabulated spectra.
             c_ell: Spectrum values or callable spectrum.
             order: Bessel order to use.
-            taper: Whether to suppress low-k and high-k edge power.
-            taper_kwargs: Optional settings for the spectrum taper.
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
@@ -141,8 +137,6 @@ class HankelTransform:
         k_pk: ArrayLike | None = None,
         pk: SpectrumInput | None = None,
         order: float | int = 0,
-        taper: bool = False,
-        taper_kwargs: dict | None = None,
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
         """Compute a spherical radial statistic from one spectrum at given radial values.
@@ -152,8 +146,6 @@ class HankelTransform:
             k_pk: Wavenumber grid for tabulated spectra (in 1/Mpc).
             pk: Spectrum values or callable spectrum.
             order: Bessel order to use.
-            taper: Whether to suppress low-k and high-k edge power.
-            taper_kwargs: Optional settings for the spectrum taper.
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
@@ -163,8 +155,6 @@ class HankelTransform:
             k_pk=k_pk,
             pk=pk,
             order=order,
-            taper=taper,
-            taper_kwargs=taper_kwargs,
             **kwargs,
         )
         r_eval_arr = validate_interpolation_within_bounds(r, r_grid, "r")
@@ -188,8 +178,6 @@ class HankelTransform:
             pk2: Second spectrum values or callable spectrum.
             pk3: Third spectrum values or callable spectrum.
             order: Bessel order to use.
-            taper: Whether to suppress low-k and high-k edge power.
-            taper_kwargs: Optional settings for the spectrum taper.
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:

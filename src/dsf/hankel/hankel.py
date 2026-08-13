@@ -48,7 +48,9 @@ class HankelTransform:
             backend_class = _BACKENDS[backend]
         except KeyError as e:
             valid = "', '".join(_BACKENDS)
-            raise ValueError(f"Unsupported backend '{backend}'. Use one of: '{valid}'.") from e
+            raise ValueError(
+                f"Unsupported backend '{backend}'. Use one of: '{valid}'."
+            ) from e
 
         self.backend_name = backend
         self.backend = backend_class(**kwargs)
@@ -126,7 +128,9 @@ class HankelTransform:
         theta_grid, xi_grid = self.backend.projected_correlation(
             ell=ell, c_ell=c_ell, order=order, **kwargs
         )
-        theta_eval_arr = validate_interpolation_within_bounds(theta, theta_grid, "theta")
+        theta_eval_arr = validate_interpolation_within_bounds(
+            theta, theta_grid, "theta"
+        )
 
         xi_out = np.interp(theta_eval_arr, theta_grid, xi_grid)
         return theta_eval_arr, np.asarray(xi_out, dtype=float)

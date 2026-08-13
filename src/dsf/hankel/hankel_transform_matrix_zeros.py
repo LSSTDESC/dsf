@@ -164,12 +164,16 @@ class HankelTransformMatrixZeros(HankelTransformBase):
 
             if np.max(r) < self.r_max:
                 n_zeros += self.n_zeros_step
-                self._log(f"order={order}: increasing n_zeros to {n_zeros} to cover r_max")
+                self._log(
+                    f"order={order}: increasing n_zeros to {n_zeros} to cover r_max"
+                )
                 continue
 
             if np.min(k) > self.k_min:
                 n_zeros += self.n_zeros_step
-                self._log(f"order={order}: increasing n_zeros to {n_zeros} to cover k_min")
+                self._log(
+                    f"order={order}: increasing n_zeros to {n_zeros} to cover k_min"
+                )
                 continue
 
             break
@@ -578,7 +582,9 @@ class HankelTransformMatrixZeros(HankelTransformBase):
 
         expected_shape = tuple([r_arr.size] * matrix_arr.ndim)
         if matrix_arr.shape != expected_shape:
-            raise ValueError(f"matrix shape must be {expected_shape}. Got {matrix_arr.shape}.")
+            raise ValueError(
+                f"matrix shape must be {expected_shape}. Got {matrix_arr.shape}."
+            )
 
         return compute_bin_radial_matrix(r_arr, matrix_arr, r_bins_arr)
 

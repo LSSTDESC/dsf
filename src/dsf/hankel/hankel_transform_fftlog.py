@@ -117,7 +117,9 @@ class HankelTransformFFTLog(HankelTransformBase):
             **kwargs,
         )
 
-        return hankel_projected(ell=ell, c_ell=c_ell_eval, order=order, use_offset=use_offset)
+        return hankel_projected(
+            ell=ell, c_ell=c_ell_eval, order=order, use_offset=use_offset
+        )
 
     def spherical_correlation(
         self,

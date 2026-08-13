@@ -149,4 +149,6 @@ class HankelTransformBase:
 
     def diagonal_error(self, covariance: FloatArray) -> FloatArray:
         """Return one-sigma errors from a covariance matrix."""
-        raise NotImplementedError(f"{self.__class__.__name__} does not support diagonal_error().")
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support diagonal_error()."
+        )

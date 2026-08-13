@@ -273,7 +273,9 @@ def apply_taper_spectrum(
     pk_out[k > large_k_upper] = 0.0
 
     low = k < low_k_upper
-    pk_out[low] *= np.cos((k[low] - low_k_upper) / (low_k_upper - low_k_lower) * np.pi / 2.0)
+    pk_out[low] *= np.cos(
+        (k[low] - low_k_upper) / (low_k_upper - low_k_lower) * np.pi / 2.0
+    )
     pk_out[k < low_k_lower] = 0.0
 
     return pk_out

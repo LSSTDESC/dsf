@@ -10,10 +10,6 @@ from dsf.utils.validators import as_1d_float_array, validate_power_spectrum_inpu
 class HankelTransformBase:
     """Base class for Hankel transforms."""
 
-    def __init__(self) -> None:
-        """Initialize the HankelTransformBase class."""
-        pass
-
     def taper_spectrum(
         self,
         k: ArrayLike,

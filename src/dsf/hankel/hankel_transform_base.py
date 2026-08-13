@@ -148,13 +148,27 @@ class HankelTransformBase:
         )
 
     def correlation_matrix(self, covariance: FloatArray) -> FloatArray:
-        """Return the correlation matrix associated with a covariance matrix."""
+        """Return the correlation matrix associated with a covariance matrix.
+
+        Args:
+            covariance: 2D square covariance matrix.
+
+        Raises:
+            NotImplementedError: If the backend does not support correlation matrices.
+        """
         raise NotImplementedError(
             f"{self.__class__.__name__} does not support correlation_matrix()."
         )
 
     def diagonal_error(self, covariance: FloatArray) -> FloatArray:
-        """Return one-sigma errors from a covariance matrix."""
+        """Return one-sigma errors from a covariance matrix.
+
+        Args:
+            covariance: 2D square covariance matrix.
+
+        Raises:
+            NotImplementedError: If the backend does not support diagonal errors.
+        """
         raise NotImplementedError(
             f"{self.__class__.__name__} does not support diagonal_error()."
         )

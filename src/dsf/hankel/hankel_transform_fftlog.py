@@ -29,11 +29,6 @@ class HankelTransformFFTLog(HankelTransformBase):
     using the scipy FFTLog algorithm.
     """
 
-    def _check_order(self, order: float | int) -> None:
-        """Validate that a requested Bessel order is available."""
-        if order < 0:
-            raise ValueError(f"Order {order} must be positive.")
-
     def _evaluate_spectrum(
         self,
         spectrum: SpectrumInput,
@@ -43,7 +38,7 @@ class HankelTransformFFTLog(HankelTransformBase):
         taper_kwargs: dict | None = None,
         **kwargs,
     ) -> FloatArray:
-        """Evaluate a spectrum on the internal Hankel grid.
+        """Evaluate a spectrum on a supplied wavenumber grid.
 
         Args:
             spectrum: Tabulated spectrum values or callable spectrum.
@@ -54,7 +49,7 @@ class HankelTransformFFTLog(HankelTransformBase):
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
-            Spectrum evaluated on the internal Hankel wavenumber grid.
+            Spectrum evaluated on the supplied wavenumber grid.
         """
         if callable(spectrum):
             values = np.asarray(spectrum(k=k_input, **kwargs), dtype=float)

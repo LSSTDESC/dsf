@@ -17,6 +17,13 @@ Each of the three available backends can be useful for different purposes.
   transforms using direct matrix operator methods. Requires fine-tuning
   of the k-sampling upon generation. Robust against ringing at small scales,
   but can exhibit minor ringing at large scales.
+
+The mathematical conventions for the projected and spherical transforms
+are as follows:
+
+:math:`\\gamma_t(\\theta) = \\int \\frac{\\ell d\\ell}{2\\pi} C(\\ell )J_\\mu(\\ell \\theta)`.
+
+:math:`\\xi(r) = \\int \\frac{k^2 dk}{2\\pi^2} P(k) j_\\mu(kr)`.
 """
 
 from __future__ import annotations

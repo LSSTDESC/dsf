@@ -29,7 +29,10 @@ from dsf.hankel.hankel_transform_fftlog import HankelTransformFFTLog
 from dsf.hankel.hankel_transform_matrix_direct import HankelTransformMatrixDirect
 from dsf.hankel.hankel_transform_matrix_zeros import HankelTransformMatrixZeros
 from dsf.utils.types import ArrayLike, FloatArray, SpectrumInput
-from dsf.utils.validators import validate_interpolation_within_bounds
+from dsf.utils.validators import (
+    validate_interpolation_within_bounds,
+    validate_positive_strictly_increasing_1d_array,
+)
 
 HankelBackend = Literal["fftlog", "matrix_zeros", "matrix_direct"]
 _BACKENDS = {
@@ -128,6 +131,8 @@ class HankelTransform:
         theta_grid, xi_grid = self.backend.projected_correlation(
             ell=ell, c_ell=c_ell, order=order, **kwargs
         )
+
+        validate_positive_strictly_increasing_1d_array(theta_grid)
         theta_eval_arr = validate_interpolation_within_bounds(
             theta, theta_grid, "theta"
         )
@@ -161,6 +166,8 @@ class HankelTransform:
             order=order,
             **kwargs,
         )
+
+        validate_positive_strictly_increasing_1d_array(r_grid)
         r_eval_arr = validate_interpolation_within_bounds(r, r_grid, "r")
 
         xi_out = np.interp(r_eval_arr, r_grid, xi_grid)

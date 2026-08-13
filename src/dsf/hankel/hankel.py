@@ -4,7 +4,7 @@ This module provides the ``HankelTransform`` class, an interface for
 the ``HankelTransformFFTLog``, ``HankelTransformMatrixDirect``, and
 ``HankelTransformMatrixZeros`` classes. It provides public methods to
 compute projected and spherical correlation functions, as well as covariance
-matricies, from these underlying Hankel transform implementations.
+matrices, from these underlying Hankel transform implementations.
 
 Each of the three available backends can be useful for different purposes.
 

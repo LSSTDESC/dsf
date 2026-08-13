@@ -1,13 +1,11 @@
 """FFTLog-basedHankel transforms for 1D radial statistics.
 
 This module provides the ``HankelTransformFFTLog`` class, which converts
-Fourier-space spectra into projected radial-space quantities using the FFTLog
-algorithm. It is useful for computing projected correlation functions,
-covariance matrices, and higher-order radial tensors that appear in
-weak-lensing and Delta Sigma calculations.
-
-The class owns the public validation layer and delegates low-level radial and
-Bessel operations to ``hankel_utils``.
+Fourier-space spectra into radial-space quantities using the FFTLog
+algorithm. It implements 1D projected and spherical Hankel transforms
+as a ``HankelTransform`` backend. It also includes two public functions that
+perform the FFTLog-based Hankel transforms directly, without requiring a
+``HankelTransform`` class instance.
 """
 
 from __future__ import annotations

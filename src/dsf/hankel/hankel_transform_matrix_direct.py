@@ -123,6 +123,9 @@ class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
 
         Returns:
             Radial grid and projected radial statistic.
+
+        Raises:
+            ValueError: If the number of spectra is not 1, 2, or 3.
         """
         self._check_order(order)
 

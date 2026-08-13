@@ -89,7 +89,10 @@ class HankelTransformBase:
         order: float | int = 0,
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
-        """Compute a projected radial statistic from one spectrum."""
+        """Compute a projected radial statistic from one spectrum:
+
+        :math:`\\gamma_t(\\theta) = \\int \\frac{\\ell d\\ell}{2\\pi} C(\\ell )J_\\mu(\\ell \\theta)`.
+        """
         raise NotImplementedError(
             f"{self.__class__.__name__} does not support projected_correlation()."
         )
@@ -101,7 +104,10 @@ class HankelTransformBase:
         order: float | int = 0,
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
-        """Compute a spherical radial statistic from one spectrum."""
+        """Compute a spherical radial statistic from one spectrum:
+
+        :math:`\\xi(r) = \\int \\frac{k^2 dk}{2\\pi^2} P(k) j_\\mu(kr)`.
+        """
         raise NotImplementedError(
             f"{self.__class__.__name__} does not support spherical_correlation()."
         )

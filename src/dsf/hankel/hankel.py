@@ -21,6 +21,8 @@ Each of the three available backends can be useful for different purposes.
 
 from __future__ import annotations
 
+from typing import Literal
+
 import numpy as np
 
 from dsf.hankel.hankel_transform_fftlog import HankelTransformFFTLog
@@ -29,11 +31,13 @@ from dsf.hankel.hankel_transform_matrix_zeros import HankelTransformMatrixZeros
 from dsf.utils.types import ArrayLike, FloatArray, SpectrumInput
 from dsf.utils.validators import validate_interpolation_within_bounds
 
+HankelBackend = Literal["fftlog", "matrix_zeros", "matrix_direct"]
+
 
 class HankelTransform:
     """Class for performing Hankel transforms using different algorithms."""
 
-    def __init__(self, backend="fftlog", **kwargs) -> None:
+    def __init__(self, backend: HankelBackend = "fftlog", **kwargs) -> None:
         """Initialize the HankelTransform class."""
         if backend == "fftlog":
             self.backend = HankelTransformFFTLog(**kwargs)

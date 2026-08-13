@@ -1,4 +1,19 @@
-"""DOCSTRING"""
+"""Shared base interface for Hankel transform backends.
+
+This module defines the common interface used by the FFTLog, direct matrix,
+and zero-crossing matrix Hankel transform implementations. The base class
+provides shared helpers for validating and tapering input spectra, while
+backend-specific subclasses implement the projected, spherical, covariance,
+and higher-order radial transforms.
+
+Projected transforms are intended for flat-sky spectra on angular wavenumber
+grids, while spherical transforms are intended for three-dimensional power
+spectra on reciprocal radial wavenumber grids. Subclasses are expected to
+document their exact normalization conventions and output-grid units.
+
+Unsupported operations should raise ``NotImplementedError`` with a clear
+message.
+"""
 
 from __future__ import annotations
 

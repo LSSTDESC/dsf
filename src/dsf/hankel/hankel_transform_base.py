@@ -87,9 +87,6 @@ class HankelTransformBase:
         ell: ArrayLike | None = None,
         c_ell: SpectrumInput | None = None,
         order: float | int = 0,
-        taper: bool = False,
-        taper_kwargs: dict | None = None,
-        use_offset: bool = False,
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
         """Compute a projected radial statistic from one spectrum."""
@@ -102,9 +99,6 @@ class HankelTransformBase:
         k_pk: ArrayLike | None = None,
         pk: SpectrumInput | None = None,
         order: float | int = 0,
-        taper: bool = False,
-        taper_kwargs: dict | None = None,
-        use_offset: bool = False,
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
         """Compute a spherical radial statistic from one spectrum."""
@@ -142,9 +136,6 @@ class HankelTransformBase:
         pk1: SpectrumInput | None = None,
         pk2: SpectrumInput | None = None,
         pk3: SpectrumInput | None = None,
-        order: float | int = 0,
-        taper: bool = False,
-        taper_kwargs: dict | None = None,
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
         """Compute a projected third-order radial tensor from three spectra."""

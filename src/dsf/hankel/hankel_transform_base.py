@@ -73,8 +73,6 @@ class HankelTransformBase:
         *,
         order: float | int = 0,
         k_input: ArrayLike | None = None,
-        taper: bool = False,
-        taper_kwargs: dict | None = None,
         **kwargs,
     ) -> FloatArray:
         """Evaluate a tabulated or callable spectrum on the backend grid."""

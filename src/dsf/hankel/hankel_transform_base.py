@@ -67,6 +67,21 @@ class HankelTransformBase:
             **kwargs,
         )
 
+    def _evaluate_spectrum(
+        self,
+        spectrum: SpectrumInput,
+        *,
+        order: float | int = 0,
+        k_input: ArrayLike | None = None,
+        taper: bool = False,
+        taper_kwargs: dict | None = None,
+        **kwargs,
+    ) -> FloatArray:
+        """Evaluate a tabulated or callable spectrum on the backend grid."""
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support _evaluate_spectrum()."
+        )
+
     def projected_correlation(
         self,
         ell: ArrayLike | None = None,

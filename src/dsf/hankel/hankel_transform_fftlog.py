@@ -51,12 +51,13 @@ class HankelTransformFFTLog(HankelTransformBase):
         Returns:
             Spectrum evaluated on the supplied wavenumber grid.
         """
+        if k_input is None:
+            raise ValueError("k_input must be supplied.")
+
         if callable(spectrum):
             values = np.asarray(spectrum(k=k_input, **kwargs), dtype=float)
         else:
             values = as_1d_float_array(spectrum, "spectrum", min_size=2)
-        if k_input is None:
-            raise ValueError("k_input must be supplied.")
 
         if taper:
             taper_kwargs = {} if taper_kwargs is None else taper_kwargs

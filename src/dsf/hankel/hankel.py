@@ -66,8 +66,6 @@ class HankelTransform:
             ell: ell grid for tabulated spectra.
             c_ell: Spectrum values or callable spectrum.
             order: Bessel order to use.
-            taper: Whether to suppress low-k and high-k edge power.
-            taper_kwargs: Optional settings for the spectrum taper.
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:

@@ -32,6 +32,11 @@ from dsf.utils.types import ArrayLike, FloatArray, SpectrumInput
 from dsf.utils.validators import validate_interpolation_within_bounds
 
 HankelBackend = Literal["fftlog", "matrix_zeros", "matrix_direct"]
+_BACKENDS = {
+    "fftlog": HankelTransformFFTLog,
+    "matrix_zeros": HankelTransformMatrixZeros,
+    "matrix_direct": HankelTransformMatrixDirect,
+}
 
 
 class HankelTransform:
@@ -39,17 +44,14 @@ class HankelTransform:
 
     def __init__(self, backend: HankelBackend = "fftlog", **kwargs) -> None:
         """Initialize the HankelTransform class."""
-        if backend == "fftlog":
-            self.backend = HankelTransformFFTLog(**kwargs)
-        elif backend == "matrix_zeros":
-            self.backend = HankelTransformMatrixZeros(**kwargs)
-        elif backend == "matrix_direct":
-            self.backend = HankelTransformMatrixDirect(**kwargs)
-        else:
-            raise ValueError(
-                f"""Unsupported backend '{backend}'. 
-                Use 'fftlog', 'matrix_zeros', or 'matrix_direct'."""
-            )
+        try:
+            backend_class = _BACKENDS[backend]
+        except KeyError as e:
+            valid = "', '".join(_BACKENDS)
+            raise ValueError(f"Unsupported backend '{backend}'. Use one of: '{valid}'.") from e
+
+        self.backend_name = backend
+        self.backend = backend_class(**kwargs)
 
     def projected_correlation(
         self,

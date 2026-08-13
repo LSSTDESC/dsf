@@ -29,10 +29,6 @@ class HankelTransformFFTLog(HankelTransformBase):
     using the scipy FFTLog algorithm.
     """
 
-    def __init__(self) -> None:
-        """Initialize the HankelTransformFFTLog class."""
-        super().__init__()
-
     def _check_order(self, order: float | int) -> None:
         """Validate that a requested Bessel order is available."""
         if order < 0:

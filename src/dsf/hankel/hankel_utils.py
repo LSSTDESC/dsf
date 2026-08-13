@@ -17,6 +17,7 @@ from scipy.optimize import brentq
 from scipy.special import jn_zeros, jv
 
 from dsf.utils.types import FloatArray
+from dsf.utils.validators import as_1d_float_array, validate_nonnegative_scalar
 
 __all__ = [
     "bessel_zeros",
@@ -248,8 +249,22 @@ def apply_taper_spectrum(
 
     Returns:
         Power spectrum with smooth low-k and high-k suppression applied.
+
+    Raises:
+        ValueError: If the upper limit of a taper is not larger than the lower limit.
     """
-    pk_out = np.copy(pk)
+    k = as_1d_float_array(k)
+    pk_out = as_1d_float_array(pk)
+
+    validate_nonnegative_scalar(large_k_lower, "large_k_lower")
+    validate_nonnegative_scalar(large_k_upper, "large_k_upper")
+    validate_nonnegative_scalar(low_k_lower, "low_k_lower")
+    validate_nonnegative_scalar(low_k_upper, "low_k_upper")
+
+    if large_k_upper <= large_k_lower:
+        raise ValueError("large_k_upper must be larger than large_k_lower.")
+    if low_k_upper <= low_k_lower:
+        raise ValueError("low_k_upper must be larger than low_k_lower.")
 
     high = k > large_k_lower
     pk_out[high] *= np.cos(

@@ -47,7 +47,7 @@ class HankelTransformBase:
         Args:
             k_pk: Wavenumber grid for tabulated spectra.
             pk: Power-spectrum values or callable power spectrum.
-            order: Bessel order to use.
+            order: Bessel order used to select the backend k grid.
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
             **kwargs: Extra arguments passed to callable spectra.

@@ -1,4 +1,4 @@
-"""Hankel transforms for projected radial statistics.
+"""FFTLog-basedHankel transforms for 1D radial statistics.
 
 This module provides the ``HankelTransformFFTLog`` class, which converts
 Fourier-space spectra into projected radial-space quantities using the FFTLog

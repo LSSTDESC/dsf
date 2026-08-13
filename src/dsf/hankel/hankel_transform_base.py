@@ -118,7 +118,7 @@ class HankelTransformBase:
         order: float | int = 0,
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
-        """Project two spectra into a covariance-like radial statistic."""
+        """Project two spectra into a radial covariance matrix."""
         raise NotImplementedError(
             f"{self.__class__.__name__} does not support projected_covariance()."
         )

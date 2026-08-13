@@ -75,13 +75,13 @@ class HankelTransform:
         """Compute a projected radial statistic from one spectrum.
 
         Args:
-            ell: ell grid for tabulated spectra.
+            ell: ell grid for tabulated spectra (unitless).
             c_ell: Spectrum values or callable spectrum.
             order: Bessel order to use.
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
-            Radial grid and projected radial statistic.
+            Radial grid and projected radial statistic (units of radians).
         """
         return self.backend.projected_correlation(
             ell=ell,
@@ -100,13 +100,14 @@ class HankelTransform:
         """Compute a spherical radial statistic from one spectrum.
 
         Args:
-            k_pk: Wavenumber grid for tabulated spectra (in 1/Mpc).
+            k_pk: Wavenumber grid for tabulated spectra.
             pk: Spectrum values or callable spectrum.
             order: Bessel order to use.
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
-            Radial grid and spherical radial statistic.
+            Radial grid and spherical radial statistic. The units of
+            the radial grid are the inverse of the units of ``k``.
         """
         return self.backend.spherical_correlation(
             k_pk=k_pk,
@@ -198,7 +199,7 @@ class HankelTransform:
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
-            Radial grid and projected covariance matrix.
+            Radial grid and projected covariance matrix (units of radians).
         """
         return self.backend.projected_covariance(
             k_pk=k_pk,

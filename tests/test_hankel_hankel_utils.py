@@ -1,10 +1,10 @@
-"""Unit tests for ``dsf.covariance.projection.hankel_utils``."""
+"""Unit tests for ``dsf.hankel.hankel_utils``."""
 
 import numpy as np
 import pytest
 from scipy.special import jv
 
-from dsf.covariance.projection.hankel_utils import (
+from dsf.hankel.hankel_utils import (
     apply_taper_spectrum,
     bessel_zeros,
     compute_bin_radial_matrix,
@@ -44,7 +44,9 @@ def test_bessel_zeros_non_integer_order_are_actual_roots():
 
 def test_bessel_zeros_rejects_non_positive_number_of_roots():
     """Tests that requesting zero or fewer Bessel roots fails."""
-    with pytest.raises(ValueError, match="n_zeros must be positive"):
+    with pytest.raises(
+        ValueError, match="n_zeros must be a positive integer"
+    ):
         bessel_zeros(order=0, n_zeros=0)
 
 
@@ -102,7 +104,9 @@ def test_apply_taper_spectrum_uses_expected_cosine_taper_values():
         low_k_upper=1.0e-5,
     )
 
-    expected_low = 2.0 * np.cos((5.0e-6 - 1.0e-5) / (1.0e-5 - 0.0) * np.pi / 2.0)
+    expected_low = 2.0 * np.cos(
+        (5.0e-6 - 1.0e-5) / (1.0e-5 - 0.0) * np.pi / 2.0
+    )
     expected_high = 4.0 * np.cos((55.0 - 10.0) / (100.0 - 10.0) * np.pi / 2.0)
 
     np.testing.assert_allclose(tapered, [expected_low, expected_high])
@@ -248,7 +252,9 @@ def test_compute_bin_radial_matrix_matches_manual_weighted_average():
 
             submatrix = matrix[np.ix_(rows, cols)]
             weight_matrix = np.multiply.outer(row_weights, col_weights)
-            expected[i, j] = np.sum(submatrix * weight_matrix) / np.sum(weight_matrix)
+            expected[i, j] = np.sum(submatrix * weight_matrix) / np.sum(
+                weight_matrix
+            )
 
     np.testing.assert_allclose(binned, expected)
 

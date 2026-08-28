@@ -1,7 +1,7 @@
-"""Geometry ingredients for DeltaSigma covariance calculations.
+"""Geometry ingredients for Delta Sigma covariance calculations.
 
 This module converts tomographic redshift-bin metadata and cosmology into the
-geometry quantities needed by the DeltaSigma covariance blocks.
+geometry quantities needed by the Delta Sigma covariance blocks.
 
 Bin edges and redshift distributions are supplied by the tomography layer.
 This module then computes cosmology-dependent distances, line-of-sight depths,
@@ -310,7 +310,7 @@ def gm_lensing_window(
     """Return the galaxy-matter lensing line-of-sight window.
 
     The returned window is the dimensionless ``W(Pi)`` factor used for the
-    ``gm x gm`` and ``gm x gg`` DeltaSigma covariance line-of-sight integrals.
+    ``gm x gm`` and ``gm x gg`` Delta Sigma covariance line-of-sight integrals.
     It follows the same structure as the legacy calculation: average
     ``Sigma_crit^{-1}`` over source redshifts at displaced lens positions,
     average that quantity over the lens redshift distribution, and multiply by
@@ -459,7 +459,7 @@ def delta_pi_gm_factors(
     gm_window: FloatArray | None = None,
     h: float | None = None,
 ) -> tuple[float, float]:
-    """Return line-of-sight factors for DeltaSigma ``gm`` covariance blocks.
+    """Return line-of-sight factors for Delta Sigma ``gm`` covariance blocks.
 
     Args:
         cosmo: CCL cosmology object.
@@ -491,7 +491,9 @@ def delta_pi_gm_factors(
             sigma_crit_prefactor=sigma_crit_prefactor,
         )
     elif pi is None or gm_window is None:
-        raise ValueError("pi and gm_window must either both be supplied or both be None.")
+        raise ValueError(
+            "pi and gm_window must either both be supplied or both be None."
+        )
     else:
         pi_arr = np.asarray(pi, dtype=float)
         gm_window_arr = np.asarray(gm_window, dtype=float)

@@ -1,4 +1,4 @@
-DeltaSigma covariance
+Delta Sigma covariance
 =====================
 
 This example shows how to compute a minimal DSF covariance matrix for the
@@ -70,8 +70,9 @@ Minimal gm covariance example
        area_deg2=5000.0,
        sigma_e=0.26,
        galaxy_bias=1.5,
-       k=np.geomspace(2.0e-2, 5.0, 48),
+       k=np.geomspace(1.0e-2, 6.0, 48),
        hankel_kwargs={
+           "backend": "matrix_zeros",
            "r_min": 1.5,
            "r_max": 25.0,
            "k_min": 2.0e-2,

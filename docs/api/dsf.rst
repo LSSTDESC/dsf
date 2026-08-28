@@ -9,6 +9,7 @@ Subpackages
 
    dsf.covariance
    dsf.data_vector
+   dsf.hankel
    dsf.tomography
    dsf.utils
 

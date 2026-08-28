@@ -1,13 +1,13 @@
-"""Numerical scripts for projected radial statistics.
+"""Numerical utilities for projected radial statistics.
 
-This module provides small utilities used when converting Fourier-space
-power spectra into radial-space projected statistics. The scripts cover
+This module provides low-level utilities used when converting Fourier-space
+power spectra into radial-space projected statistics. The utilities cover
 Bessel-function roots, smooth spectrum tapering, radial bin centers,
 radial integration weights, covariance-to-correlation conversion, and
 bin-averaging of radial matrices or tensors.
 
-The functions assume their inputs have already been validated by the public
-calling layer.
+The functions generally assume their inputs have already been validated by
+the public calling layer.
 """
 
 from __future__ import annotations
@@ -17,6 +17,12 @@ from scipy.optimize import brentq
 from scipy.special import jn_zeros, jv
 
 from dsf.utils.types import FloatArray
+from dsf.utils.validators import (
+    as_1d_float_array,
+    is_non_negative_integer,
+    is_positive_integer,
+    validate_nonnegative_scalar,
+)
 
 __all__ = [
     "bessel_zeros",
@@ -29,12 +35,6 @@ __all__ = [
 ]
 
 
-def _is_non_negative_integer(value: float | int) -> bool:
-    """Return whether a value is a valid integer Bessel order."""
-    value_float = float(value)
-    return value_float >= 0.0 and value_float.is_integer()
-
-
 def bessel_zeros(order: float | int, n_zeros: int) -> FloatArray:
     """Return positive roots of the Bessel function for a given order.
 
@@ -45,13 +45,13 @@ def bessel_zeros(order: float | int, n_zeros: int) -> FloatArray:
     Returns:
         Positive roots of :math:`J_\\nu(x)` for the requested order.
     """
-    if n_zeros <= 0:
-        raise ValueError("n_zeros must be positive.")
-
-    if _is_non_negative_integer(order):
+    if not is_positive_integer(n_zeros):
+        raise ValueError("n_zeros must be a positive integer.")
+    if is_non_negative_integer(order):
         return np.asarray(jn_zeros(int(order), n_zeros), dtype=float)
 
     order_float = float(order)
+    validate_nonnegative_scalar(order_float, "order")
     roots = np.empty(n_zeros, dtype=float)
 
     def bessel_order_value(x: float) -> float:
@@ -79,51 +79,13 @@ def bessel_zeros(order: float | int, n_zeros: int) -> FloatArray:
             f_upper = bessel_order_value(upper)
         else:
             raise RuntimeError(
-                f"Could not bracket Bessel zero {zero_number} for order={order_float}."
+                f"Could not bracket Bessel zero {zero_number} "
+                f"for order={order_float}."
             )
 
         roots[i] = brentq(bessel_order_value, lower, upper)
 
     return roots
-
-
-def apply_taper_spectrum(
-    k: FloatArray,
-    pk: FloatArray,
-    large_k_lower: float = 10.0,
-    large_k_upper: float = 100.0,
-    low_k_lower: float = 0.0,
-    low_k_upper: float = 1.0e-5,
-) -> FloatArray:
-    """Return a smoothly tapered power spectrum.
-
-    The taper suppresses power outside the trusted wavenumber range so that
-    projected radial statistics are less sensitive to sharp spectrum cutoffs.
-
-    Args:
-        k: Wavenumber grid.
-        pk: Power-spectrum values evaluated on ``k``.
-        large_k_lower: Wavenumber where high-k suppression begins.
-        large_k_upper: Wavenumber above which the spectrum is set to zero.
-        low_k_lower: Wavenumber below which the spectrum is set to zero.
-        low_k_upper: Wavenumber where low-k suppression ends.
-
-    Returns:
-        Power spectrum with smooth low-k and high-k suppression applied.
-    """
-    pk_out = np.copy(pk)
-
-    high = k > large_k_lower
-    pk_out[high] *= np.cos(
-        (k[high] - large_k_lower) / (large_k_upper - large_k_lower) * np.pi / 2.0
-    )
-    pk_out[k > large_k_upper] = 0.0
-
-    low = k < low_k_upper
-    pk_out[low] *= np.cos((k[low] - low_k_upper) / (low_k_upper - low_k_lower) * np.pi / 2.0)
-    pk_out[k < low_k_lower] = 0.0
-
-    return pk_out
 
 
 def compute_correlation_matrix(covariance: FloatArray) -> FloatArray:
@@ -137,6 +99,8 @@ def compute_correlation_matrix(covariance: FloatArray) -> FloatArray:
         corresponding covariance standard deviations.
     """
     diag = np.diagonal(covariance)
+    if np.any(diag < 0.0):
+        raise ValueError("Covariance diagonal must be non-negative.")
     denom = np.sqrt(np.outer(diag, diag))
 
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -154,14 +118,17 @@ def compute_diagonal_error(covariance: FloatArray) -> FloatArray:
     Returns:
         Square root of the covariance diagonal.
     """
-    return np.sqrt(np.diagonal(covariance))
+    diag = np.diagonal(covariance)
+    if np.any(diag < 0.0):
+        raise ValueError("Covariance diagonal must be non-negative.")
+    return np.sqrt(diag)
 
 
 def radial_bin_centers(r_bins: FloatArray) -> FloatArray:
     """Return geometric centers of radial bins.
 
     Args:
-        r_bins: Radial bin edges.
+        r_bins: Positive radial bin edges.
 
     Returns:
         Geometric mean of each pair of neighboring radial bin edges.
@@ -206,6 +173,8 @@ def _outer_product(values: FloatArray, ndim: int) -> FloatArray:
     Returns:
         Repeated outer product of ``values`` with one factor per radial axis.
     """
+    is_positive_integer(ndim)
+
     result = values
 
     for _ in range(ndim - 1):
@@ -262,3 +231,65 @@ def compute_bin_radial_matrix(
     binned[nonzero] = binned_sum[nonzero] / norm[nonzero]
 
     return centers, binned
+
+
+def apply_taper_spectrum(
+    k: FloatArray,
+    pk: FloatArray,
+    large_k_lower: float = 10.0,
+    large_k_upper: float = 100.0,
+    low_k_lower: float = 0.0,
+    low_k_upper: float = 1.0e-5,
+) -> FloatArray:
+    """Return a smoothly tapered power spectrum.
+
+    The taper suppresses power outside the trusted wavenumber range so that
+    projected radial statistics are less sensitive to sharp spectrum cutoffs.
+
+    Args:
+        k: Wavenumber grid.
+        pk: Power-spectrum values evaluated on ``k``.
+        large_k_lower: Wavenumber where high-k suppression begins.
+        large_k_upper: Wavenumber above which the spectrum is set to zero.
+        low_k_lower: Wavenumber below which the spectrum is set to zero.
+        low_k_upper: Wavenumber where low-k suppression ends.
+
+    Returns:
+        Power spectrum with smooth low-k and high-k suppression applied.
+
+    Raises:
+        ValueError: If the upper limit is smaller than the lower limit.
+    """
+    k = as_1d_float_array(k, "k")
+    pk_out = np.copy(as_1d_float_array(pk, "pk"))
+
+    validate_nonnegative_scalar(large_k_lower, "large_k_lower")
+    validate_nonnegative_scalar(large_k_upper, "large_k_upper")
+    validate_nonnegative_scalar(low_k_lower, "low_k_lower")
+    validate_nonnegative_scalar(low_k_upper, "low_k_upper")
+
+    if large_k_upper <= large_k_lower:
+        raise ValueError("large_k_upper must be larger than large_k_lower.")
+    if low_k_upper <= low_k_lower:
+        raise ValueError("low_k_upper must be larger than low_k_lower.")
+    if low_k_upper > large_k_lower:
+        raise ValueError("low_k_upper must be smaller than large_k_lower.")
+
+    high = k > large_k_lower
+
+    phase = (
+        (k[high] - large_k_lower)
+        / (large_k_upper - large_k_lower)
+        * np.pi
+        / 2.0
+    )
+    pk_out[high] *= np.cos(phase)
+    pk_out[k > large_k_upper] = 0.0
+
+    low = k < low_k_upper
+    pk_out[low] *= np.cos(
+        (k[low] - low_k_upper) / (low_k_upper - low_k_lower) * np.pi / 2.0
+    )
+    pk_out[k < low_k_lower] = 0.0
+
+    return pk_out

@@ -1,0 +1,249 @@
+"""FFTLog-basedHankel transforms for 1D radial statistics.
+
+This module provides the ``HankelTransformFFTLog`` class, which converts
+Fourier-space spectra into radial-space quantities using the FFTLog
+algorithm. It implements 1D projected and spherical Hankel transforms
+as a ``HankelTransform`` backend. It also includes two public functions that
+perform the FFTLog-based Hankel transforms directly, without requiring a
+``HankelTransform`` class instance.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+import numpy as np
+from scipy.fft import fhtoffset, ifht
+
+from dsf.hankel.hankel_transform_base import HankelTransformBase
+from dsf.utils.types import ArrayLike, FloatArray, SpectrumInput
+from dsf.utils.validators import (
+    as_1d_float_array,
+    validate_hankel_1d_grid_spacing,
+    validate_power_spectrum_inputs,
+)
+
+
+class HankelTransformFFTLog(HankelTransformBase):
+    """Hankel transform using the FFTLog algorithm.
+
+    This class provides methods for performing 1D Hankel transforms
+    using the scipy FFTLog algorithm.
+    """
+
+    def _evaluate_spectrum(
+        self,
+        spectrum: SpectrumInput,
+        order: float | int = 0,
+        radial_input: ArrayLike | None = None,
+        taper: bool = False,
+        taper_kwargs: dict[str, Any] | None = None,
+        **kwargs,
+    ) -> FloatArray:
+        """Evaluate a spectrum on a supplied wavenumber grid.
+
+        Args:
+            spectrum: Tabulated spectrum values or callable spectrum.
+            order: Bessel order whose grid should be used.
+            radial_input: Radial grid for tabulated spectra (k or ell).
+            taper: Whether to suppress low-k and high-k edge power.
+            taper_kwargs: Optional settings for the spectrum taper.
+            **kwargs: Extra arguments passed to callable spectra.
+
+        Returns:
+            Spectrum evaluated on the supplied wavenumber grid.
+        """
+        if radial_input is None:
+            raise ValueError("radial_input must be supplied.")
+
+        if callable(spectrum):
+            values = np.asarray(spectrum(radial_input, **kwargs), dtype=float)
+        else:
+            values = as_1d_float_array(spectrum, "spectrum", min_size=2)
+
+        if taper:
+            taper_kwargs = {} if taper_kwargs is None else taper_kwargs
+            values = self.taper_spectrum(
+                radial_input,
+                values,
+                **taper_kwargs,
+            )
+
+        if np.any(~np.isfinite(values)):
+            raise ValueError(
+                "Evaluated spectrum must contain only finite values."
+            )
+
+        return values
+
+    def projected_correlation(
+        self,
+        ell: ArrayLike | None = None,
+        c_ell: SpectrumInput | None = None,
+        order: float | int = 2,
+        taper: bool = False,
+        taper_kwargs: dict | None = None,
+        use_offset: bool = False,
+        **kwargs,
+    ) -> tuple[FloatArray, FloatArray]:
+        """Compute a projected radial statistic from one spectrum.
+
+        Args:
+            ell: ell grid for tabulated spectra (unitless).
+            c_ell: Spectrum values or callable spectrum.
+            order: Bessel order to use (default is 2 for tangential shear).
+            taper: Whether to suppress low-k and high-k edge power.
+            taper_kwargs: Optional settings for the spectrum taper.
+            use_offset: Apply automatic offset to FFTLog to reduce ringing.
+            **kwargs: Extra arguments passed to callable spectra.
+
+        Returns:
+            Radial grid (units of radians) and projected radial statistic.
+        """
+        if ell is None:
+            raise ValueError("ell must be supplied.")
+        if c_ell is None:
+            raise ValueError("c_ell must be supplied.")
+
+        ell_arr = as_1d_float_array(ell, "ell", min_size=2)
+
+        c_ell_eval = self._evaluate_spectrum(
+            c_ell,
+            order=order,
+            radial_input=ell_arr,
+            taper=taper,
+            taper_kwargs=taper_kwargs,
+            **kwargs,
+        )
+
+        return hankel_projected(
+            ell=ell_arr, c_ell=c_ell_eval, order=order, use_offset=use_offset
+        )
+
+    def spherical_correlation(
+        self,
+        k_pk: ArrayLike | None = None,
+        pk: SpectrumInput | None = None,
+        order: float | int = 0,
+        taper: bool = False,
+        taper_kwargs: dict | None = None,
+        use_offset: bool = False,
+        **kwargs,
+    ) -> tuple[FloatArray, FloatArray]:
+        """Compute a spherical radial statistic from one spectrum.
+
+        Args:
+            k_pk: Wavenumber grid for tabulated spectra (units of inverse distance).
+            pk: Spectrum values or callable spectrum.
+            order: Bessel order to use (default is 0 for Delta Sigma).
+            taper: Whether to suppress low-k and high-k edge power.
+            taper_kwargs: Optional settings for the spectrum taper.
+            use_offset: Apply automatic offset to FFTLog to reduce ringing.
+            **kwargs: Extra arguments passed to callable spectra.
+
+        Returns:
+            Radial grid and spherical radial statistic. The units of
+            the radial grid are the inverse of the units of ``k``.
+        """
+        if pk is None:
+            raise ValueError("pk must be supplied.")
+
+        k_pk_arr = as_1d_float_array(k_pk, "k_pk", min_size=2)
+
+        pk_eval = self._evaluate_spectrum(
+            pk,
+            order=order,
+            radial_input=k_pk_arr,
+            taper=taper,
+            taper_kwargs=taper_kwargs,
+            **kwargs,
+        )
+
+        return hankel_spherical(
+            k=k_pk_arr, pk=pk_eval, order=order, use_offset=use_offset
+        )
+
+
+def hankel_projected(
+    ell: FloatArray,
+    c_ell: FloatArray,
+    order: float | int = 2,
+    use_offset: bool = False,
+) -> tuple[FloatArray, FloatArray]:
+    """Convert an angular power spectrum to a projected correlation using FFTLog.
+
+    :math:`\\gamma_t(\\theta) = \\int \\frac{\\ell d\\ell}{2\\pi} C(\\ell )J_\\mu(\\ell \\theta)`.
+
+    Args:
+        ell: ell array (dimensionless; must be uniform in logspace).
+        c_ell: Power spectrum to transform.
+        order: Bessel order to use (default is 2 for tangential shear).
+        use_offset: Apply automatic offset to FFTLog to reduce ringing.
+
+    Returns:
+        Radial grid (units of radians) and projected radial statistic.
+    """
+    ell_arr = validate_hankel_1d_grid_spacing(ell, "ell")
+    c_ell_arr = as_1d_float_array(c_ell, "c_ell", min_size=2)
+    validate_power_spectrum_inputs(
+        ell_arr, c_ell_arr, k_name="ell", pk_name="c_ell"
+    )
+
+    dln_ell = float(np.log(ell_arr[1] / ell_arr[0]))
+    offset = fhtoffset(dln=dln_ell, mu=order) if use_offset else 0.0
+
+    transformed_power = ifht(
+        c_ell_arr * ell_arr, dln=dln_ell, mu=order, offset=offset
+    )
+
+    theta = np.exp(offset) / ell_arr[::-1]
+    prefactor = 1.0 / (2.0 * np.pi * theta)
+    xi = np.asarray(prefactor * transformed_power, dtype=float)
+
+    return theta, xi
+
+
+def hankel_spherical(
+    k: FloatArray,
+    pk: FloatArray,
+    order: float | int = 0,
+    use_offset: bool = False,
+) -> tuple[FloatArray, FloatArray]:
+    """Convert power spectrum to 3D correlation function using FFTLog:
+
+    :math:`\\xi(r) = \\int \\frac{k^2 dk}{2\\pi^2} P(k) j_\\ell(kr)`.
+
+    Currently, only order 0 is implemented.
+
+    Args:
+        k: Wavenumber array (must be uniform in logspace).
+        pk: Power spectrum to transform.
+        order: Bessel order to use (default is 0 for Delta Sigma).
+        use_offset: Apply automatic offset to FFTLog to reduce ringing.
+
+    Returns:
+        Radial grid and 3D correlation function.
+    """
+    if order != 0:
+        raise NotImplementedError(
+            "Only order 0 is currently implemented for spherical Hankel transforms."
+        )
+    k_arr = validate_hankel_1d_grid_spacing(k, "k")
+    pk_arr = as_1d_float_array(pk, "pk", min_size=2)
+    validate_power_spectrum_inputs(k_arr, pk_arr)
+
+    dln_k = float(np.log(k_arr[1] / k_arr[0]))
+    offset = fhtoffset(dln=dln_k, mu=0.5) if use_offset else 0.0
+
+    transformed_power = ifht(
+        k_arr**1.5 * pk_arr,
+        dln=dln_k,
+        mu=0.5,
+        offset=offset,
+    )
+
+    r = np.exp(offset) / k_arr[::-1]
+    prefactor = 1.0 / (2.0 * np.pi * r) ** 1.5
+    xi = np.asarray(prefactor * transformed_power, dtype=float)
+
+    return r, xi

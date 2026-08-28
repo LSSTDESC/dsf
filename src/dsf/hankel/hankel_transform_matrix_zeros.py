@@ -1,12 +1,10 @@
 """Hankel transforms for projected radial statistics.
 
-This module provides the ``HankelTransform`` class, which converts
-Fourier-space spectra into projected radial-space quantities. It is useful for
-computing projected correlation functions, covariance matrices, and higher-order
+This module provides the ``HankelTransformMatrixZeros`` class, which converts
+Fourier-space spectra into projected radial-space quantities using precomputed
+Hankel operator grids along the Bessel zeros. It is useful for computing
+projected correlation functions, covariance matrices, and higher-order
 radial tensors that appear in weak-lensing and Delta Sigma calculations.
-
-The class owns the public validation layer and delegates low-level radial and
-Bessel operations to ``hankel_utils``.
 """
 
 from __future__ import annotations
@@ -16,24 +14,28 @@ from collections.abc import Iterable
 import numpy as np
 from scipy.special import jv
 
-from dsf.covariance.projection.hankel_utils import (
-    apply_taper_spectrum,
+from dsf.hankel.hankel_transform_base import HankelTransformBase
+from dsf.hankel.hankel_utils import (
     bessel_zeros,
     compute_bin_radial_matrix,
     compute_correlation_matrix,
     compute_diagonal_error,
 )
+from dsf.utils.interpolators import interpolate_linear, interpolate_loglog
 from dsf.utils.types import ArrayLike, FloatArray, SpectrumInput
 from dsf.utils.validators import (
     as_1d_float_array,
+    is_non_negative_integer,
+    is_positive_integer,
     validate_1d_pair,
+    validate_interpolation_within_bounds,
     validate_positive_scalar,
     validate_power_spectrum_inputs,
     validate_strictly_increasing,
 )
 
 
-class HankelTransform:
+class HankelTransformMatrixZeros(HankelTransformBase):
     """Project Fourier-space spectra into radial-space statistics.
 
     The class builds Bessel-function grids for the requested orders and uses
@@ -41,6 +43,9 @@ class HankelTransform:
     a projected correlation-like statistic, two spectra give a projected
     covariance matrix, and three spectra give a projected third-order radial
     tensor.
+
+    The input r and k ranges must have reciprocal units such that
+    :math:`r \\times k` is dimensionless.
 
     Args:
         r_min: Minimum radial scale to cover.
@@ -51,7 +56,7 @@ class HankelTransform:
         n_zeros: Initial number of Bessel roots used for each grid.
         n_zeros_step: Number of extra Bessel roots added if the requested range
             is not covered.
-        prune_r: Optional radial-grid pruning factor. Use ``None`` or ``0`` to
+        prune_r: Optional radial-grid pruning factor. Use ``0`` to
             keep the full grid.
         prune_log_space: Whether pruning should keep approximately logarithmic
             radial spacing.
@@ -68,22 +73,24 @@ class HankelTransform:
         orders: Iterable[float | int] = (0, 2),
         n_zeros: int = 1000,
         n_zeros_step: int = 1000,
-        prune_r: int | None = None,
+        prune_r: int = 0,
         prune_log_space: bool = True,
         verbose: bool = False,
         max_iterations: int = 100,
     ) -> None:
+        super().__init__()
+
         self.r_min = float(r_min)
         self.r_max = float(r_max)
         self.k_min = float(k_min)
         self.k_max = float(k_max)
         self.orders = tuple(orders)
-        self.n_zeros = int(n_zeros)
-        self.n_zeros_step = int(n_zeros_step)
+        self.n_zeros = n_zeros
+        self.n_zeros_step = n_zeros_step
         self.prune_r = prune_r
         self.prune_log_space = bool(prune_log_space)
         self.verbose = bool(verbose)
-        self.max_iterations = int(max_iterations)
+        self.max_iterations = max_iterations
 
         self._validate_init_inputs()
         self._init_cache()
@@ -114,12 +121,14 @@ class HankelTransform:
             raise ValueError("r_max must be larger than r_min.")
         if self.k_max <= self.k_min:
             raise ValueError("k_max must be larger than k_min.")
-        if self.n_zeros <= 0:
-            raise ValueError("n_zeros must be positive.")
-        if self.n_zeros_step <= 0:
-            raise ValueError("n_zeros_step must be positive.")
-        if self.max_iterations <= 0:
-            raise ValueError("max_iterations must be positive.")
+        if not is_positive_integer(self.n_zeros):
+            raise ValueError("n_zeros must be a positive integer.")
+        if not is_positive_integer(self.n_zeros_step):
+            raise ValueError("n_zeros_step must be a positive integer.")
+        if not is_positive_integer(self.max_iterations):
+            raise ValueError("max_iterations must be a positive integer.")
+        if not is_non_negative_integer(self.prune_r):
+            raise ValueError("prune_r must be a non-negative integer.")
 
         self._validate_orders()
 
@@ -132,7 +141,9 @@ class HankelTransform:
             if not np.isfinite(order):
                 raise ValueError("orders must contain only finite values.")
             if order < 0:
-                raise ValueError("orders must contain non-negative Bessel orders.")
+                raise ValueError(
+                    "orders must contain non-negative Bessel orders."
+                )
 
     def _log(self, message: str) -> None:
         """Print grid diagnostics when verbose mode is enabled."""
@@ -148,6 +159,15 @@ class HankelTransform:
         n_zeros = self.n_zeros
         k_max = self.k_max
 
+        # Iteratively increase the number of Bessel zeros and k_max until the
+        # r-k grid covers the requested r and k range. At each step, check
+        # the following:
+        #   1) If r_min is not covered, increase k_max to push r to smaller scales,
+        #      since k and r are related as inverses.
+        #   2) If r_max is not covered, increase n_zeros. Since r=z/k_max, going to
+        #      higher zeros increases the maximum r.
+        #   3) If k_min is not covered, increase n_zeros. Since k=z*k_max/z_max,
+        #      increasing the maximum zero decreases the minimum k.
         for _ in range(self.max_iterations):
             zeros = bessel_zeros(order, n_zeros)
             k = zeros / zeros[-1] * k_max
@@ -160,12 +180,18 @@ class HankelTransform:
 
             if np.max(r) < self.r_max:
                 n_zeros += self.n_zeros_step
-                self._log(f"order={order}: increasing n_zeros to {n_zeros} to cover r_max")
+                self._log(
+                    f"order={order}: increasing n_zeros to {n_zeros} "
+                    "to cover r_max"
+                )
                 continue
 
             if np.min(k) > self.k_min:
                 n_zeros += self.n_zeros_step
-                self._log(f"order={order}: increasing n_zeros to {n_zeros} to cover k_min")
+                self._log(
+                    f"order={order}: increasing n_zeros to {n_zeros} "
+                    "to cover k_min"
+                )
                 continue
 
             break
@@ -179,6 +205,8 @@ class HankelTransform:
         r_selected = self._prune_radial_grid(r_selected)
         r_selected = np.unique(r_selected)
 
+        # Convention: int k dk / (2 pi) P(k) J_n(k r) with weights 1 / J_{n+1}(zero)^2
+        # Construct Bessel grids over the full k and zero ranges that were just selected
         j_matrix = np.asarray(jv(order, np.outer(r_selected, k)), dtype=float)
         j_next = np.asarray(jv(order + 1, zeros), dtype=float)
         norm = (2.0 * k_max**2 / zeros[-1] ** 2) / (2.0 * np.pi)
@@ -226,12 +254,12 @@ class HankelTransform:
         Returns:
             Original or pruned radial grid.
         """
-        if self.prune_r in (None, 0):
+        if self.prune_r == 0:
             return r
 
-        prune_r = int(self.prune_r)
-        if prune_r <= 0:
-            raise ValueError("prune_r must be positive, None, or 0.")
+        prune_r = self.prune_r
+        if prune_r < 0:
+            raise ValueError("prune_r must be a non-negative integer.")
 
         n = r.size
         if n <= 2:
@@ -249,6 +277,12 @@ class HankelTransform:
 
         indices = np.unique(np.append(indices, [n - 1]))
 
+        validate_strictly_increasing(indices, "indices", min_size=2)
+        if np.min(indices) != 0 or np.max(indices) != n - 1:
+            raise ValueError(
+                "Pruned array must include the first and last values."
+            )
+
         return r[indices]
 
     def available_orders(self) -> tuple[float | int, ...]:
@@ -265,64 +299,83 @@ class HankelTransform:
 
     def _evaluate_tabulated_spectrum(
         self,
-        k_input: ArrayLike,
+        radial_input: ArrayLike,
         spectrum: ArrayLike,
         order: float | int,
         taper: bool = False,
         taper_kwargs: dict | None = None,
+        grid_spacing: str = "linear",
     ) -> FloatArray:
         """Evaluate a tabulated spectrum on the internal Hankel grid.
 
         Args:
-            k_input: Input wavenumber grid.
-            spectrum: Spectrum values evaluated on ``k_input``.
+            radial_input: Input radial grid (k or ell).
+            spectrum: Spectrum values evaluated on ``radial_input``.
             order: Bessel order whose grid should be used.
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
+            grid_spacing: Interpolate in "linear" or "log" space.
 
         Returns:
             Spectrum evaluated on the internal Hankel wavenumber grid.
         """
-        k_arr = as_1d_float_array(k_input, "k_input")
+        if grid_spacing == "linear":
+            interp_func = interpolate_linear
+        elif grid_spacing == "log":
+            interp_func = interpolate_loglog
+        else:
+            raise ValueError("grid_spacing must be 'linear' or 'log'.")
+
+        radial_arr = as_1d_float_array(radial_input, "radial_input")
         spectrum_arr = as_1d_float_array(spectrum, "spectrum")
 
         validate_1d_pair(
-            k_arr,
+            radial_arr,
             spectrum_arr,
-            x_name="k_input",
+            x_name="radial_input",
             y_name="spectrum",
         )
         validate_power_spectrum_inputs(
-            k_arr,
+            radial_arr,
             spectrum_arr,
-            k_name="k_input",
+            k_name="radial_input",
             pk_name="spectrum",
         )
 
+        try:
+            validate_interpolation_within_bounds(
+                self.k[order], radial_arr, "matrix k grid"
+            )
+        except ValueError as e:
+            raise ValueError(
+                "The tabulated radial values of the spectrum do not cover "
+                "the full matrix grid. "
+                f"Need [{self.k[order][0]}, {self.k[order][-1]}], "
+                f"got [{radial_arr[0]}, {radial_arr[-1]}]."
+            ) from e
+
         if taper:
             taper_kwargs = {} if taper_kwargs is None else taper_kwargs
-            spectrum_arr = apply_taper_spectrum(
-                k_arr,
+            spectrum_arr = self.taper_spectrum(
+                radial_arr,
                 spectrum_arr,
                 **taper_kwargs,
             )
 
-        return np.asarray(
-            np.interp(
-                self.k[order],
-                k_arr,
-                spectrum_arr,
-                left=0.0,
-                right=0.0,
-            ),
-            dtype=float,
+        return interp_func(
+            self.k[order],
+            radial_arr,
+            spectrum_arr,
+            x_name="matrix k grid",
+            xp_name="radial_input",
+            fp_name="spectrum",
         )
 
     def _evaluate_spectrum(
         self,
         spectrum: SpectrumInput,
-        order: float | int,
-        k_input: ArrayLike | None = None,
+        order: float | int = 0,
+        radial_input: ArrayLike | None = None,
         taper: bool = False,
         taper_kwargs: dict | None = None,
         **kwargs,
@@ -332,7 +385,7 @@ class HankelTransform:
         Args:
             spectrum: Tabulated spectrum values or callable spectrum.
             order: Bessel order whose grid should be used.
-            k_input: Wavenumber grid for tabulated spectra.
+            radial_input: Radial grid for tabulated spectra (k or ell).
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
             **kwargs: Extra arguments passed to callable spectra.
@@ -344,13 +397,14 @@ class HankelTransform:
         target_k = self.k[order]
 
         if callable(spectrum):
-            values = np.asarray(spectrum(k=target_k, **kwargs), dtype=float)
+            values = np.asarray(spectrum(target_k, **kwargs), dtype=float)
+        elif radial_input is None:
+            raise ValueError(
+                "radial_input must be supplied for tabulated spectra."
+            )
         else:
-            if k_input is None:
-                raise ValueError("k_input must be supplied for tabulated spectra.")
-
             values = self._evaluate_tabulated_spectrum(
-                k_input=k_input,
+                radial_input=radial_input,
                 spectrum=spectrum,
                 order=order,
                 taper=taper,
@@ -363,43 +417,11 @@ class HankelTransform:
                 f"Got {values.shape}, expected {target_k.shape}."
             )
         if np.any(~np.isfinite(values)):
-            raise ValueError("Evaluated spectrum must contain only finite values.")
+            raise ValueError(
+                "Evaluated spectrum must contain only finite values."
+            )
 
         return values
-
-    def pk_grid(
-        self,
-        k_pk: ArrayLike | None = None,
-        pk: SpectrumInput | None = None,
-        order: float | int = 0,
-        taper: bool = False,
-        taper_kwargs: dict | None = None,
-        **kwargs,
-    ) -> FloatArray:
-        """Return a power spectrum evaluated on a Hankel grid.
-
-        Args:
-            k_pk: Wavenumber grid for tabulated spectra.
-            pk: Power-spectrum values or callable power spectrum.
-            order: Bessel order to use.
-            taper: Whether to suppress low-k and high-k edge power.
-            taper_kwargs: Optional settings for the spectrum taper.
-            **kwargs: Extra arguments passed to callable spectra.
-
-        Returns:
-            Power spectrum evaluated on the internal wavenumber grid.
-        """
-        if pk is None:
-            raise ValueError("pk must be supplied.")
-
-        return self._evaluate_spectrum(
-            pk,
-            order=order,
-            k_input=k_pk,
-            taper=taper,
-            taper_kwargs=taper_kwargs,
-            **kwargs,
-        )
 
     def _project_spectra_to_radial(
         self,
@@ -413,12 +435,20 @@ class HankelTransform:
             order: Bessel order to use.
 
         Returns:
-            Radial grid and projected radial statistic.
+            Radial grid and projected radial statistic, of shape (n_r,) for
+            one spectrum, or (n_r, n_r) for two spectra.
+
+        Raises:
+            ValueError: If the number of spectra is not 1 or 2.
         """
         self._check_order(order)
 
         product = np.ones_like(self.k[order])
         for spectrum in spectra:
+            if spectrum.shape != self.k[order].shape:
+                raise ValueError(
+                    "Each spectrum must be evaluated on the internal k grid."
+                )
             product *= spectrum
 
         weighted = product / self.j_next_at_zeros[order] ** 2
@@ -430,27 +460,18 @@ class HankelTransform:
             transformed = np.dot(j_matrix, weighted) * norm
         elif ndim == 2:
             transformed = np.dot(j_matrix, (j_matrix * weighted).T) * norm
-        elif ndim == 3:
-            transformed = (
-                np.einsum(
-                    "az,bz,cz,z->abc",
-                    j_matrix,
-                    j_matrix,
-                    j_matrix,
-                    weighted,
-                )
-                * norm
-            )
         else:
-            raise ValueError(f"Only 1, 2, or 3 spectra are supported. Got {ndim}.")
+            raise ValueError(
+                f"Only 1 or 2 spectra are supported. Got {ndim}."
+            )
 
         return self.r[order], np.asarray(transformed, dtype=float)
 
     def projected_correlation(
         self,
-        k_pk: ArrayLike | None = None,
-        pk: SpectrumInput | None = None,
-        order: float | int = 0,
+        ell: ArrayLike | None = None,
+        c_ell: SpectrumInput | None = None,
+        order: float | int = 2,
         taper: bool = False,
         taper_kwargs: dict | None = None,
         **kwargs,
@@ -458,68 +479,29 @@ class HankelTransform:
         """Compute a projected radial statistic from one spectrum.
 
         Args:
-            k_pk: Wavenumber grid for tabulated spectra.
-            pk: Spectrum values or callable spectrum.
-            order: Bessel order to use.
+            ell: ell grid for tabulated spectra (unitless).
+            c_ell: Spectrum values or callable spectrum.
+            order: Bessel order to use (default is 2 for tangential shear).
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
-            Radial grid and projected radial statistic.
+            Radial grid (units of radians) and projected radial statistic.
         """
-        if pk is None:
-            raise ValueError("pk must be supplied.")
+        if c_ell is None:
+            raise ValueError("c_ell must be supplied.")
 
-        pk_eval = self._evaluate_spectrum(
-            pk,
+        c_ell_eval = self._evaluate_spectrum(
+            c_ell,
             order=order,
-            k_input=k_pk,
+            radial_input=ell,
             taper=taper,
             taper_kwargs=taper_kwargs,
             **kwargs,
         )
 
-        return self._project_spectra_to_radial([pk_eval], order)
-
-    def spherical_correlation(
-        self,
-        k_pk: ArrayLike | None = None,
-        pk: SpectrumInput | None = None,
-        order: float | int = 0,
-        taper: bool = False,
-        taper_kwargs: dict | None = None,
-        **kwargs,
-    ) -> tuple[FloatArray, FloatArray]:
-        """Compute the k-weighted projected radial statistic.
-
-        Args:
-            k_pk: Wavenumber grid for tabulated spectra.
-            pk: Spectrum values or callable spectrum.
-            order: Bessel order to use.
-            taper: Whether to suppress low-k and high-k edge power.
-            taper_kwargs: Optional settings for the spectrum taper.
-            **kwargs: Extra arguments passed to callable spectra.
-
-        Returns:
-            Radial grid and k-weighted projected radial statistic.
-        """
-        if pk is None:
-            raise ValueError("pk must be supplied.")
-
-        pk_eval = self._evaluate_spectrum(
-            pk,
-            order=order,
-            k_input=k_pk,
-            taper=taper,
-            taper_kwargs=taper_kwargs,
-            **kwargs,
-        )
-
-        return self._project_spectra_to_radial(
-            [pk_eval * self.k[order]],
-            order,
-        )
+        return self._project_spectra_to_radial([c_ell_eval], order)
 
     def projected_covariance(
         self,
@@ -534,16 +516,17 @@ class HankelTransform:
         """Compute a projected covariance matrix from two spectra.
 
         Args:
-            k_pk: Wavenumber grid for tabulated spectra.
+            k_pk: Wavenumber grid for tabulated spectra (units of inverse distance).
             pk1: First spectrum values or callable spectrum.
             pk2: Second spectrum values or callable spectrum.
-            order: Bessel order to use.
+            order: Bessel order to use (default is 2 for tangential shear).
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
-            Radial grid and projected covariance matrix.
+            Radial grid and projected covariance matrix. The units of
+            the radial grid are the inverse of the units of ``k``.
         """
         if pk1 is None or pk2 is None:
             raise ValueError("pk1 and pk2 must both be supplied.")
@@ -551,7 +534,7 @@ class HankelTransform:
         pk1_eval = self._evaluate_spectrum(
             pk1,
             order=order,
-            k_input=k_pk,
+            radial_input=k_pk,
             taper=taper,
             taper_kwargs=taper_kwargs,
             **kwargs,
@@ -559,56 +542,13 @@ class HankelTransform:
         pk2_eval = self._evaluate_spectrum(
             pk2,
             order=order,
-            k_input=k_pk,
+            radial_input=k_pk,
             taper=taper,
             taper_kwargs=taper_kwargs,
             **kwargs,
         )
 
         return self._project_spectra_to_radial([pk1_eval, pk2_eval], order)
-
-    def projected_skewness(
-        self,
-        k_pk: ArrayLike | None = None,
-        pk1: SpectrumInput | None = None,
-        pk2: SpectrumInput | None = None,
-        pk3: SpectrumInput | None = None,
-        order: float | int = 0,
-        taper: bool = False,
-        taper_kwargs: dict | None = None,
-        **kwargs,
-    ) -> tuple[FloatArray, FloatArray]:
-        """Compute a projected third-order radial tensor from three spectra.
-
-        Args:
-            k_pk: Wavenumber grid for tabulated spectra.
-            pk1: First spectrum values or callable spectrum.
-            pk2: Second spectrum values or callable spectrum.
-            pk3: Third spectrum values or callable spectrum.
-            order: Bessel order to use.
-            taper: Whether to suppress low-k and high-k edge power.
-            taper_kwargs: Optional settings for the spectrum taper.
-            **kwargs: Extra arguments passed to callable spectra.
-
-        Returns:
-            Radial grid and projected third-order radial tensor.
-        """
-        if pk1 is None or pk2 is None or pk3 is None:
-            raise ValueError("pk1, pk2, and pk3 must all be supplied.")
-
-        spectra = [
-            self._evaluate_spectrum(
-                pk,
-                order=order,
-                k_input=k_pk,
-                taper=taper,
-                taper_kwargs=taper_kwargs,
-                **kwargs,
-            )
-            for pk in (pk1, pk2, pk3)
-        ]
-
-        return self._project_spectra_to_radial(spectra, order)
 
     def bin_radial_matrix(
         self,
@@ -632,6 +572,7 @@ class HankelTransform:
 
         validate_strictly_increasing(r_arr, "r")
         validate_strictly_increasing(r_bins_arr, "r_bins")
+        validate_interpolation_within_bounds(r_bins_arr, r_arr, "r_bins")
 
         if np.any(r_bins_arr <= 0.0):
             raise ValueError("r_bins must contain only positive values.")
@@ -642,7 +583,10 @@ class HankelTransform:
 
         expected_shape = tuple([r_arr.size] * matrix_arr.ndim)
         if matrix_arr.shape != expected_shape:
-            raise ValueError(f"matrix shape must be {expected_shape}. Got {matrix_arr.shape}.")
+            raise ValueError(
+                f"matrix shape must be {expected_shape}. "
+                f"Got {matrix_arr.shape}."
+            )
 
         return compute_bin_radial_matrix(r_arr, matrix_arr, r_bins_arr)
 
@@ -663,6 +607,10 @@ class HankelTransform:
             raise ValueError("covariance must be square.")
         if np.any(~np.isfinite(covariance_arr)):
             raise ValueError("covariance must contain only finite values.")
+        if np.any(np.diag(covariance_arr) <= 0.0):
+            raise ValueError(
+                "covariance diagonal must contain only positive values."
+            )
 
         return compute_correlation_matrix(covariance_arr)
 
@@ -683,28 +631,9 @@ class HankelTransform:
             raise ValueError("covariance must be square.")
         if np.any(~np.isfinite(covariance_arr)):
             raise ValueError("covariance must contain only finite values.")
+        if np.any(np.diag(covariance_arr) <= 0.0):
+            raise ValueError(
+                "covariance diagonal must contain only positive values."
+            )
 
         return compute_diagonal_error(covariance_arr)
-
-    def taper_spectrum(
-        self,
-        k: ArrayLike,
-        pk: ArrayLike,
-        **kwargs,
-    ) -> FloatArray:
-        """Return a smoothly tapered power spectrum.
-
-        Args:
-            k: Wavenumber grid.
-            pk: Power-spectrum values evaluated on ``k``.
-            **kwargs: Optional taper settings.
-
-        Returns:
-            Power spectrum with smooth low-k and high-k suppression.
-        """
-        k_arr = as_1d_float_array(k, "k")
-        pk_arr = as_1d_float_array(pk, "pk")
-
-        validate_power_spectrum_inputs(k_arr, pk_arr)
-
-        return apply_taper_spectrum(k_arr, pk_arr, **kwargs)

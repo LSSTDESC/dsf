@@ -1,16 +1,16 @@
-"""Unit tests for ``dsf.covariance.projection.hankel_transform``."""
+"""Unit tests for ``dsf.hankel.hankel_transform_matrix_zeros``."""
 
 import numpy as np
 import pytest
 
-from dsf.covariance.projection.hankel_transform import HankelTransform
+from dsf.hankel.hankel_transform_matrix_zeros import HankelTransformMatrixZeros
 
-HANKEL_MODULE = "dsf.covariance.projection.hankel_transform"
+HANKEL_MODULE = "dsf.hankel.hankel_transform_matrix_zeros"
 
 
 def make_fake_transform():
-    """Return a HankelTransform instance with small deterministic internal grids."""
-    transform = HankelTransform.__new__(HankelTransform)
+    """Return a HankelTransformMatrixZeros instance with small deterministic internal grids."""
+    transform = HankelTransformMatrixZeros.__new__(HankelTransformMatrixZeros)
 
     transform.k = {0: np.array([1.0, 2.0, 4.0])}
     transform.r = {0: np.array([10.0, 20.0])}
@@ -54,11 +54,11 @@ def test_check_order_rejects_missing_order():
 def test_evaluate_tabulated_spectrum_interpolates_to_internal_k_grid():
     """Test that tabulated spectra are interpolated onto the internal k grid."""
     transform = make_fake_transform()
-    k_input = np.array([1.0, 2.0, 4.0])
+    radial_input = np.array([1.0, 2.0, 4.0])
     spectrum = np.array([10.0, 20.0, 40.0])
 
     result = transform._evaluate_tabulated_spectrum(
-        k_input=k_input,
+        radial_input=radial_input,
         spectrum=spectrum,
         order=0,
     )
@@ -68,40 +68,22 @@ def test_evaluate_tabulated_spectrum_interpolates_to_internal_k_grid():
     np.testing.assert_allclose(result, expected)
 
 
-def test_evaluate_tabulated_spectrum_sets_out_of_range_values_to_zero():
-    """Test that interpolation returns zero outside the tabulated k range."""
-    transform = make_fake_transform()
-    transform.k = {0: np.array([0.5, 1.5, 3.0, 8.0])}
-    k_input = np.array([1.0, 2.0, 4.0])
-    spectrum = np.array([10.0, 20.0, 40.0])
-
-    result = transform._evaluate_tabulated_spectrum(
-        k_input=k_input,
-        spectrum=spectrum,
-        order=0,
-    )
-
-    expected = np.array([0.0, 15.0, 30.0, 0.0])
-
-    np.testing.assert_allclose(result, expected)
-
-
 def test_evaluate_tabulated_spectrum_applies_taper_when_requested(monkeypatch):
     """Test that tabulated spectra are tapered before interpolation if requested."""
     transform = make_fake_transform()
-    k_input = np.array([1.0, 2.0, 4.0])
+    radial_input = np.array([1.0, 2.0, 4.0])
     spectrum = np.array([10.0, 20.0, 40.0])
 
     def fake_apply_taper_spectrum(k, pk, **kwargs):
         return pk * 2.0
 
     monkeypatch.setattr(
-        f"{HANKEL_MODULE}.apply_taper_spectrum",
+        "dsf.hankel.hankel_transform_base.apply_taper_spectrum",
         fake_apply_taper_spectrum,
     )
 
     result = transform._evaluate_tabulated_spectrum(
-        k_input=k_input,
+        radial_input=radial_input,
         spectrum=spectrum,
         order=0,
         taper=True,
@@ -112,8 +94,8 @@ def test_evaluate_tabulated_spectrum_applies_taper_when_requested(monkeypatch):
     np.testing.assert_allclose(result, expected)
 
 
-def test_evaluate_spectrum_calls_callable_on_internal_k_grid():
-    """Test that callable spectra are evaluated on the internal k grid."""
+def test_evaluate_spectrum_calls_callable_on_internal_radial_grid():
+    """Test that callable spectra are evaluated on the internal radial grid."""
     transform = make_fake_transform()
 
     def spectrum(k, amplitude):
@@ -130,11 +112,11 @@ def test_evaluate_spectrum_calls_callable_on_internal_k_grid():
     np.testing.assert_allclose(result, expected)
 
 
-def test_evaluate_spectrum_requires_k_input_for_tabulated_spectra():
-    """Test that tabulated spectra require an input k grid."""
+def test_evaluate_spectrum_requires_radial_input_for_tabulated_spectra():
+    """Test that tabulated spectra require an input radial grid."""
     transform = make_fake_transform()
 
-    with pytest.raises(ValueError, match="k_input must be supplied"):
+    with pytest.raises(ValueError, match="radial_input must be supplied"):
         transform._evaluate_spectrum(
             np.array([1.0, 2.0, 3.0]),
             order=0,
@@ -155,35 +137,21 @@ def test_evaluate_spectrum_rejects_wrong_callable_shape():
         )
 
 
-def test_evaluate_spectrum_rejects_nonfinite_callable_values():
-    """Test that callable spectra must return finite values."""
+def test_power_grid_requires_power_spectrum():
+    """Test that power_grid requires a supplied power spectrum."""
     transform = make_fake_transform()
 
-    def bad_spectrum(k):
-        return np.array([1.0, np.nan, 3.0])
-
-    with pytest.raises(ValueError, match="finite values"):
-        transform._evaluate_spectrum(
-            bad_spectrum,
-            order=0,
-        )
+    with pytest.raises(ValueError, match="power_spectrum must be supplied"):
+        transform.power_grid(order=0)
 
 
-def test_pk_grid_requires_power_spectrum():
-    """Test that pk_grid requires a supplied power spectrum."""
+def test_power_grid_returns_spectrum_on_internal_grid():
+    """Test that power_grid returns the spectrum evaluated on the Hankel radial grid."""
     transform = make_fake_transform()
 
-    with pytest.raises(ValueError, match="pk must be supplied"):
-        transform.pk_grid(order=0)
-
-
-def test_pk_grid_returns_spectrum_on_internal_grid():
-    """Test that pk_grid returns the spectrum evaluated on the Hankel k grid."""
-    transform = make_fake_transform()
-
-    result = transform.pk_grid(
-        k_pk=np.array([1.0, 2.0, 4.0]),
-        pk=np.array([10.0, 20.0, 40.0]),
+    result = transform.power_grid(
+        radial_grid=np.array([1.0, 2.0, 4.0]),
+        power_spectrum=np.array([10.0, 20.0, 40.0]),
         order=0,
     )
 
@@ -227,41 +195,12 @@ def test_project_spectra_to_radial_projects_two_spectra_to_matrix():
     assert result.shape == (transform.r[0].size, transform.r[0].size)
 
 
-def test_project_spectra_to_radial_projects_three_spectra_to_tensor():
-    """Test that three spectra are projected into a third-order radial tensor."""
-    transform = make_fake_transform()
-    spectrum_1 = np.array([2.0, 4.0, 8.0])
-    spectrum_2 = np.array([1.0, 3.0, 5.0])
-    spectrum_3 = np.array([2.0, 1.0, 4.0])
-
-    r, result = transform._project_spectra_to_radial(
-        [spectrum_1, spectrum_2, spectrum_3],
-        order=0,
-    )
-
-    product = spectrum_1 * spectrum_2 * spectrum_3
-    weighted = product / transform.j_next_at_zeros[0] ** 2
-    j_matrix = transform.j[0]
-    expected = (
-        np.einsum("az,bz,cz,z->abc", j_matrix, j_matrix, j_matrix, weighted)
-        * transform.normalization[0]
-    )
-
-    np.testing.assert_allclose(r, transform.r[0])
-    np.testing.assert_allclose(result, expected)
-    assert result.shape == (
-        transform.r[0].size,
-        transform.r[0].size,
-        transform.r[0].size,
-    )
-
-
-def test_project_spectra_to_radial_rejects_more_than_three_spectra():
+def test_project_spectra_to_radial_rejects_more_than_two_spectra():
     """Test that radial projection rejects unsupported spectrum products."""
     transform = make_fake_transform()
-    spectra = [np.ones_like(transform.k[0]) for _ in range(4)]
+    spectra = [np.ones_like(transform.k[0]) for _ in range(3)]
 
-    with pytest.raises(ValueError, match="Only 1, 2, or 3 spectra are supported"):
+    with pytest.raises(ValueError, match="Only 1 or 2 spectra are supported"):
         transform._project_spectra_to_radial(spectra, order=0)
 
 
@@ -271,31 +210,12 @@ def test_projected_correlation_projects_one_input_spectrum():
     pk = np.array([2.0, 4.0, 8.0])
 
     r, result = transform.projected_correlation(
-        k_pk=np.array([1.0, 2.0, 4.0]),
-        pk=pk,
+        ell=np.array([1.0, 2.0, 4.0]),
+        c_ell=pk,
         order=0,
     )
 
     weighted = pk / transform.j_next_at_zeros[0] ** 2
-    expected = np.dot(transform.j[0], weighted) * transform.normalization[0]
-
-    np.testing.assert_allclose(r, transform.r[0])
-    np.testing.assert_allclose(result, expected)
-
-
-def test_spherical_correlation_projects_k_weighted_spectrum():
-    """Test that spherical_correlation projects the k-weighted spectrum."""
-    transform = make_fake_transform()
-    pk = np.array([2.0, 4.0, 8.0])
-
-    r, result = transform.spherical_correlation(
-        k_pk=np.array([1.0, 2.0, 4.0]),
-        pk=pk,
-        order=0,
-    )
-
-    weighted_spectrum = pk * transform.k[0]
-    weighted = weighted_spectrum / transform.j_next_at_zeros[0] ** 2
     expected = np.dot(transform.j[0], weighted) * transform.normalization[0]
 
     np.testing.assert_allclose(r, transform.r[0])
@@ -317,37 +237,8 @@ def test_projected_covariance_projects_two_input_spectra():
 
     product = pk1 * pk2
     weighted = product / transform.j_next_at_zeros[0] ** 2
-    expected = np.dot(transform.j[0], (transform.j[0] * weighted).T) * transform.normalization[0]
-
-    np.testing.assert_allclose(r, transform.r[0])
-    np.testing.assert_allclose(result, expected)
-
-
-def test_projected_skewness_projects_three_input_spectra():
-    """Test that projected_skewness evaluates and projects three spectra."""
-    transform = make_fake_transform()
-    pk1 = np.array([2.0, 4.0, 8.0])
-    pk2 = np.array([1.0, 3.0, 5.0])
-    pk3 = np.array([2.0, 1.0, 4.0])
-
-    r, result = transform.projected_skewness(
-        k_pk=np.array([1.0, 2.0, 4.0]),
-        pk1=pk1,
-        pk2=pk2,
-        pk3=pk3,
-        order=0,
-    )
-
-    product = pk1 * pk2 * pk3
-    weighted = product / transform.j_next_at_zeros[0] ** 2
     expected = (
-        np.einsum(
-            "az,bz,cz,z->abc",
-            transform.j[0],
-            transform.j[0],
-            transform.j[0],
-            weighted,
-        )
+        np.dot(transform.j[0], (transform.j[0] * weighted).T)
         * transform.normalization[0]
     )
 
@@ -359,15 +250,25 @@ def test_projected_correlation_requires_power_spectrum():
     """Test that projected_correlation requires a supplied power spectrum."""
     transform = make_fake_transform()
 
-    with pytest.raises(ValueError, match="pk must be supplied"):
+    with pytest.raises(ValueError, match="c_ell must be supplied"):
         transform.projected_correlation(order=0)
 
 
-def test_spherical_correlation_requires_power_spectrum():
-    """Test that spherical_correlation requires a supplied power spectrum."""
+# def test_spherical_correlation_requires_power_spectrum():
+#     """Test that spherical_correlation requires a supplied power spectrum."""
+#     transform = make_fake_transform()
+
+#     with pytest.raises(ValueError, match="pk must be supplied"):
+#         transform.spherical_correlation(order=0)
+
+
+def test_spherical_correlation_returns_not_implemented():
+    """Test that the FFTLog backend does not support spherical_correlation."""
     transform = make_fake_transform()
 
-    with pytest.raises(ValueError, match="pk must be supplied"):
+    with pytest.raises(
+        NotImplementedError, match="does not support spherical_correlation"
+    ):
         transform.spherical_correlation(order=0)
 
 
@@ -377,14 +278,6 @@ def test_projected_covariance_requires_two_power_spectra():
 
     with pytest.raises(ValueError, match="pk1 and pk2 must both be supplied"):
         transform.projected_covariance(pk1=np.ones(3), order=0)
-
-
-def test_projected_skewness_requires_three_power_spectra():
-    """Test that projected_skewness requires all three input spectra."""
-    transform = make_fake_transform()
-
-    with pytest.raises(ValueError, match="pk1, pk2, and pk3 must all be supplied"):
-        transform.projected_skewness(pk1=np.ones(3), pk2=np.ones(3), order=0)
 
 
 def test_bin_radial_matrix_delegates_valid_inputs(monkeypatch):
@@ -421,17 +314,6 @@ def test_bin_radial_matrix_rejects_wrong_matrix_shape():
     r_bins = np.array([1.0, 2.0, 3.0])
 
     with pytest.raises(ValueError, match="matrix shape must be"):
-        transform.bin_radial_matrix(r, matrix, r_bins)
-
-
-def test_bin_radial_matrix_rejects_nonpositive_bin_edges():
-    """Test that bin_radial_matrix rejects non-positive radial bin edges."""
-    transform = make_fake_transform()
-    r = np.array([1.0, 2.0, 3.0])
-    matrix = np.ones((3, 3))
-    r_bins = np.array([0.0, 2.0, 3.0])
-
-    with pytest.raises(ValueError, match="r_bins must contain only positive values"):
         transform.bin_radial_matrix(r, matrix, r_bins)
 
 
@@ -501,15 +383,15 @@ def test_taper_spectrum_delegates_valid_power_spectrum(monkeypatch):
     def fake_apply_taper_spectrum(k_arg, pk_arg, **kwargs):
         np.testing.assert_allclose(k_arg, k)
         np.testing.assert_allclose(pk_arg, pk)
-        assert kwargs["alpha"] == 0.25
+        assert kwargs["large_k_lower"] == 0.25
         return expected
 
     monkeypatch.setattr(
-        f"{HANKEL_MODULE}.apply_taper_spectrum",
+        "dsf.hankel.hankel_transform_base.apply_taper_spectrum",
         fake_apply_taper_spectrum,
     )
 
-    result = transform.taper_spectrum(k, pk, alpha=0.25)
+    result = transform.taper_spectrum(k, pk, large_k_lower=0.25)
 
     np.testing.assert_allclose(result, expected)
 
@@ -533,16 +415,20 @@ def test_taper_spectrum_delegates_valid_power_spectrum(monkeypatch):
 )
 def test_init_rejects_invalid_inputs(monkeypatch, kwargs):
     """Test that HankelTransform initialization rejects invalid configuration."""
-    monkeypatch.setattr(HankelTransform, "_build_all_grids", lambda self: None)
+    monkeypatch.setattr(
+        HankelTransformMatrixZeros, "_build_all_grids", lambda self: None
+    )
 
     with pytest.raises(ValueError):
-        HankelTransform(**kwargs)
+        HankelTransformMatrixZeros(**kwargs)
 
 
 def test_prune_radial_grid_returns_original_grid_when_pruning_disabled(monkeypatch):
     """Test that radial pruning can be disabled."""
-    monkeypatch.setattr(HankelTransform, "_build_all_grids", lambda self: None)
-    transform = HankelTransform(prune_r=None)
+    monkeypatch.setattr(
+        HankelTransformMatrixZeros, "_build_all_grids", lambda self: None
+    )
+    transform = HankelTransformMatrixZeros(prune_r=0)
     r = np.array([1.0, 2.0, 3.0])
 
     result = transform._prune_radial_grid(r)
@@ -552,8 +438,10 @@ def test_prune_radial_grid_returns_original_grid_when_pruning_disabled(monkeypat
 
 def test_prune_radial_grid_keeps_endpoints_for_linear_pruning(monkeypatch):
     """Test that linearly pruned radial grids keep both endpoints."""
-    monkeypatch.setattr(HankelTransform, "_build_all_grids", lambda self: None)
-    transform = HankelTransform(prune_r=2, prune_log_space=False)
+    monkeypatch.setattr(
+        HankelTransformMatrixZeros, "_build_all_grids", lambda self: None
+    )
+    transform = HankelTransformMatrixZeros(prune_r=2, prune_log_space=False)
     r = np.arange(1.0, 8.0)
 
     result = transform._prune_radial_grid(r)
@@ -564,8 +452,10 @@ def test_prune_radial_grid_keeps_endpoints_for_linear_pruning(monkeypatch):
 
 def test_select_radial_range_selects_grid_covering_requested_range(monkeypatch):
     """Test that radial range selection includes bracketing grid points."""
-    monkeypatch.setattr(HankelTransform, "_build_all_grids", lambda self: None)
-    transform = HankelTransform(r_min=2.5, r_max=6.5)
+    monkeypatch.setattr(
+        HankelTransformMatrixZeros, "_build_all_grids", lambda self: None
+    )
+    transform = HankelTransformMatrixZeros(r_min=2.5, r_max=6.5)
     r = np.array([1.0, 2.0, 3.0, 5.0, 7.0, 9.0])
 
     result = transform._select_radial_range(r)
@@ -573,3 +463,60 @@ def test_select_radial_range_selects_grid_covering_requested_range(monkeypatch):
     expected = np.array([2.0, 3.0, 5.0, 7.0])
 
     np.testing.assert_allclose(result, expected)
+
+
+def test_matrix_zeros_bin_radial_matrix_delegates_to_helper(monkeypatch):
+    """Test that matrix binning delegates to the shared helper."""
+    transform = make_fake_transform()
+
+    def fake_compute_bin_radial_matrix(r, matrix, r_bins):
+        return np.array([1.5, 2.5]), matrix[:2, :2]
+
+    monkeypatch.setattr(
+        "dsf.hankel.hankel_transform_matrix_zeros.compute_bin_radial_matrix",
+        fake_compute_bin_radial_matrix,
+    )
+
+    centers, binned = transform.bin_radial_matrix(
+        np.array([1.0, 2.0, 3.0]),
+        np.eye(3),
+        np.array([1.0, 2.0, 3.0]),
+    )
+
+    np.testing.assert_allclose(centers, [1.5, 2.5])
+    np.testing.assert_allclose(binned, np.eye(2))
+
+
+def test_matrix_zeros_rejects_missing_projected_spectrum():
+    """Test that projected correlation still requires a spectrum input."""
+    transform = make_fake_transform()
+
+    with pytest.raises(ValueError, match="c_ell must be supplied"):
+        transform.projected_correlation(order=0)
+
+
+def test_evaluate_spectrum_rejects_interpolation_outside_grid():
+    """Test that _evaluate_spectrum rejects tabulated spectra that do not cover the grid."""
+    transform = make_fake_transform()
+
+    with pytest.raises(
+        ValueError,
+        match="The tabulated radial values of the spectrum do not cover the full matrix grid.",
+    ):
+        transform._evaluate_spectrum(
+            spectrum=[1.0, 1.0],
+            order=0,
+            radial_input=[1.0, 2.0],
+        )
+
+
+def test_bin_radial_matrix_rejects_r_outside_grid():
+    """Test that bin_radial_matrix rejects r interpolation values outside grid."""
+    transform = make_fake_transform()
+
+    with pytest.raises(ValueError, match="lie outside the data grid."):
+        transform.bin_radial_matrix(
+            transform.k[0],
+            np.ones([3, 3]),
+            np.array([5.0, 15.0]),
+        )

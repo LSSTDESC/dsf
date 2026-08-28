@@ -138,7 +138,7 @@ class DeltaSigmaCalculator:
             first_bad = int(bad[0])
 
             raise FloatingPointError(
-                "Non-finite DeltaSigma values at one scale factor. "
+                "Non-finite Delta Sigma values at one scale factor. "
                 f"First bad index: {first_bad}. "
                 f"r = {r[first_bad]}, a = {a}."
             )
@@ -272,7 +272,7 @@ class DeltaSigmaCalculator:
             first_z_index, first_r_index = bad[0]
 
             raise FloatingPointError(
-                "Non-finite DeltaSigma values before redshift integration. "
+                "Non-finite Delta Sigma values before redshift integration. "
                 f"First bad index: {first_z_index}, {first_r_index}. "
                 f"z = {z_use[first_z_index]}, "
                 f"r index = {first_r_index}."
@@ -289,7 +289,7 @@ class DeltaSigmaCalculator:
             first_bad = int(bad[0])
 
             raise FloatingPointError(
-                "Non-finite DeltaSigma values after redshift integration. "
+                "Non-finite Delta Sigma values after redshift integration. "
                 f"First bad index: {first_bad}."
             )
 

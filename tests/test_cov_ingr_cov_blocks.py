@@ -37,6 +37,7 @@ def hankel(radius_grid):
     hankel.calls = []
     hankel.bin_calls = []
     hankel.r = radius_grid
+    hankel.backend = SimpleNamespace()
 
     return hankel
 
@@ -69,7 +70,7 @@ def patch_projected_covariance(monkeypatch, hankel, *, radii=None):
         return np.asarray(radii, dtype=float), np.outer(pk1, pk2)
 
     monkeypatch.setattr(
-        hankel,
+        hankel.backend,
         "projected_covariance",
         projected_covariance,
         raising=False,
@@ -97,7 +98,7 @@ def patch_binned_radial_matrix(monkeypatch, hankel):
         )
 
     monkeypatch.setattr(
-        hankel,
+        hankel.backend,
         "bin_radial_matrix",
         bin_radial_matrix,
         raising=False,
@@ -265,7 +266,7 @@ def test_delta_sigma_gm_covariance_rejects_mismatched_radial_grids(
         return np.asarray([1.0, 2.1, 3.0]), np.outer(pk1, pk2)
 
     monkeypatch.setattr(
-        hankel,
+        hankel.backend,
         "projected_covariance",
         projected_covariance,
         raising=False,

@@ -128,7 +128,7 @@ def radial_bin_centers(r_bins: FloatArray) -> FloatArray:
     """Return geometric centers of radial bins.
 
     Args:
-        r_bins: Radial bin edges.
+        r_bins: Positive radial bin edges.
 
     Returns:
         Geometric mean of each pair of neighboring radial bin edges.

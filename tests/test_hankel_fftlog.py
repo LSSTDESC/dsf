@@ -250,7 +250,7 @@ def test_fftlog_projected_correlation_requires_spectrum():
     """Test that the FFTLog backend requires a projected spectrum input."""
     transform = HankelTransformFFTLog()
 
-    with pytest.raises(ValueError, match="c_ell must be supplied"):
+    with pytest.raises(ValueError, match="ell must be supplied"):
         transform.projected_correlation(order=2)
 
 
@@ -286,7 +286,9 @@ def test_projected_covariance_returns_not_implemented():
     """Test that the FFTLog backend does not support projected_covariance."""
     transform = HankelTransformFFTLog()
 
-    with pytest.raises(NotImplementedError, match="does not support projected_covariance"):
+    with pytest.raises(
+        NotImplementedError, match="does not support projected_covariance"
+    ):
         transform.projected_covariance(order=2)
 
 
@@ -294,5 +296,7 @@ def test_projected_skewness_returns_not_implemented():
     """Test that the FFTLog backend does not support projected_skewness."""
     transform = HankelTransformFFTLog()
 
-    with pytest.raises(NotImplementedError, match="does not support projected_skewness"):
+    with pytest.raises(
+        NotImplementedError, match="does not support projected_skewness"
+    ):
         transform.projected_skewness(order=2)

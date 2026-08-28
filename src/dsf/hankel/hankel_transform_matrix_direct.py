@@ -137,7 +137,7 @@ class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
             Radial grid and projected radial statistic.
 
         Raises:
-            ValueError: If the number of spectra is not 1, 2, or 3.
+            ValueError: If the number of spectra is not 1 or 2.
         """
         self._check_order(order)
 
@@ -159,9 +159,7 @@ class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
             transformed = j @ (weight * product)
         elif ndim == 2:
             transformed = (j * weight * product) @ j_t
-        elif ndim == 3:
-            transformed = j @ (weight * product) @ j_t @ j_t
         else:
-            raise ValueError(f"Only 1, 2, or 3 spectra are supported. Got {ndim}.")
+            raise ValueError(f"Only 1 or 2 spectra are supported. Got {ndim}.")
 
         return self.r[order], np.asarray(transformed, dtype=float)

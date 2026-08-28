@@ -195,41 +195,12 @@ def test_project_spectra_to_radial_projects_two_spectra_to_matrix():
     assert result.shape == (transform.r[0].size, transform.r[0].size)
 
 
-def test_project_spectra_to_radial_projects_three_spectra_to_tensor():
-    """Test that three spectra are projected into a third-order radial tensor."""
-    transform = make_fake_transform()
-    spectrum_1 = np.array([2.0, 4.0, 8.0])
-    spectrum_2 = np.array([1.0, 3.0, 5.0])
-    spectrum_3 = np.array([2.0, 1.0, 4.0])
-
-    r, result = transform._project_spectra_to_radial(
-        [spectrum_1, spectrum_2, spectrum_3],
-        order=0,
-    )
-
-    product = spectrum_1 * spectrum_2 * spectrum_3
-    weighted = product / transform.j_next_at_zeros[0] ** 2
-    j_matrix = transform.j[0]
-    expected = (
-        np.einsum("az,bz,cz,z->abc", j_matrix, j_matrix, j_matrix, weighted)
-        * transform.normalization[0]
-    )
-
-    np.testing.assert_allclose(r, transform.r[0])
-    np.testing.assert_allclose(result, expected)
-    assert result.shape == (
-        transform.r[0].size,
-        transform.r[0].size,
-        transform.r[0].size,
-    )
-
-
-def test_project_spectra_to_radial_rejects_more_than_three_spectra():
+def test_project_spectra_to_radial_rejects_more_than_two_spectra():
     """Test that radial projection rejects unsupported spectrum products."""
     transform = make_fake_transform()
-    spectra = [np.ones_like(transform.k[0]) for _ in range(4)]
+    spectra = [np.ones_like(transform.k[0]) for _ in range(3)]
 
-    with pytest.raises(ValueError, match="Only 1, 2, or 3 spectra are supported"):
+    with pytest.raises(ValueError, match="Only 1 or 2 spectra are supported"):
         transform._project_spectra_to_radial(spectra, order=0)
 
 
@@ -249,25 +220,6 @@ def test_projected_correlation_projects_one_input_spectrum():
 
     np.testing.assert_allclose(r, transform.r[0])
     np.testing.assert_allclose(result, expected)
-
-
-# def test_spherical_correlation_projects_k_weighted_spectrum():
-#     """Test that spherical_correlation projects the k-weighted spectrum."""
-#     transform = make_fake_transform()
-#     pk = np.array([2.0, 4.0, 8.0])
-
-#     r, result = transform.spherical_correlation(
-#         k_pk=np.array([1.0, 2.0, 4.0]),
-#         pk=pk,
-#         order=0,
-#     )
-
-#     weighted_spectrum = pk * transform.k[0]
-#     weighted = weighted_spectrum / transform.j_next_at_zeros[0] ** 2
-#     expected = np.dot(transform.j[0], weighted) * transform.normalization[0]
-
-#     np.testing.assert_allclose(r, transform.r[0])
-#     np.testing.assert_allclose(result, expected)
 
 
 def test_projected_covariance_projects_two_input_spectra():

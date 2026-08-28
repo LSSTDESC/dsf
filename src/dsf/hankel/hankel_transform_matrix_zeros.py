@@ -390,7 +390,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         target_k = self.k[order]
 
         if callable(spectrum):
-            values = np.asarray(spectrum(k=target_k, **kwargs), dtype=float)
+            values = np.asarray(spectrum(target_k, **kwargs), dtype=float)
         elif radial_input is None:
             raise ValueError("radial_input must be supplied for tabulated spectra.")
         else:

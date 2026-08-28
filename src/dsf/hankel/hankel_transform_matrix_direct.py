@@ -5,6 +5,10 @@ Fourier-space spectra into projected radial-space quantities using precomputed
 Hankel operator grids along a predefined radial grid. It is useful for computing
 projected correlation functions, covariance matrices, and higher-order
 radial tensors that appear in weak-lensing and Delta Sigma calculations.
+
+This class inherits from ``HankelTransformMatrixZeros`` in order to reuse the
+public matrix API. However, the grid construction and projection methods are
+overridden.
 """
 
 from __future__ import annotations

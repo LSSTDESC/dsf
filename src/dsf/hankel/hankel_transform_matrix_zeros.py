@@ -436,7 +436,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         """Compute a projected radial statistic from one spectrum.
 
         Args:
-            ell: ell grid for tabulated spectra.
+            ell: ell grid for tabulated spectra (unitless).
             c_ell: Spectrum values or callable spectrum.
             order: Bessel order to use (default is 2 for tangential shear).
             taper: Whether to suppress low-k and high-k edge power.
@@ -444,7 +444,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
-            Radial grid and projected radial statistic.
+            Radial grid and projected radial statistic (units of radians).
         """
         if c_ell is None:
             raise ValueError("c_ell must be supplied.")
@@ -473,7 +473,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         """Compute a projected covariance matrix from two spectra.
 
         Args:
-            k_pk: Wavenumber grid for tabulated spectra.
+            k_pk: Wavenumber grid for tabulated spectra (units of inverse distance).
             pk1: First spectrum values or callable spectrum.
             pk2: Second spectrum values or callable spectrum.
             order: Bessel order to use (default is 2 for tangential shear).
@@ -482,7 +482,8 @@ class HankelTransformMatrixZeros(HankelTransformBase):
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
-            Radial grid and projected covariance matrix.
+            Radial grid and projected covariance matrix. The units of
+            the radial grid are the inverse of the units of ``k``.
         """
         if pk1 is None or pk2 is None:
             raise ValueError("pk1 and pk2 must both be supplied.")

@@ -87,7 +87,7 @@ class HankelTransformFFTLog(HankelTransformBase):
         """Compute a projected radial statistic from one spectrum.
 
         Args:
-            ell: ell grid for tabulated spectra.
+            ell: ell grid for tabulated spectra (unitless).
             c_ell: Spectrum values or callable spectrum.
             order: Bessel order to use (default is 2 for tangential shear).
             taper: Whether to suppress low-k and high-k edge power.
@@ -96,7 +96,7 @@ class HankelTransformFFTLog(HankelTransformBase):
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
-            Radial grid and projected radial statistic.
+            Radial grid and projected radial statistic (units of radians).
         """
         if ell is None:
             raise ValueError("ell must be supplied.")
@@ -131,7 +131,7 @@ class HankelTransformFFTLog(HankelTransformBase):
         """Compute a spherical radial statistic from one spectrum.
 
         Args:
-            k_pk: Wavenumber grid for tabulated spectra.
+            k_pk: Wavenumber grid for tabulated spectra (units of inverse distance).
             pk: Spectrum values or callable spectrum.
             order: Bessel order to use (default is 0 for delta sigma).
             taper: Whether to suppress low-k and high-k edge power.
@@ -140,7 +140,8 @@ class HankelTransformFFTLog(HankelTransformBase):
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
-            Radial grid and spherical radial statistic.
+            Radial grid and spherical radial statistic. The units of
+            the radial grid are the inverse of the units of ``k``.
         """
         if pk is None:
             raise ValueError("pk must be supplied.")

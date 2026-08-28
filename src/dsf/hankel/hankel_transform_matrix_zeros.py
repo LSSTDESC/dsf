@@ -152,6 +152,15 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         n_zeros = self.n_zeros
         k_max = self.k_max
 
+        # Iteratively increase the number of Bessel zeros and k_max until the
+        # r-k grid covers the requested r and k range. At each step, check
+        # the following:
+        #   1) If r_min is not covered, increase k_max to push r to smaller scales,
+        #      since k and r are related as inverses.
+        #   2) If r_max is not covered, increase n_zeros. Since r=z/k_max, going to
+        #      higher zeros increases the maximum r.
+        #   3) If k_min is not covered, increase n_zeros. Since k=z*k_max/z_max,
+        #      increasing the maximum zero decreases the minimum k.
         for _ in range(self.max_iterations):
             zeros = bessel_zeros(order, n_zeros)
             k = zeros / zeros[-1] * k_max

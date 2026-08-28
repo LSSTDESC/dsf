@@ -82,12 +82,12 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         self.k_min = float(k_min)
         self.k_max = float(k_max)
         self.orders = tuple(orders)
-        self.n_zeros = int(n_zeros)
-        self.n_zeros_step = int(n_zeros_step)
+        self.n_zeros = n_zeros
+        self.n_zeros_step = n_zeros_step
         self.prune_r = prune_r
         self.prune_log_space = bool(prune_log_space)
         self.verbose = bool(verbose)
-        self.max_iterations = int(max_iterations)
+        self.max_iterations = max_iterations
 
         self._validate_init_inputs()
         self._init_cache()

@@ -17,7 +17,11 @@ from scipy.optimize import brentq
 from scipy.special import jn_zeros, jv
 
 from dsf.utils.types import FloatArray
-from dsf.utils.validators import as_1d_float_array, validate_nonnegative_scalar
+from dsf.utils.validators import (
+    as_1d_float_array,
+    is_non_negative_integer,
+    validate_nonnegative_scalar,
+)
 
 __all__ = [
     "bessel_zeros",
@@ -28,12 +32,6 @@ __all__ = [
     "radial_bin_centers",
     "radial_weights",
 ]
-
-
-def _is_non_negative_integer(value: float | int) -> bool:
-    """Return whether a value is a valid integer Bessel order."""
-    value_float = float(value)
-    return value_float >= 0.0 and value_float.is_integer()
 
 
 def bessel_zeros(order: float | int, n_zeros: int) -> FloatArray:
@@ -49,7 +47,7 @@ def bessel_zeros(order: float | int, n_zeros: int) -> FloatArray:
     if n_zeros <= 0:
         raise ValueError("n_zeros must be positive.")
 
-    if _is_non_negative_integer(order):
+    if is_non_negative_integer(order):
         return np.asarray(jn_zeros(int(order), n_zeros), dtype=float)
 
     order_float = float(order)

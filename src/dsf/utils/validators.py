@@ -373,7 +373,9 @@ def normalize_axis(axis: int, ndim: int) -> int:
     if ndim <= 0:
         raise ValueError("ndim must be positive.")
     if not -ndim <= axis < ndim:
-        raise ValueError(f"axis {axis} is out of bounds for an array with {ndim} dimensions.")
+        raise ValueError(
+            f"axis {axis} is out of bounds for an array with {ndim} dimensions."
+        )
 
     return axis % ndim
 
@@ -754,12 +756,16 @@ def validate_hankel_1d_grid_spacing(
         input_values: k or ell grid for the Hankel transform.
         name: Name of the k or ell grid used in error messages.
     """
-    x_arr = validate_positive_strictly_increasing_1d_array(input_values, name, min_size=2)
+    x_arr = validate_positive_strictly_increasing_1d_array(
+        input_values, name, min_size=2
+    )
 
     lnx = np.log(x_arr)
     dlnx = np.diff(lnx)
     if not np.allclose(dlnx, dlnx[0]):
-        raise ValueError(f"{name} must have uniform logarithmic spacing for Hankel transforms.")
+        raise ValueError(
+            f"{name} must have uniform logarithmic spacing for Hankel transforms."
+        )
 
     return x_arr
 
@@ -786,6 +792,8 @@ def validate_interpolation_within_bounds(
     x_data_arr = as_1d_float_array(x_data, f"{name}_data", min_size=2)
 
     if not np.all((x_eval_arr >= x_data_arr[0]) & (x_eval_arr <= x_data_arr[-1])):
-        raise ValueError(f"Requested interpolation values for {name} lie outside the data grid.")
+        raise ValueError(
+            f"Requested interpolation values for {name} lie outside the data grid."
+        )
 
     return x_eval_arr

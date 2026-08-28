@@ -35,6 +35,7 @@ import numpy as np
 from dsf.hankel.hankel_transform_fftlog import HankelTransformFFTLog
 from dsf.hankel.hankel_transform_matrix_direct import HankelTransformMatrixDirect
 from dsf.hankel.hankel_transform_matrix_zeros import HankelTransformMatrixZeros
+from dsf.utils.interpolators import interpolate_linear, interpolate_loglog
 from dsf.utils.types import ArrayLike, FloatArray, SpectrumInput
 from dsf.utils.validators import (
     validate_interpolation_within_bounds,
@@ -118,60 +119,81 @@ class HankelTransform:
 
     def projected_correlation_interpolated(
         self,
-        theta: ArrayLike | None = None,
-        ell: ArrayLike | None = None,
-        c_ell: SpectrumInput | None = None,
+        theta: FloatArray,
+        ell: FloatArray,
+        c_ell: SpectrumInput,
         order: float | int = 0,
+        grid_spacing: str = "linear",
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
         """Compute a projected radial statistic from one spectrum at given theta values.
-            The statistic is interpolated linearly from the internal Hankel grid to the
-            requested theta values.
+            The statistic is interpolated from the internal Hankel grid to the requested
+            theta values.
 
         Args:
             theta: Theta values for interpolation (in radians).
             ell: ell grid for tabulated spectra.
             c_ell: Spectrum values or callable spectrum.
             order: Bessel order to use.
+            grid_spacing: Interpolate in "linear" or "log" space.
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
             Radial grid and projected radial statistic.
         """
+        if grid_spacing == "linear":
+            interp_func = interpolate_linear
+        elif grid_spacing == "log":
+            interp_func = interpolate_loglog
+        else:
+            raise ValueError("grid_spacing must be 'linear' or 'log'.")
+
         theta_grid, xi_grid = self.backend.projected_correlation(
             ell=ell, c_ell=c_ell, order=order, **kwargs
         )
 
-        validate_positive_strictly_increasing_1d_array(theta_grid, "theta_grid")
-        theta_eval_arr = validate_interpolation_within_bounds(
-            theta, theta_grid, "theta"
+        xi_out = interp_func(
+            theta,
+            theta_grid,
+            xi_grid,
+            x_name="theta",
+            xp_name="theta_grid",
+            fp_name="xi_grid",
         )
 
-        xi_out = np.interp(theta_eval_arr, theta_grid, xi_grid)
-        return theta_eval_arr, np.asarray(xi_out, dtype=float)
+        return theta, np.asarray(xi_out, dtype=float)
 
     def spherical_correlation_interpolated(
         self,
-        r: ArrayLike | None = None,
-        k_pk: ArrayLike | None = None,
-        pk: SpectrumInput | None = None,
+        r: FloatArray,
+        k_pk: FloatArray,
+        pk: SpectrumInput,
         order: float | int = 0,
+        grid_spacing: str = "linear",
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
         """Compute a spherical radial statistic from one spectrum at given radial values.
-            The statistic is interpolated linearly from the internal Hankel grid to the
-            requested radial values.
+            The statistic is interpolated from the internal Hankel grid to the requested
+            radial values.
 
         Args:
             r: radial values for interpolation (in Mpc).
             k_pk: Wavenumber grid for tabulated spectra (in 1/Mpc).
             pk: Spectrum values or callable spectrum.
             order: Bessel order to use.
+            grid_spacing: Interpolate in "linear" or "log" space.
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
             Radial grid and spherical radial statistic.
         """
+        if grid_spacing == "linear":
+            interp_func = interpolate_linear
+        elif grid_spacing == "log":
+            interp_func = interpolate_loglog
+        else:
+            raise ValueError("grid_spacing must be 'linear' or 'log'.")
+
         r_grid, xi_grid = self.backend.spherical_correlation(
             k_pk=k_pk,
             pk=pk,
@@ -179,11 +201,16 @@ class HankelTransform:
             **kwargs,
         )
 
-        validate_positive_strictly_increasing_1d_array(r_grid, "r_grid")
-        r_eval_arr = validate_interpolation_within_bounds(r, r_grid, "r")
+        xi_out = interp_func(
+            r,
+            r_grid,
+            xi_grid,
+            x_name="r",
+            xp_name="r_grid",
+            fp_name="xi_grid",
+        )
 
-        xi_out = np.interp(r_eval_arr, r_grid, xi_grid)
-        return r_eval_arr, np.asarray(xi_out, dtype=float)
+        return r, np.asarray(xi_out, dtype=float)
 
     def projected_covariance(
         self,

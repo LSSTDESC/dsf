@@ -191,7 +191,7 @@ def test_hankel_invalid_spacing_raises(transform_func):
     non_logspaced = np.array([1.0, 2.0, 3.0, 4.0])
 
     with pytest.raises(ValueError):
-        transform_func(non_logspaced, P_or_C, use_offset=False)
+        transform_func(non_logspaced, P_or_C, P_or_C, use_offset=False)
 
 
 @pytest.mark.parametrize(
@@ -213,8 +213,8 @@ def test_spherical_correlation_interpolated_rejects_interpolation_outside_bounds
     with pytest.raises(ValueError):
         ht_fft = HankelTransform(backend="fftlog")
         _, xi_vals = ht_fft.spherical_correlation_interpolated(
-            r_eval,
-            k=k,
+            r=r_eval,
+            k_pk=k,
             pk=pk,
             use_offset=False,
         )
@@ -239,7 +239,7 @@ def test_projected_correlation_interpolated_rejects_interpolation_outside_bounds
     with pytest.raises(ValueError):
         ht_fft = HankelTransform(backend="fftlog")
         _, gamma_vals = ht_fft.projected_correlation_interpolated(
-            theta_eval,
+            theta=theta_eval,
             ell=ell,
             c_ell=c_ell,
             use_offset=False,

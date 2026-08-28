@@ -75,7 +75,8 @@ def test_spherical_correlation_interpolated_output_exists_and_correct_length(
     r_eval,
     expected_len,
 ):
-    """Tests that spherical_correlation_interpolated has shape ``(len(r_eval), len(r_eval))``."""
+    """Tests that spherical_correlation_interpolated has shape
+    ``(len(r_eval), len(r_eval))``."""
     ht_fft = HankelTransform(backend="fftlog")
     r_vals, xi_vals = ht_fft.spherical_correlation_interpolated(
         r_eval,
@@ -155,7 +156,8 @@ def test_projected_correlation_interpolated_output_exists_and_correct_length(
     theta_eval,
     expected_len,
 ):
-    """Tests that projected_correlation_interpolated has shape ``(len(theta), len(theta))``."""
+    """Tests that projected_correlation_interpolated has shape
+    ``(len(theta), len(theta))``."""
     ht_fft = HankelTransform(backend="fftlog")
     theta_vals, gamma_vals = ht_fft.projected_correlation_interpolated(
         theta_eval,
@@ -176,11 +178,15 @@ def test_projected_correlation_interpolated_output_exists_and_correct_length(
     "transform_func",
     [
         param(
-            HankelTransform(backend="fftlog").spherical_correlation_interpolated,
+            HankelTransform(
+                backend="fftlog"
+            ).spherical_correlation_interpolated,
             id="invalid_spacing_k_hankel_spherical",
         ),
         param(
-            HankelTransform(backend="fftlog").projected_correlation_interpolated,
+            HankelTransform(
+                backend="fftlog"
+            ).projected_correlation_interpolated,
             id="invalid_spacing_ell_hankel_projected",
         ),
     ],

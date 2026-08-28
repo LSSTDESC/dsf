@@ -32,7 +32,7 @@ class HankelTransformFFTLog(HankelTransformBase):
     def _evaluate_spectrum(
         self,
         spectrum: SpectrumInput,
-        order: float | int,
+        order: float | int = 0,
         k_input: ArrayLike | None = None,
         taper: bool = False,
         taper_kwargs: dict | None = None,
@@ -95,20 +95,24 @@ class HankelTransformFFTLog(HankelTransformBase):
         Returns:
             Radial grid and projected radial statistic.
         """
+        if ell is None:
+            raise ValueError("ell must be supplied.")
         if c_ell is None:
             raise ValueError("c_ell must be supplied.")
+
+        ell_arr = as_1d_float_array(ell, "ell", min_size=2)
 
         c_ell_eval = self._evaluate_spectrum(
             c_ell,
             order=order,
-            k_input=ell,
+            k_input=ell_arr,
             taper=taper,
             taper_kwargs=taper_kwargs,
             **kwargs,
         )
 
         return hankel_projected(
-            ell=ell, c_ell=c_ell_eval, order=order, use_offset=use_offset
+            ell=ell_arr, c_ell=c_ell_eval, order=order, use_offset=use_offset
         )
 
     def spherical_correlation(
@@ -137,16 +141,20 @@ class HankelTransformFFTLog(HankelTransformBase):
         if pk is None:
             raise ValueError("pk must be supplied.")
 
+        k_pk_arr = as_1d_float_array(k_pk, "k_pk", min_size=2)
+
         pk_eval = self._evaluate_spectrum(
             pk,
             order=order,
-            k_input=k_pk,
+            k_input=k_pk_arr,
             taper=taper,
             taper_kwargs=taper_kwargs,
             **kwargs,
         )
 
-        return hankel_spherical(k=k_pk, pk=pk_eval, order=order, use_offset=use_offset)
+        return hankel_spherical(
+            k=k_pk_arr, pk=pk_eval, order=order, use_offset=use_offset
+        )
 
 
 def hankel_projected(

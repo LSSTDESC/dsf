@@ -56,7 +56,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         n_zeros: Initial number of Bessel roots used for each grid.
         n_zeros_step: Number of extra Bessel roots added if the requested range
             is not covered.
-        prune_r: Optional radial-grid pruning factor. Use ``None`` or ``0`` to
+        prune_r: Optional radial-grid pruning factor. Use ``0`` to
             keep the full grid.
         prune_log_space: Whether pruning should keep approximately logarithmic
             radial spacing.

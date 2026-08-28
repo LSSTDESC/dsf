@@ -20,9 +20,14 @@ def test_hankel_spherical_fftlog_matches_ccl():
 
     ht_fft = HankelTransform(backend="fftlog")
     _, xi_dsf = ht_fft.spherical_correlation_interpolated(
-        r_arr, k_pk=k_arr, pk=cosmo.nonlin_matter_power(k_arr, 1 / (1 + z)), use_offset=False
+        r_arr,
+        k_pk=k_arr,
+        pk=cosmo.nonlin_matter_power(k_arr, 1 / (1 + z)),
+        use_offset=False,
     )
-    xi_ccl = ccl.correlation_3d(cosmo, r=r_arr, a=1 / (1 + z), p_of_k_a=cosmo.get_nonlin_power())
+    xi_ccl = ccl.correlation_3d(
+        cosmo, r=r_arr, a=1 / (1 + z), p_of_k_a=cosmo.get_nonlin_power()
+    )
 
     assert np.allclose(xi_dsf, xi_ccl, rtol=0.005, atol=0)
 
@@ -36,7 +41,9 @@ def test_hankel_projected_fftlog_matches_direct_integration():
     theta_arr = np.radians(np.geomspace(0.1, 100, 100))
     c_ell_arr = cosmo.nonlin_power(ell_arr, 1)
 
-    bessel_kernel = jv(2, ell_arr[:, None] * theta_arr[None, :]) * ell_arr[:, None]
+    bessel_kernel = (
+        jv(2, ell_arr[:, None] * theta_arr[None, :]) * ell_arr[:, None]
+    )
     direct_integ_result = trapezoid_integral(
         bessel_kernel * c_ell_arr[:, None],
         ell_arr,
@@ -60,7 +67,9 @@ def test_hankel_projected_matrix_zeros_matches_direct_integration():
     theta_arr = np.radians(np.geomspace(3, 100, 100))
     c_ell_arr = cosmo.nonlin_power(ell_arr, 1)
 
-    bessel_kernel = jv(2, ell_arr[:, None] * theta_arr[None, :]) * ell_arr[:, None]
+    bessel_kernel = (
+        jv(2, ell_arr[:, None] * theta_arr[None, :]) * ell_arr[:, None]
+    )
     direct_integ_result = trapezoid_integral(
         bessel_kernel * c_ell_arr[:, None],
         ell_arr,
@@ -76,7 +85,7 @@ def test_hankel_projected_matrix_zeros_matches_direct_integration():
         max_iterations=300,
         n_zeros=25000,
         n_zeros_step=5000,
-        prune_r=None,
+        prune_r=0,
         verbose=True,
         orders=[2],
     )
@@ -97,7 +106,9 @@ def test_hankel_projected_matrix_direct_matches_direct_integration():
     theta_arr = np.radians(np.geomspace(3, 100, 100))
     c_ell_arr = cosmo.nonlin_power(ell_arr, 1)
 
-    bessel_kernel = jv(2, ell_arr[:, None] * theta_arr[None, :]) * ell_arr[:, None]
+    bessel_kernel = (
+        jv(2, ell_arr[:, None] * theta_arr[None, :]) * ell_arr[:, None]
+    )
     direct_integ_result = trapezoid_integral(
         bessel_kernel * c_ell_arr[:, None],
         ell_arr,
@@ -140,7 +151,7 @@ def test_hankel_projected_covariance_agrees_between_zeros_and_direct():
         max_iterations=300,
         n_zeros=25000,
         n_zeros_step=5000,
-        prune_r=None,
+        prune_r=0,
         verbose=True,
         orders=[2],
     )
@@ -152,7 +163,9 @@ def test_hankel_projected_covariance_agrees_between_zeros_and_direct():
         pk2=cosmo.nonlin_power(ell_z, a),
         order=2,
     )
-    r_matz, cov_matz = ht_matz.bin_radial_matrix(r_gkgk_z, cov_gkgk_z, r_out * cosmo["h"])
+    r_matz, cov_matz = ht_matz.bin_radial_matrix(
+        r_gkgk_z, cov_gkgk_z, r_out * cosmo["h"]
+    )
 
     ht_matd = HankelTransform(
         backend="matrix_direct",
@@ -172,7 +185,9 @@ def test_hankel_projected_covariance_agrees_between_zeros_and_direct():
         pk2=cosmo.nonlin_power(ell_d, a),
         order=2,
     )
-    r_matd, cov_matd = ht_matd.bin_radial_matrix(r_gkgk_d, cov_gkgk_d, r_out * cosmo["h"])
+    r_matd, cov_matd = ht_matd.bin_radial_matrix(
+        r_gkgk_d, cov_gkgk_d, r_out * cosmo["h"]
+    )
 
     assert np.allclose(cov_matz, cov_matd, rtol=0.05, atol=0)
     assert np.all(r_matz == r_matd)

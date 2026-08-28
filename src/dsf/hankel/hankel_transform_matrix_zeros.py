@@ -5,9 +5,6 @@ Fourier-space spectra into projected radial-space quantities using precomputed
 Hankel operator grids along the Bessel zeros. It is useful for computing
 projected correlation functions, covariance matrices, and higher-order
 radial tensors that appear in weak-lensing and Delta Sigma calculations.
-
-The class owns the public validation layer and delegates low-level radial and
-Bessel operations to ``hankel_utils``.
 """
 
 from __future__ import annotations

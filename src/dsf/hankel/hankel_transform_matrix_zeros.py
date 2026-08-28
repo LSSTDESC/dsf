@@ -334,7 +334,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
     def _evaluate_spectrum(
         self,
         spectrum: SpectrumInput,
-        order: float | int,
+        order: float | int = 0,
         k_input: ArrayLike | None = None,
         taper: bool = False,
         taper_kwargs: dict | None = None,

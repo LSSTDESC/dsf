@@ -273,7 +273,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
 
     def _evaluate_tabulated_spectrum(
         self,
-        k_input: ArrayLike,
+        radial_input: ArrayLike,
         spectrum: ArrayLike,
         order: float | int,
         taper: bool = False,
@@ -282,8 +282,8 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         """Evaluate a tabulated spectrum on the internal Hankel grid.
 
         Args:
-            k_input: Input wavenumber grid.
-            spectrum: Spectrum values evaluated on ``k_input``.
+            radial_input: Input radial grid (k or ell).
+            spectrum: Spectrum values evaluated on ``radial_input``.
             order: Bessel order whose grid should be used.
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
@@ -291,19 +291,19 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         Returns:
             Spectrum evaluated on the internal Hankel wavenumber grid.
         """
-        k_arr = as_1d_float_array(k_input, "k_input")
+        k_arr = as_1d_float_array(radial_input, "radial_input")
         spectrum_arr = as_1d_float_array(spectrum, "spectrum")
 
         validate_1d_pair(
             k_arr,
             spectrum_arr,
-            x_name="k_input",
+            x_name="radial_input",
             y_name="spectrum",
         )
         validate_power_spectrum_inputs(
             k_arr,
             spectrum_arr,
-            k_name="k_input",
+            k_name="radial_input",
             pk_name="spectrum",
         )
 
@@ -311,7 +311,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
             validate_interpolation_within_bounds(self.k[order], k_arr, "matrix k grid")
         except ValueError as e:
             raise ValueError(
-                "The tabulated k-values of the spectrum do not cover the full matrix grid."
+                "The tabulated radial values of the spectrum do not cover the full matrix grid."
             ) from e
 
         if taper:
@@ -335,7 +335,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         self,
         spectrum: SpectrumInput,
         order: float | int = 0,
-        k_input: ArrayLike | None = None,
+        radial_input: ArrayLike | None = None,
         taper: bool = False,
         taper_kwargs: dict | None = None,
         **kwargs,
@@ -345,7 +345,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         Args:
             spectrum: Tabulated spectrum values or callable spectrum.
             order: Bessel order whose grid should be used.
-            k_input: Wavenumber grid for tabulated spectra.
+            radial_input: Radial grid for tabulated spectra (k or ell).
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
             **kwargs: Extra arguments passed to callable spectra.
@@ -358,11 +358,11 @@ class HankelTransformMatrixZeros(HankelTransformBase):
 
         if callable(spectrum):
             values = np.asarray(spectrum(k=target_k, **kwargs), dtype=float)
-        elif k_input is None:
-            raise ValueError("k_input must be supplied for tabulated spectra.")
+        elif radial_input is None:
+            raise ValueError("radial_input must be supplied for tabulated spectra.")
         else:
             values = self._evaluate_tabulated_spectrum(
-                k_input=k_input,
+                radial_input=radial_input,
                 spectrum=spectrum,
                 order=order,
                 taper=taper,
@@ -452,7 +452,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         c_ell_eval = self._evaluate_spectrum(
             c_ell,
             order=order,
-            k_input=ell,
+            radial_input=ell,
             taper=taper,
             taper_kwargs=taper_kwargs,
             **kwargs,
@@ -490,7 +490,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         pk1_eval = self._evaluate_spectrum(
             pk1,
             order=order,
-            k_input=k_pk,
+            radial_input=k_pk,
             taper=taper,
             taper_kwargs=taper_kwargs,
             **kwargs,
@@ -498,7 +498,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         pk2_eval = self._evaluate_spectrum(
             pk2,
             order=order,
-            k_input=k_pk,
+            radial_input=k_pk,
             taper=taper,
             taper_kwargs=taper_kwargs,
             **kwargs,
@@ -539,7 +539,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
             self._evaluate_spectrum(
                 pk,
                 order=order,
-                k_input=k_pk,
+                radial_input=k_pk,
                 taper=taper,
                 taper_kwargs=taper_kwargs,
                 **kwargs,

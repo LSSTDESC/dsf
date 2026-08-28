@@ -48,10 +48,10 @@ class HankelTransformBase:
 
         return apply_taper_spectrum(k_arr, pk_arr, **kwargs)
 
-    def pk_grid(
+    def power_grid(
         self,
-        k_pk: ArrayLike | None = None,
-        pk: SpectrumInput | None = None,
+        radial_grid: ArrayLike | None = None,
+        power_spectrum: SpectrumInput | None = None,
         order: float | int = 0,
         taper: bool = False,
         taper_kwargs: dict | None = None,
@@ -60,23 +60,26 @@ class HankelTransformBase:
         """Return a power spectrum evaluated on a Hankel grid.
 
         Args:
-            k_pk: Wavenumber grid for tabulated spectra.
-            pk: Power-spectrum values or callable power spectrum.
+            radial_grid: Radial grid for tabulated spectra (k or ell).
+            power_spectrum: Power-spectrum values or callable power spectrum.
             order: Bessel order used to select the backend k grid.
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
-            Power spectrum evaluated on the internal wavenumber grid.
+            Power spectrum evaluated on the internal radial grid.
         """
-        if pk is None:
-            raise ValueError("pk must be supplied.")
+        if power_spectrum is None:
+            raise ValueError("power_spectrum must be supplied.")
+
+        if radial_grid is None:
+            raise ValueError("radial_grid must be supplied.")
 
         return self._evaluate_spectrum(
-            pk,
+            power_spectrum,
             order=order,
-            k_input=k_pk,
+            radial_input=radial_grid,
             taper=taper,
             taper_kwargs=taper_kwargs,
             **kwargs,
@@ -87,7 +90,7 @@ class HankelTransformBase:
         spectrum: SpectrumInput,
         *,
         order: float | int = 0,
-        k_input: ArrayLike | None = None,
+        radial_input: ArrayLike | None = None,
         **kwargs,
     ) -> FloatArray:
         """Evaluate a tabulated or callable spectrum on the backend grid."""

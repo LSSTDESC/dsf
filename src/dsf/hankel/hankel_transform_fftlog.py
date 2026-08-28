@@ -10,6 +10,8 @@ perform the FFTLog-based Hankel transforms directly, without requiring a
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 from scipy.fft import fhtoffset, ifht
 
@@ -33,9 +35,9 @@ class HankelTransformFFTLog(HankelTransformBase):
         self,
         spectrum: SpectrumInput,
         order: float | int = 0,
-        k_input: ArrayLike | None = None,
+        radial_input: ArrayLike | None = None,
         taper: bool = False,
-        taper_kwargs: dict | None = None,
+        taper_kwargs: dict[str, Any] | None = None,
         **kwargs,
     ) -> FloatArray:
         """Evaluate a spectrum on a supplied wavenumber grid.
@@ -43,7 +45,7 @@ class HankelTransformFFTLog(HankelTransformBase):
         Args:
             spectrum: Tabulated spectrum values or callable spectrum.
             order: Bessel order whose grid should be used.
-            k_input: Wavenumber grid for tabulated spectra.
+            radial_input: Radial grid for tabulated spectra (k or ell).
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
             **kwargs: Extra arguments passed to callable spectra.
@@ -51,18 +53,18 @@ class HankelTransformFFTLog(HankelTransformBase):
         Returns:
             Spectrum evaluated on the supplied wavenumber grid.
         """
-        if k_input is None:
-            raise ValueError("k_input must be supplied.")
+        if radial_input is None:
+            raise ValueError("radial_input must be supplied.")
 
         if callable(spectrum):
-            values = np.asarray(spectrum(k=k_input, **kwargs), dtype=float)
+            values = np.asarray(spectrum(radial_input, **kwargs), dtype=float)
         else:
             values = as_1d_float_array(spectrum, "spectrum", min_size=2)
 
         if taper:
             taper_kwargs = {} if taper_kwargs is None else taper_kwargs
             values = self.taper_spectrum(
-                k_input,
+                radial_input,
                 values,
                 **taper_kwargs,
             )
@@ -105,7 +107,7 @@ class HankelTransformFFTLog(HankelTransformBase):
         c_ell_eval = self._evaluate_spectrum(
             c_ell,
             order=order,
-            k_input=ell_arr,
+            radial_input=ell_arr,
             taper=taper,
             taper_kwargs=taper_kwargs,
             **kwargs,
@@ -146,7 +148,7 @@ class HankelTransformFFTLog(HankelTransformBase):
         pk_eval = self._evaluate_spectrum(
             pk,
             order=order,
-            k_input=k_pk_arr,
+            radial_input=k_pk_arr,
             taper=taper,
             taper_kwargs=taper_kwargs,
             **kwargs,

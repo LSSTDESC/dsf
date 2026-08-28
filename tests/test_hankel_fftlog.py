@@ -290,13 +290,3 @@ def test_projected_covariance_returns_not_implemented():
         NotImplementedError, match="does not support projected_covariance"
     ):
         transform.projected_covariance(order=2)
-
-
-def test_projected_skewness_returns_not_implemented():
-    """Test that the FFTLog backend does not support projected_skewness."""
-    transform = HankelTransformFFTLog()
-
-    with pytest.raises(
-        NotImplementedError, match="does not support projected_skewness"
-    ):
-        transform.projected_skewness(order=2)

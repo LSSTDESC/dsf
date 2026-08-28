@@ -51,6 +51,7 @@ def bessel_zeros(order: float | int, n_zeros: int) -> FloatArray:
         return np.asarray(jn_zeros(int(order), n_zeros), dtype=float)
 
     order_float = float(order)
+    validate_nonnegative_scalar(order_float, "order")
     roots = np.empty(n_zeros, dtype=float)
 
     def bessel_order_value(x: float) -> float:

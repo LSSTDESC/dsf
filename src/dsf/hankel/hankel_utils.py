@@ -99,8 +99,8 @@ def compute_correlation_matrix(covariance: FloatArray) -> FloatArray:
         corresponding covariance standard deviations.
     """
     diag = np.diagonal(covariance)
-    if np.any(diag <= 0.0):
-        raise ValueError("covariance diagonal must be strictly positive.")
+    if np.any(diag < 0.0):
+        raise ValueError("Covariance diagonal must be non-negative.")
     denom = np.sqrt(np.outer(diag, diag))
 
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -118,7 +118,10 @@ def compute_diagonal_error(covariance: FloatArray) -> FloatArray:
     Returns:
         Square root of the covariance diagonal.
     """
-    return np.sqrt(np.diagonal(covariance))
+    diag = np.diagonal(covariance)
+    if np.any(diag < 0.0):
+        raise ValueError("Covariance diagonal must be non-negative.")
+    return np.sqrt(diag)
 
 
 def radial_bin_centers(r_bins: FloatArray) -> FloatArray:

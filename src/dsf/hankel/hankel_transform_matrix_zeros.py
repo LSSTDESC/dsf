@@ -397,6 +397,10 @@ class HankelTransformMatrixZeros(HankelTransformBase):
 
         product = np.ones_like(self.k[order])
         for spectrum in spectra:
+            if spectrum.shape != self.k[order].shape:
+                raise ValueError(
+                    "Each spectrum must be evaluated on the internal k grid."
+                )
             product *= spectrum
 
         weighted = product / self.j_next_at_zeros[order] ** 2

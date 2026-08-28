@@ -197,6 +197,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         r_selected = np.unique(r_selected)
 
         # Convention: int k dk / (2 pi) P(k) J_n(k r) with weights 1 / J_{n+1}(zero)^2
+        # Construct Bessel grids over the full k and zero ranges that were just selected
         j_matrix = np.asarray(jv(order, np.outer(r_selected, k)), dtype=float)
         j_next = np.asarray(jv(order + 1, zeros), dtype=float)
         norm = (2.0 * k_max**2 / zeros[-1] ** 2) / (2.0 * np.pi)

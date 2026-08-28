@@ -20,7 +20,11 @@ from scipy.special import jv
 
 from dsf.hankel.hankel_transform_matrix_zeros import HankelTransformMatrixZeros
 from dsf.utils.types import FloatArray
-from dsf.utils.validators import as_2d_float_array, validate_positive_scalar
+from dsf.utils.validators import (
+    as_2d_float_array,
+    is_positive_integer,
+    validate_positive_scalar,
+)
 
 
 class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
@@ -55,12 +59,18 @@ class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
         n_k: int = 1000,
         orders: Iterable[float | int] = (0, 2),
     ) -> None:
+        if not is_positive_integer(n_r):
+            raise ValueError("n_r must be a positive integer.")
+        if not is_positive_integer(n_k):
+            raise ValueError("n_k must be a positive integer.")
+
         self.r_min = float(r_min)
         self.r_max = float(r_max)
         self.k_min = float(k_min)
         self.k_max = float(k_max)
-        self.n_r = int(n_r)
-        self.n_k = int(n_k)
+        self.n_r = n_r
+        self.n_k = n_k
+
         self.orders = tuple(orders)
 
         self._validate_init_inputs()

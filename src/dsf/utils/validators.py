@@ -531,6 +531,12 @@ def is_non_negative_integer(value: float | int) -> bool:
     return value_float >= 0.0 and value_float.is_integer()
 
 
+def is_positive_integer(value: float | int) -> bool:
+    """Return whether a value is a positive integer."""
+    value_float = float(value)
+    return value_float > 0.0 and value_float.is_integer()
+
+
 def occupied_redshift_range_from_nz(
     z: Any,
     nz: Any,

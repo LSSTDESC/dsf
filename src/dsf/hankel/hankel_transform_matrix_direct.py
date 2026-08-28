@@ -90,10 +90,10 @@ class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
             raise ValueError("r_max must be larger than r_min.")
         if self.k_max <= self.k_min:
             raise ValueError("k_max must be larger than k_min.")
-        if self.n_r <= 0:
-            raise ValueError("n_r must be positive.")
-        if self.n_k <= 0:
-            raise ValueError("n_k must be positive.")
+        if self.n_r < 2:
+            raise ValueError("n_r must be at least 2.")
+        if self.n_k < 2:
+            raise ValueError("n_k must be at least 2.")
 
         self._validate_orders()
 

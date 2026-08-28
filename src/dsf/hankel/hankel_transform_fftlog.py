@@ -205,7 +205,9 @@ def hankel_spherical(
 ) -> tuple[FloatArray, FloatArray]:
     """Convert power spectrum to 3D correlation function using FFTLog:
 
-    :math:`\\xi(r) = \\int \\frac{k^2 dk}{2\\pi^2} P(k) j_\\mu(kr)`.
+    :math:`\\xi(r) = \\int \\frac{k^2 dk}{2\\pi^2} P(k) j_\\ell(kr)`.
+
+    Currently, only order 0 is implemented.
 
     Args:
         k: Wavenumber array (must be uniform in logspace).

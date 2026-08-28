@@ -272,6 +272,10 @@ class HankelTransformMatrixZeros(HankelTransformBase):
 
         indices = np.unique(np.append(indices, [n - 1]))
 
+        validate_strictly_increasing(indices, "indices", min_size=2)
+        if np.min(indices) != 0 or np.max(indices) != n - 1:
+            raise ValueError("Pruned array must include the first and last values.")
+
         return r[indices]
 
     def available_orders(self) -> tuple[float | int, ...]:

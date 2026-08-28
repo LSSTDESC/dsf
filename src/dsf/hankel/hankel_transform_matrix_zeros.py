@@ -593,6 +593,8 @@ class HankelTransformMatrixZeros(HankelTransformBase):
             raise ValueError("covariance must be square.")
         if np.any(~np.isfinite(covariance_arr)):
             raise ValueError("covariance must contain only finite values.")
+        if np.any(np.diag(covariance_arr) <= 0.0):
+            raise ValueError("covariance diagonal must contain only positive values.")
 
         return compute_correlation_matrix(covariance_arr)
 
@@ -613,5 +615,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
             raise ValueError("covariance must be square.")
         if np.any(~np.isfinite(covariance_arr)):
             raise ValueError("covariance must contain only finite values.")
+        if np.any(np.diag(covariance_arr) <= 0.0):
+            raise ValueError("covariance diagonal must contain only positive values.")
 
         return compute_diagonal_error(covariance_arr)

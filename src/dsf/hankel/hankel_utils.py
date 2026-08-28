@@ -272,6 +272,8 @@ def apply_taper_spectrum(
         raise ValueError("large_k_upper must be larger than large_k_lower.")
     if low_k_upper <= low_k_lower:
         raise ValueError("low_k_upper must be larger than low_k_lower.")
+    if low_k_upper > large_k_lower:
+        raise ValueError("low_k_upper must be smaller than large_k_lower.")
 
     high = k > large_k_lower
     pk_out[high] *= np.cos(

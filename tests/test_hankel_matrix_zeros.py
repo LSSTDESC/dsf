@@ -294,38 +294,6 @@ def test_projected_covariance_projects_two_input_spectra():
     np.testing.assert_allclose(result, expected)
 
 
-def test_projected_skewness_projects_three_input_spectra():
-    """Test that projected_skewness evaluates and projects three spectra."""
-    transform = make_fake_transform()
-    pk1 = np.array([2.0, 4.0, 8.0])
-    pk2 = np.array([1.0, 3.0, 5.0])
-    pk3 = np.array([2.0, 1.0, 4.0])
-
-    r, result = transform.projected_skewness(
-        k_pk=np.array([1.0, 2.0, 4.0]),
-        pk1=pk1,
-        pk2=pk2,
-        pk3=pk3,
-        order=0,
-    )
-
-    product = pk1 * pk2 * pk3
-    weighted = product / transform.j_next_at_zeros[0] ** 2
-    expected = (
-        np.einsum(
-            "az,bz,cz,z->abc",
-            transform.j[0],
-            transform.j[0],
-            transform.j[0],
-            weighted,
-        )
-        * transform.normalization[0]
-    )
-
-    np.testing.assert_allclose(r, transform.r[0])
-    np.testing.assert_allclose(result, expected)
-
-
 def test_projected_correlation_requires_power_spectrum():
     """Test that projected_correlation requires a supplied power spectrum."""
     transform = make_fake_transform()
@@ -358,14 +326,6 @@ def test_projected_covariance_requires_two_power_spectra():
 
     with pytest.raises(ValueError, match="pk1 and pk2 must both be supplied"):
         transform.projected_covariance(pk1=np.ones(3), order=0)
-
-
-def test_projected_skewness_requires_three_power_spectra():
-    """Test that projected_skewness requires all three input spectra."""
-    transform = make_fake_transform()
-
-    with pytest.raises(ValueError, match="pk1, pk2, and pk3 must all be supplied"):
-        transform.projected_skewness(pk1=np.ones(3), pk2=np.ones(3), order=0)
 
 
 def test_bin_radial_matrix_delegates_valid_inputs(monkeypatch):

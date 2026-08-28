@@ -13,6 +13,7 @@ __all__ = [
     "as_1d_float_array",
     "as_2d_float_array",
     "is_non_negative_integer",
+    "is_positive_integer",
     "normalize_axis",
     "occupied_redshift_range_from_nz",
     "redshift_window_mask",

@@ -507,49 +507,6 @@ class HankelTransformMatrixZeros(HankelTransformBase):
 
         return self._project_spectra_to_radial([pk1_eval, pk2_eval], order)
 
-    def projected_skewness(
-        self,
-        k_pk: ArrayLike | None = None,
-        pk1: SpectrumInput | None = None,
-        pk2: SpectrumInput | None = None,
-        pk3: SpectrumInput | None = None,
-        order: float | int = 0,
-        taper: bool = False,
-        taper_kwargs: dict | None = None,
-        **kwargs,
-    ) -> tuple[FloatArray, FloatArray]:
-        """Compute a projected third-order radial tensor from three spectra.
-
-        Args:
-            k_pk: Wavenumber grid for tabulated spectra.
-            pk1: First spectrum values or callable spectrum.
-            pk2: Second spectrum values or callable spectrum.
-            pk3: Third spectrum values or callable spectrum.
-            order: Bessel order to use.
-            taper: Whether to suppress low-k and high-k edge power.
-            taper_kwargs: Optional settings for the spectrum taper.
-            **kwargs: Extra arguments passed to callable spectra.
-
-        Returns:
-            Radial grid and projected third-order radial tensor.
-        """
-        if pk1 is None or pk2 is None or pk3 is None:
-            raise ValueError("pk1, pk2, and pk3 must all be supplied.")
-
-        spectra = [
-            self._evaluate_spectrum(
-                pk,
-                order=order,
-                radial_input=k_pk,
-                taper=taper,
-                taper_kwargs=taper_kwargs,
-                **kwargs,
-            )
-            for pk in (pk1, pk2, pk3)
-        ]
-
-        return self._project_spectra_to_radial(spectra, order)
-
     def bin_radial_matrix(
         self,
         r: ArrayLike,

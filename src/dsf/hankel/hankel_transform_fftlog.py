@@ -190,7 +190,7 @@ def hankel_projected(
 
     transformed_power = ifht(c_ell_arr * ell_arr, dln=dln_ell, mu=order, offset=offset)
 
-    theta = offset / ell_arr[::-1]
+    theta = np.exp(offset) / ell_arr[::-1]
     prefactor = 1.0 / (2.0 * np.pi * theta)
     xi = np.asarray(prefactor * transformed_power, dtype=float)
 

@@ -78,7 +78,7 @@ class HankelTransformFFTLog(HankelTransformBase):
         self,
         ell: ArrayLike | None = None,
         c_ell: SpectrumInput | None = None,
-        order: float | int = 0,
+        order: float | int = 2,
         taper: bool = False,
         taper_kwargs: dict | None = None,
         use_offset: bool = False,
@@ -89,7 +89,7 @@ class HankelTransformFFTLog(HankelTransformBase):
         Args:
             ell: ell grid for tabulated spectra.
             c_ell: Spectrum values or callable spectrum.
-            order: Bessel order to use.
+            order: Bessel order to use (default is 2 for tangential shear).
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
             use_offset: Apply automatic offset to FFTLog to reduce ringing.
@@ -133,7 +133,7 @@ class HankelTransformFFTLog(HankelTransformBase):
         Args:
             k_pk: Wavenumber grid for tabulated spectra.
             pk: Spectrum values or callable spectrum.
-            order: Bessel order to use.
+            order: Bessel order to use (default is 0 for delta sigma).
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
             use_offset: Apply automatic offset to FFTLog to reduce ringing.
@@ -209,7 +209,7 @@ def hankel_spherical(
     Args:
         k: Wavenumber array (must be uniform in logspace).
         pk: Power spectrum to transform.
-        order: Bessel order to use (default is 0 for density).
+        order: Bessel order to use (default is 0 for delta sigma).
         use_offset: Apply automatic offset to FFTLog to reduce ringing.
 
     Returns:

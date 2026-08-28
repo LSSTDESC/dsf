@@ -428,7 +428,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         self,
         ell: ArrayLike | None = None,
         c_ell: SpectrumInput | None = None,
-        order: float | int = 0,
+        order: float | int = 2,
         taper: bool = False,
         taper_kwargs: dict | None = None,
         **kwargs,
@@ -438,7 +438,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         Args:
             ell: ell grid for tabulated spectra.
             c_ell: Spectrum values or callable spectrum.
-            order: Bessel order to use.
+            order: Bessel order to use (default is 2 for tangential shear).
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
             **kwargs: Extra arguments passed to callable spectra.
@@ -476,7 +476,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
             k_pk: Wavenumber grid for tabulated spectra.
             pk1: First spectrum values or callable spectrum.
             pk2: Second spectrum values or callable spectrum.
-            order: Bessel order to use.
+            order: Bessel order to use (default is 2 for tangential shear).
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
             **kwargs: Extra arguments passed to callable spectra.

@@ -24,6 +24,8 @@ from dsf.hankel.hankel_utils import (
 from dsf.utils.types import ArrayLike, FloatArray, SpectrumInput
 from dsf.utils.validators import (
     as_1d_float_array,
+    is_non_negative_integer,
+    is_positive_integer,
     validate_1d_pair,
     validate_interpolation_within_bounds,
     validate_positive_scalar,
@@ -70,7 +72,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         orders: Iterable[float | int] = (0, 2),
         n_zeros: int = 1000,
         n_zeros_step: int = 1000,
-        prune_r: int | None = None,
+        prune_r: int = 0,
         prune_log_space: bool = True,
         verbose: bool = False,
         max_iterations: int = 100,
@@ -118,12 +120,14 @@ class HankelTransformMatrixZeros(HankelTransformBase):
             raise ValueError("r_max must be larger than r_min.")
         if self.k_max <= self.k_min:
             raise ValueError("k_max must be larger than k_min.")
-        if self.n_zeros <= 0:
-            raise ValueError("n_zeros must be positive.")
-        if self.n_zeros_step <= 0:
-            raise ValueError("n_zeros_step must be positive.")
-        if self.max_iterations <= 0:
-            raise ValueError("max_iterations must be positive.")
+        if not is_positive_integer(self.n_zeros):
+            raise ValueError("n_zeros must be a positive integer.")
+        if not is_positive_integer(self.n_zeros_step):
+            raise ValueError("n_zeros_step must be a positive integer.")
+        if not is_positive_integer(self.max_iterations):
+            raise ValueError("max_iterations must be a positive integer.")
+        if not is_non_negative_integer(self.prune_r):
+            raise ValueError("prune_r must be a non-negative integer.")
 
         self._validate_orders()
 
@@ -245,12 +249,12 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         Returns:
             Original or pruned radial grid.
         """
-        if self.prune_r in (None, 0):
+        if self.prune_r == 0:
             return r
 
-        prune_r = int(self.prune_r)
-        if prune_r <= 0:
-            raise ValueError("prune_r must be positive, None, or 0.")
+        prune_r = self.prune_r
+        if prune_r < 0:
+            raise ValueError("prune_r must be a non-negative integer.")
 
         n = r.size
         if n <= 2:

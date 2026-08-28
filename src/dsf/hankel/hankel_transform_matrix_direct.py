@@ -22,6 +22,7 @@ from dsf.hankel.hankel_transform_matrix_zeros import HankelTransformMatrixZeros
 from dsf.utils.types import FloatArray
 from dsf.utils.validators import (
     as_2d_float_array,
+    is_positive_integer,
     validate_positive_scalar,
 )
 
@@ -92,8 +93,12 @@ class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
             raise ValueError("k_max must be larger than k_min.")
         if self.n_r < 2:
             raise ValueError("n_r must be at least 2.")
+        if not is_positive_integer(self.n_r):
+            raise ValueError("n_r must be a positive integer.")
         if self.n_k < 2:
             raise ValueError("n_k must be at least 2.")
+        if not is_positive_integer(self.n_k):
+            raise ValueError("n_k must be a positive integer.")
 
         self._validate_orders()
 

@@ -428,7 +428,7 @@ def test_prune_radial_grid_returns_original_grid_when_pruning_disabled(monkeypat
     monkeypatch.setattr(
         HankelTransformMatrixZeros, "_build_all_grids", lambda self: None
     )
-    transform = HankelTransformMatrixZeros(prune_r=None)
+    transform = HankelTransformMatrixZeros(prune_r=0)
     r = np.array([1.0, 2.0, 3.0])
 
     result = transform._prune_radial_grid(r)

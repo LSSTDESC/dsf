@@ -185,12 +185,12 @@ def hankel_projected(
     c_ell_arr = as_1d_float_array(c_ell, "c_ell", min_size=2)
     validate_power_spectrum_inputs(ell_arr, c_ell_arr, k_name="ell", pk_name="c_ell")
 
-    theta = 1.0 / ell_arr[::-1]
     dln_ell = float(np.log(ell_arr[1] / ell_arr[0]))
     offset = fhtoffset(dln=dln_ell, mu=order) if use_offset else 0.0
 
     transformed_power = ifht(c_ell_arr * ell_arr, dln=dln_ell, mu=order, offset=offset)
 
+    theta = offset / ell_arr[::-1]
     prefactor = 1.0 / (2.0 * np.pi * theta)
     xi = np.asarray(prefactor * transformed_power, dtype=float)
 
@@ -224,7 +224,6 @@ def hankel_spherical(
     pk_arr = as_1d_float_array(pk, "pk", min_size=2)
     validate_power_spectrum_inputs(k_arr, pk_arr)
 
-    r = 1.0 / k_arr[::-1]
     dln_k = float(np.log(k_arr[1] / k_arr[0]))
     offset = fhtoffset(dln=dln_k, mu=0.5) if use_offset else 0.0
 
@@ -235,6 +234,7 @@ def hankel_spherical(
         offset=offset,
     )
 
+    r = np.exp(offset) / k_arr[::-1]
     prefactor = 1.0 / (2.0 * np.pi * r) ** 1.5
     xi = np.asarray(prefactor * transformed_power, dtype=float)
 

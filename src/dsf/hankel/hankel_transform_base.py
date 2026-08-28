@@ -177,3 +177,9 @@ class HankelTransformBase:
         raise NotImplementedError(
             f"{self.__class__.__name__} does not support diagonal_error()."
         )
+
+    def _validate_orders(self) -> None:
+        """Validate the requested Bessel orders."""
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not support _validate_orders()."
+        )

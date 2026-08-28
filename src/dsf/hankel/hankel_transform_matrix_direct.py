@@ -139,7 +139,8 @@ class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
             order: Bessel order to use.
 
         Returns:
-            Radial grid and projected radial statistic.
+            Radial grid and projected radial statistic, of shape (n_r,) for
+            one spectrum, or (n_r, n_r) for two spectra.
 
         Raises:
             ValueError: If the number of spectra is not 1 or 2.

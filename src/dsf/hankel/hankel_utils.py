@@ -173,6 +173,8 @@ def _outer_product(values: FloatArray, ndim: int) -> FloatArray:
     Returns:
         Repeated outer product of ``values`` with one factor per radial axis.
     """
+    is_positive_integer(ndim)
+
     result = values
 
     for _ in range(ndim - 1):

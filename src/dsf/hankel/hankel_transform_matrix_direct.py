@@ -106,6 +106,7 @@ class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
 
         k = np.geomspace(self.k_min, self.k_max, self.n_k)
         dlnk = np.gradient(np.log(k))
+        # Projected convention: int k dk / (2 pi) P(k) J_n(k r).
         weight = k**2 * dlnk / (2.0 * np.pi)
 
         r = np.geomspace(self.r_min, self.r_max, self.n_r)

@@ -1,13 +1,13 @@
-"""Numerical scripts for projected radial statistics.
+"""Numerical utilities for projected radial statistics.
 
-This module provides small utilities used when converting Fourier-space
-power spectra into radial-space projected statistics. The scripts cover
+This module provides low-level utilities used when converting Fourier-space
+power spectra into radial-space projected statistics. The utilities cover
 Bessel-function roots, smooth spectrum tapering, radial bin centers,
 radial integration weights, covariance-to-correlation conversion, and
 bin-averaging of radial matrices or tensors.
 
-The functions assume their inputs have already been validated by the public
-calling layer.
+The functions generally assume their inputs have already been validated by
+the public calling layer.
 """
 
 from __future__ import annotations

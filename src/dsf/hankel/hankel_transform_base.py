@@ -149,19 +149,6 @@ class HankelTransformBase:
             f"{self.__class__.__name__} does not support bin_radial_matrix()."
         )
 
-    def projected_skewness(
-        self,
-        k_pk: ArrayLike | None = None,
-        pk1: SpectrumInput | None = None,
-        pk2: SpectrumInput | None = None,
-        pk3: SpectrumInput | None = None,
-        **kwargs,
-    ) -> tuple[FloatArray, FloatArray]:
-        """Compute a projected third-order radial tensor from three spectra."""
-        raise NotImplementedError(
-            f"{self.__class__.__name__} does not support projected_skewness()."
-        )
-
     def correlation_matrix(self, covariance: FloatArray) -> FloatArray:
         """Return the correlation matrix associated with a covariance matrix.
 

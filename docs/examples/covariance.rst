@@ -1,4 +1,4 @@
-DeltaSigma covariance
+Delta Sigma covariance
 =====================
 
 This example shows how to compute a minimal DSF covariance matrix for the

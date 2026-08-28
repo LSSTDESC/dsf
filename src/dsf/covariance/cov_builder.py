@@ -1,6 +1,6 @@
-"""DeltaSigma covariance builder.
+"""Delta Sigma covariance builder.
 
-This module assembles covariance matrices for projected DeltaSigma forecast
+This module assembles covariance matrices for projected Delta Sigma forecast
 data vectors. Binny provides the tomographic redshift distributions, bin
 metadata, densities, and selected lens-source pairs. This builder combines
 those tomography products with covariance ingredients such as matter power
@@ -8,7 +8,7 @@ spectra, survey volume, shape noise, shot noise, galaxy bias, and critical
 surface density factors.
 
 The main class is designed for forecasts where the observable may be the
-galaxy-matter DeltaSigma signal alone, the projected clustering-like signal
+galaxy-matter Delta Sigma signal alone, the projected clustering-like signal
 alone, or a joint data vector containing both. The block-diagonal scripts give
 simple first-pass covariances in which different tomographic lens-source pairs
 are treated as independent.
@@ -54,7 +54,7 @@ __all__ = [
 
 
 class DeltaSigmaCovarianceBuilder:
-    """Build projected DeltaSigma covariance matrices from tomography outputs.
+    """Build projected Delta Sigma covariance matrices from tomography outputs.
 
     The builder collects the survey, cosmology, tomography, nuisance, and
     projection inputs needed to evaluate covariance blocks for tomographic
@@ -62,7 +62,7 @@ class DeltaSigmaCovarianceBuilder:
 
     It supports three useful covariance views:
 
-    - ``gm x gm`` for the galaxy-matter DeltaSigma signal.
+    - ``gm x gm`` for the galaxy-matter Delta Sigma signal.
     - ``gg x gg`` for a projected clustering-like contribution.
     - a joint ``gm + gg`` covariance including the cross block.
 
@@ -213,7 +213,9 @@ class DeltaSigmaCovarianceBuilder:
 
         self.nonlinear = bool(nonlinear)
         self.pi = None if pi is None else np.asarray(pi, dtype=float)
-        self.gm_window = None if gm_window is None else np.asarray(gm_window, dtype=float)
+        self.gm_window = (
+            None if gm_window is None else np.asarray(gm_window, dtype=float)
+        )
 
         self.taper = bool(taper)
         self.taper_kwargs = taper_kwargs
@@ -229,14 +231,16 @@ class DeltaSigmaCovarianceBuilder:
         self._lens_ingredient_cache: dict[int, dict[str, Any]] = {}
         self._source_ingredient_cache: dict[int, dict[str, Any]] = {}
 
-        self.hankel = hankel if hankel is not None else self.hankel_transform(hankel_kwargs)
+        self.hankel = (
+            hankel if hankel is not None else self.hankel_transform(hankel_kwargs)
+        )
 
     def covariance_for_pair(
         self,
         lens_bin_index: int,
         source_bin_index: int,
     ) -> dict[str, Any]:
-        """Return all DeltaSigma covariance blocks for one bin pair.
+        """Return all Delta Sigma covariance blocks for one bin pair.
 
         Args:
             lens_bin_index: Index of the lens tomographic bin.
@@ -291,7 +295,7 @@ class DeltaSigmaCovarianceBuilder:
         source_bin_index: int,
         ingredients: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Return the ``gm x gm`` DeltaSigma covariance for one bin pair.
+        """Return the ``gm x gm`` Delta Sigma covariance for one bin pair.
 
         Args:
             lens_bin_index: Index of the lens tomographic bin.
@@ -485,7 +489,9 @@ class DeltaSigmaCovarianceBuilder:
         """
         pairs = self.selected_pairs(bin_pairs)
 
-        return {pair: self.cross_covariance_for_pair(pair[0], pair[1]) for pair in pairs}
+        return {
+            pair: self.cross_covariance_for_pair(pair[0], pair[1]) for pair in pairs
+        }
 
     def block_diagonal_from_outputs(
         self,
@@ -536,7 +542,7 @@ class DeltaSigmaCovarianceBuilder:
         self,
         bin_pairs: BinPairs | None = None,
     ) -> tuple[list[tuple[int, int]], np.ndarray]:
-        """Return a block-diagonal covariance for the DeltaSigma signal.
+        """Return a block-diagonal covariance for the Delta Sigma signal.
 
         Args:
             bin_pairs: Optional set of ``(lens_bin, source_bin)`` pairs. If
@@ -614,7 +620,9 @@ class DeltaSigmaCovarianceBuilder:
             n_lens_arcmin2 = None
             n_lens_3d = float(lens_density["n_gal_comoving_h3_mpc3"])
         else:
-            n_lens_arcmin2 = float(self.lens_population_stats["density_per_bin"][lens_bin_index])
+            n_lens_arcmin2 = float(
+                self.lens_population_stats["density_per_bin"][lens_bin_index]
+            )
             n_lens_3d = lens_number_density_3d_from_angular_density(
                 self.cosmo,
                 n_lens_arcmin2=n_lens_arcmin2,

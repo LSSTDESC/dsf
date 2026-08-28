@@ -133,7 +133,7 @@ class HankelTransformFFTLog(HankelTransformBase):
         Args:
             k_pk: Wavenumber grid for tabulated spectra (units of inverse distance).
             pk: Spectrum values or callable spectrum.
-            order: Bessel order to use (default is 0 for delta sigma).
+            order: Bessel order to use (default is 0 for Delta Sigma).
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
             use_offset: Apply automatic offset to FFTLog to reduce ringing.
@@ -212,7 +212,7 @@ def hankel_spherical(
     Args:
         k: Wavenumber array (must be uniform in logspace).
         pk: Power spectrum to transform.
-        order: Bessel order to use (default is 0 for delta sigma).
+        order: Bessel order to use (default is 0 for Delta Sigma).
         use_offset: Apply automatic offset to FFTLog to reduce ringing.
 
     Returns:

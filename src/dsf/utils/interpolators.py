@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from .types import FloatArray, FloatLike
+from .types import FloatArray
 from .validators import (
     as_1d_float_array,
     validate_interpolation_within_bounds,

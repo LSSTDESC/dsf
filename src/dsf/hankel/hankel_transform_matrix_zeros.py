@@ -41,6 +41,9 @@ class HankelTransformMatrixZeros(HankelTransformBase):
     covariance matrix, and three spectra give a projected third-order radial
     tensor.
 
+    The input r and k ranges must have reciprocal units such that
+    :math:`r \\times k` is dimensionless.
+
     Args:
         r_min: Minimum radial scale to cover.
         r_max: Maximum radial scale to cover.

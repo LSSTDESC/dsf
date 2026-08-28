@@ -99,6 +99,8 @@ def compute_correlation_matrix(covariance: FloatArray) -> FloatArray:
         corresponding covariance standard deviations.
     """
     diag = np.diagonal(covariance)
+    if np.any(diag <= 0.0):
+        raise ValueError("covariance diagonal must be strictly positive.")
     denom = np.sqrt(np.outer(diag, diag))
 
     with np.errstate(divide="ignore", invalid="ignore"):

@@ -444,7 +444,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
-            Radial grid and projected radial statistic (units of radians).
+            Radial grid (units of radians) and projected radial statistic.
         """
         if c_ell is None:
             raise ValueError("c_ell must be supplied.")

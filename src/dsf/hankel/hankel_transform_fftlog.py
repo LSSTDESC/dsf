@@ -96,7 +96,7 @@ class HankelTransformFFTLog(HankelTransformBase):
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
-            Radial grid and projected radial statistic (units of radians).
+            Radial grid (units of radians) and projected radial statistic.
         """
         if ell is None:
             raise ValueError("ell must be supplied.")
@@ -173,13 +173,13 @@ def hankel_projected(
     :math:`\\gamma_t(\\theta) = \\int \\frac{\\ell d\\ell}{2\\pi} C(\\ell )J_\\mu(\\ell \\theta)`.
 
     Args:
-        ell: ell array (must be uniform in logspace).
+        ell: ell array (dimensionless; must be uniform in logspace).
         c_ell: Power spectrum to transform.
         order: Bessel order to use (default is 2 for tangential shear).
         use_offset: Apply automatic offset to FFTLog to reduce ringing.
 
     Returns:
-        Radial grid and projected radial statistic.
+        Radial grid (units of radians) and projected radial statistic.
     """
     ell_arr = validate_hankel_1d_grid_spacing(ell, "ell")
     c_ell_arr = as_1d_float_array(c_ell, "c_ell", min_size=2)

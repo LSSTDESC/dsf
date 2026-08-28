@@ -19,7 +19,7 @@ from scipy.special import jv
 
 from dsf.hankel.hankel_transform_matrix_zeros import HankelTransformMatrixZeros
 from dsf.utils.types import FloatArray
-from dsf.utils.validators import validate_positive_scalar
+from dsf.utils.validators import as_2d_float_array, validate_positive_scalar
 
 
 class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
@@ -103,6 +103,9 @@ class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
         r = np.geomspace(self.r_min, self.r_max, self.n_r)
         j = jv(order, np.outer(r, k))
         j_t = j.T
+
+        j = as_2d_float_array(j, "j")
+        j_t = as_2d_float_array(j_t, "j_t")
 
         self.k[order] = k
         self.r[order] = r

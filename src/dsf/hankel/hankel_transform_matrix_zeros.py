@@ -21,6 +21,7 @@ from dsf.hankel.hankel_utils import (
     compute_correlation_matrix,
     compute_diagonal_error,
 )
+from dsf.utils.interpolators import interpolate_linear, interpolate_loglog
 from dsf.utils.types import ArrayLike, FloatArray, SpectrumInput
 from dsf.utils.validators import (
     as_1d_float_array,
@@ -297,6 +298,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         order: float | int,
         taper: bool = False,
         taper_kwargs: dict | None = None,
+        grid_spacing: str = "linear",
     ) -> FloatArray:
         """Evaluate a tabulated spectrum on the internal Hankel grid.
 
@@ -306,50 +308,60 @@ class HankelTransformMatrixZeros(HankelTransformBase):
             order: Bessel order whose grid should be used.
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
+            grid_spacing: Interpolate in "linear" or "log" space.
 
         Returns:
             Spectrum evaluated on the internal Hankel wavenumber grid.
         """
-        k_arr = as_1d_float_array(radial_input, "radial_input")
+        if grid_spacing == "linear":
+            interp_func = interpolate_linear
+        elif grid_spacing == "log":
+            interp_func = interpolate_loglog
+        else:
+            raise ValueError("grid_spacing must be 'linear' or 'log'.")
+
+        radial_arr = as_1d_float_array(radial_input, "radial_input")
         spectrum_arr = as_1d_float_array(spectrum, "spectrum")
 
         validate_1d_pair(
-            k_arr,
+            radial_arr,
             spectrum_arr,
             x_name="radial_input",
             y_name="spectrum",
         )
         validate_power_spectrum_inputs(
-            k_arr,
+            radial_arr,
             spectrum_arr,
             k_name="radial_input",
             pk_name="spectrum",
         )
 
         try:
-            validate_interpolation_within_bounds(self.k[order], k_arr, "matrix k grid")
+            validate_interpolation_within_bounds(
+                self.k[order], radial_arr, "matrix k grid"
+            )
         except ValueError as e:
             raise ValueError(
                 "The tabulated radial values of the spectrum do not cover the full matrix grid. "
                 f"Need [{self.k[order][0]}, {self.k[order][-1]}], "
-                f"got [{k_arr[0]}, {k_arr[-1]}]."
+                f"got [{radial_arr[0]}, {radial_arr[-1]}]."
             ) from e
 
         if taper:
             taper_kwargs = {} if taper_kwargs is None else taper_kwargs
             spectrum_arr = self.taper_spectrum(
-                k_arr,
+                radial_arr,
                 spectrum_arr,
                 **taper_kwargs,
             )
 
-        return np.asarray(
-            np.interp(
-                self.k[order],
-                k_arr,
-                spectrum_arr,
-            ),
-            dtype=float,
+        return interp_func(
+            self.k[order],
+            radial_arr,
+            spectrum_arr,
+            x_name="matrix k grid",
+            xp_name="radial_input",
+            fp_name="spectrum",
         )
 
     def _evaluate_spectrum(

@@ -20,6 +20,7 @@ from dsf.utils.types import FloatArray
 from dsf.utils.validators import (
     as_1d_float_array,
     is_non_negative_integer,
+    is_positive_integer,
     validate_nonnegative_scalar,
 )
 
@@ -44,9 +45,8 @@ def bessel_zeros(order: float | int, n_zeros: int) -> FloatArray:
     Returns:
         Positive roots of :math:`J_\\nu(x)` for the requested order.
     """
-    if n_zeros <= 0:
-        raise ValueError("n_zeros must be positive.")
-
+    if not is_positive_integer(n_zeros):
+        raise ValueError("n_zeros must be a positive integer.")
     if is_non_negative_integer(order):
         return np.asarray(jn_zeros(int(order), n_zeros), dtype=float)
 

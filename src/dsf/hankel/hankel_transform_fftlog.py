@@ -92,6 +92,7 @@ class HankelTransformFFTLog(HankelTransformBase):
             order: Bessel order to use.
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
+            use_offset: Apply automatic offset to FFTLog to reduce ringing.
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
@@ -135,6 +136,7 @@ class HankelTransformFFTLog(HankelTransformBase):
             order: Bessel order to use.
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
+            use_offset: Apply automatic offset to FFTLog to reduce ringing.
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
@@ -173,8 +175,7 @@ def hankel_projected(
         ell: ell array (must be uniform in logspace).
         c_ell: Power spectrum to transform.
         order: Bessel order to use (default is 2 for tangential shear).
-        use_offset: Optional flag to apply an offset to the logarithmic spacing
-            of the output. Can reduce numerical ringing.
+        use_offset: Apply automatic offset to FFTLog to reduce ringing.
 
     Returns:
         Radial grid and projected radial statistic.
@@ -209,8 +210,7 @@ def hankel_spherical(
         k: Wavenumber array (must be uniform in logspace).
         pk: Power spectrum to transform.
         order: Bessel order to use (default is 0 for density).
-        use_offset: Optional flag to apply an offset to the logarithmic spacing
-            of the output. Can reduce numerical ringing.
+        use_offset: Apply automatic offset to FFTLog to reduce ringing.
 
     Returns:
         Radial grid and 3D correlation function.

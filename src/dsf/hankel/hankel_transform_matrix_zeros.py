@@ -24,7 +24,6 @@ from dsf.hankel.hankel_utils import (
 from dsf.utils.types import ArrayLike, FloatArray, SpectrumInput
 from dsf.utils.validators import (
     as_1d_float_array,
-    is_positive_integer,
     validate_1d_pair,
     validate_interpolation_within_bounds,
     validate_positive_scalar,
@@ -77,13 +76,6 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         max_iterations: int = 100,
     ) -> None:
         super().__init__()
-
-        if not is_positive_integer(n_zeros):
-            raise ValueError("n_zeros must be a positive integer.")
-        if not is_positive_integer(n_zeros_step):
-            raise ValueError("n_zeros_step must be a positive integer.")
-        if not is_positive_integer(max_iterations):
-            raise ValueError("max_iterations must be a positive integer.")
 
         self.r_min = float(r_min)
         self.r_max = float(r_max)

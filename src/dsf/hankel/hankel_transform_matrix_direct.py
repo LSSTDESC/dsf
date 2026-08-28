@@ -18,7 +18,9 @@ from collections.abc import Iterable
 import numpy as np
 from scipy.special import jv
 
-from dsf.hankel.hankel_transform_matrix_zeros import HankelTransformMatrixZeros
+from dsf.hankel.hankel_transform_matrix_zeros import (
+    HankelTransformMatrixZeros,
+)
 from dsf.utils.types import FloatArray
 from dsf.utils.validators import (
     as_2d_float_array,
@@ -166,6 +168,8 @@ class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
         elif ndim == 2:
             transformed = (j * weight * product) @ j_t
         else:
-            raise ValueError(f"Only 1 or 2 spectra are supported. Got {ndim}.")
+            raise ValueError(
+                f"Only 1 or 2 spectra are supported. Got {ndim}."
+            )
 
         return self.r[order], np.asarray(transformed, dtype=float)

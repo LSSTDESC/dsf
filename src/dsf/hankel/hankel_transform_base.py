@@ -19,7 +19,10 @@ from __future__ import annotations
 
 from dsf.hankel.hankel_utils import apply_taper_spectrum
 from dsf.utils.types import ArrayLike, FloatArray, SpectrumInput
-from dsf.utils.validators import as_1d_float_array, validate_power_spectrum_inputs
+from dsf.utils.validators import (
+    as_1d_float_array,
+    validate_power_spectrum_inputs,
+)
 
 
 class HankelTransformBase:

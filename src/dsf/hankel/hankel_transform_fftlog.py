@@ -70,7 +70,9 @@ class HankelTransformFFTLog(HankelTransformBase):
             )
 
         if np.any(~np.isfinite(values)):
-            raise ValueError("Evaluated spectrum must contain only finite values.")
+            raise ValueError(
+                "Evaluated spectrum must contain only finite values."
+            )
 
         return values
 
@@ -183,12 +185,16 @@ def hankel_projected(
     """
     ell_arr = validate_hankel_1d_grid_spacing(ell, "ell")
     c_ell_arr = as_1d_float_array(c_ell, "c_ell", min_size=2)
-    validate_power_spectrum_inputs(ell_arr, c_ell_arr, k_name="ell", pk_name="c_ell")
+    validate_power_spectrum_inputs(
+        ell_arr, c_ell_arr, k_name="ell", pk_name="c_ell"
+    )
 
     dln_ell = float(np.log(ell_arr[1] / ell_arr[0]))
     offset = fhtoffset(dln=dln_ell, mu=order) if use_offset else 0.0
 
-    transformed_power = ifht(c_ell_arr * ell_arr, dln=dln_ell, mu=order, offset=offset)
+    transformed_power = ifht(
+        c_ell_arr * ell_arr, dln=dln_ell, mu=order, offset=offset
+    )
 
     theta = np.exp(offset) / ell_arr[::-1]
     prefactor = 1.0 / (2.0 * np.pi * theta)

@@ -79,7 +79,8 @@ def bessel_zeros(order: float | int, n_zeros: int) -> FloatArray:
             f_upper = bessel_order_value(upper)
         else:
             raise RuntimeError(
-                f"Could not bracket Bessel zero {zero_number} for order={order_float}."
+                f"Could not bracket Bessel zero {zero_number} "
+                f"for order={order_float}."
             )
 
         roots[i] = brentq(bessel_order_value, lower, upper)
@@ -250,7 +251,7 @@ def apply_taper_spectrum(
         Power spectrum with smooth low-k and high-k suppression applied.
 
     Raises:
-        ValueError: If the upper limit of a taper is not larger than the lower limit.
+        ValueError: If the upper limit is smaller than the lower limit.
     """
     k = as_1d_float_array(k, "k")
     pk_out = np.copy(as_1d_float_array(pk, "pk"))
@@ -267,7 +268,10 @@ def apply_taper_spectrum(
 
     high = k > large_k_lower
     pk_out[high] *= np.cos(
-        (k[high] - large_k_lower) / (large_k_upper - large_k_lower) * np.pi / 2.0
+        (k[high] - large_k_lower)
+        / (large_k_upper - large_k_lower)
+        * np.pi
+        / 2.0
     )
     pk_out[k > large_k_upper] = 0.0
 

@@ -37,7 +37,9 @@ from dsf.covariance.ingredients.geometry import (
     survey_volume_from_edges,
 )
 from dsf.covariance.ingredients.noise import projected_shape_noise, shot_noise
-from dsf.covariance.ingredients.power_spectrum import lens_averaged_matter_power
+from dsf.covariance.ingredients.power_spectrum import (
+    lens_averaged_matter_power,
+)
 from dsf.covariance.ingredients.sigma_crit import effective_squared_sigma_crit
 from dsf.hankel.hankel import HankelTransform
 from dsf.utils.converters import (
@@ -136,7 +138,8 @@ class DeltaSigmaCovarianceBuilder:
         self.lens_result = lens_result
         self.source_result = source_result
         self.bin_pairs: list[tuple[int, int]] = [
-            (int(lens_bin), int(source_bin)) for lens_bin, source_bin in bin_pairs
+            (int(lens_bin), int(source_bin))
+            for lens_bin, source_bin in bin_pairs
         ]
 
         self.lens_meta = self.lens_result.tomo_meta
@@ -153,14 +156,18 @@ class DeltaSigmaCovarianceBuilder:
 
         self.lens_centers = np.asarray(
             [
-                self.lens_result.tomo_meta["bins"]["truez_summary"][i]["z_mean"]
+                self.lens_result.tomo_meta["bins"]["truez_summary"][i][
+                    "z_mean"
+                ]
                 for i in self.lens_result.tomo_meta["bins"]["indices"]
             ],
             dtype=float,
         )
         self.source_centers = np.asarray(
             [
-                self.source_result.tomo_meta["bins"]["truez_summary"][i]["z_mean"]
+                self.source_result.tomo_meta["bins"]["truez_summary"][i][
+                    "z_mean"
+                ]
                 for i in self.source_result.tomo_meta["bins"]["indices"]
             ],
             dtype=float,
@@ -232,7 +239,9 @@ class DeltaSigmaCovarianceBuilder:
         self._source_ingredient_cache: dict[int, dict[str, Any]] = {}
 
         self.hankel = (
-            hankel if hankel is not None else self.hankel_transform(hankel_kwargs)
+            hankel
+            if hankel is not None
+            else self.hankel_transform(hankel_kwargs)
         )
 
     def covariance_for_pair(
@@ -306,7 +315,9 @@ class DeltaSigmaCovarianceBuilder:
             Dictionary containing the ``gm x gm`` covariance block and metadata.
         """
         if ingredients is None:
-            ingredients = self.pair_ingredients(lens_bin_index, source_bin_index)
+            ingredients = self.pair_ingredients(
+                lens_bin_index, source_bin_index
+            )
 
         r_gm, cov_gm_gm = delta_sigma_gm_covariance(
             self.hankel,
@@ -315,8 +326,12 @@ class DeltaSigmaCovarianceBuilder:
             galaxy_bias=ingredients["galaxy_bias"],
             omega_m=self.omega_m,
             rho_crit=self.rho_crit,
-            delta_pi_gm_squared_window=ingredients["delta_pi_gm_squared_window"],
-            sigma_crit_squared_average=ingredients["sigma_crit_squared_average"],
+            delta_pi_gm_squared_window=ingredients[
+                "delta_pi_gm_squared_window"
+            ],
+            sigma_crit_squared_average=ingredients[
+                "sigma_crit_squared_average"
+            ],
             shape_noise=ingredients["shape_noise"],
             shot_noise=ingredients["shot_noise"],
             volume=ingredients["volume"],
@@ -352,7 +367,9 @@ class DeltaSigmaCovarianceBuilder:
             Dictionary containing the ``gg x gg`` covariance block and metadata.
         """
         if ingredients is None:
-            ingredients = self.pair_ingredients(lens_bin_index, source_bin_index)
+            ingredients = self.pair_ingredients(
+                lens_bin_index, source_bin_index
+            )
 
         r_gg, cov_gg_gg = delta_sigma_gg_covariance(
             self.hankel,
@@ -395,7 +412,9 @@ class DeltaSigmaCovarianceBuilder:
             Dictionary containing the cross-covariance block and metadata.
         """
         if ingredients is None:
-            ingredients = self.pair_ingredients(lens_bin_index, source_bin_index)
+            ingredients = self.pair_ingredients(
+                lens_bin_index, source_bin_index
+            )
 
         r_cross, cov_gm_gg = delta_sigma_gm_gg_cross_covariance(
             self.hankel,
@@ -438,7 +457,9 @@ class DeltaSigmaCovarianceBuilder:
         """
         pairs = self.selected_pairs(bin_pairs)
 
-        return {pair: self.covariance_for_pair(pair[0], pair[1]) for pair in pairs}
+        return {
+            pair: self.covariance_for_pair(pair[0], pair[1]) for pair in pairs
+        }
 
     def gm_covariance_for_pairs(
         self,
@@ -455,7 +476,10 @@ class DeltaSigmaCovarianceBuilder:
         """
         pairs = self.selected_pairs(bin_pairs)
 
-        return {pair: self.gm_covariance_for_pair(pair[0], pair[1]) for pair in pairs}
+        return {
+            pair: self.gm_covariance_for_pair(pair[0], pair[1])
+            for pair in pairs
+        }
 
     def gg_covariance_for_pairs(
         self,
@@ -472,7 +496,10 @@ class DeltaSigmaCovarianceBuilder:
         """
         pairs = self.selected_pairs(bin_pairs)
 
-        return {pair: self.gg_covariance_for_pair(pair[0], pair[1]) for pair in pairs}
+        return {
+            pair: self.gg_covariance_for_pair(pair[0], pair[1])
+            for pair in pairs
+        }
 
     def cross_covariance_for_pairs(
         self,
@@ -490,7 +517,8 @@ class DeltaSigmaCovarianceBuilder:
         pairs = self.selected_pairs(bin_pairs)
 
         return {
-            pair: self.cross_covariance_for_pair(pair[0], pair[1]) for pair in pairs
+            pair: self.cross_covariance_for_pair(pair[0], pair[1])
+            for pair in pairs
         }
 
     def block_diagonal_from_outputs(
@@ -508,7 +536,10 @@ class DeltaSigmaCovarianceBuilder:
             Pair list and block-diagonal covariance matrix.
         """
         pairs = list(outputs)
-        blocks = [np.asarray(outputs[pair][output_key], dtype=float) for pair in pairs]
+        blocks = [
+            np.asarray(outputs[pair][output_key], dtype=float)
+            for pair in pairs
+        ]
 
         size = int(sum(block.shape[0] for block in blocks))
         covariance = np.zeros((size, size), dtype=float)
@@ -607,7 +638,9 @@ class DeltaSigmaCovarianceBuilder:
         z_max = float(self.lens_edges[lens_bin_index + 1])
         z_center = float(self.lens_centers[lens_bin_index])
 
-        nz_lens = np.asarray(self.lens_result.bins[lens_bin_index], dtype=float)
+        nz_lens = np.asarray(
+            self.lens_result.bins[lens_bin_index], dtype=float
+        )
 
         galaxy_bias = self.bin_value(self.galaxy_bias, lens_bin_index)
 
@@ -697,7 +730,9 @@ class DeltaSigmaCovarianceBuilder:
         if source_bin_index in self._source_ingredient_cache:
             return self._source_ingredient_cache[source_bin_index]
 
-        nz_source = np.asarray(self.source_result.bins[source_bin_index], dtype=float)
+        nz_source = np.asarray(
+            self.source_result.bins[source_bin_index], dtype=float
+        )
         sigma_e = self.bin_value(self.sigma_e, source_bin_index)
         n_eff_source_arcmin2 = float(
             self.source_population_stats["density_per_bin"][source_bin_index]
@@ -833,7 +868,10 @@ class DeltaSigmaCovarianceBuilder:
         if bin_pairs is None:
             return list(self.bin_pairs)
 
-        return [(int(lens_bin), int(source_bin)) for lens_bin, source_bin in bin_pairs]
+        return [
+            (int(lens_bin), int(source_bin))
+            for lens_bin, source_bin in bin_pairs
+        ]
 
     @staticmethod
     def bin_value(value: ScalarOrPerBin, bin_index: int) -> float:

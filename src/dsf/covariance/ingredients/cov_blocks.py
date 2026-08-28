@@ -149,7 +149,9 @@ def delta_sigma_gm_covariance(
         delta_pi_gm_squared_window,
         "delta_pi_gm_squared_window",
     )
-    validate_positive_scalar(sigma_crit_squared_average, "sigma_crit_squared_average")
+    validate_positive_scalar(
+        sigma_crit_squared_average, "sigma_crit_squared_average"
+    )
     validate_positive_scalar(shape_noise, "shape_noise")
     validate_positive_scalar(shot_noise, "shot_noise")
     validate_positive_scalar(volume, "volume")
@@ -189,7 +191,9 @@ def delta_sigma_gm_covariance(
 
     cov = (cov_ggkk + cov_gkgk * delta_pi_gm_squared_window) / volume
 
-    return _covariance_on_requested_radius_grid(hankel, r_ggkk, cov, rp_bin_edges)
+    return _covariance_on_requested_radius_grid(
+        hankel, r_ggkk, cov, rp_bin_edges
+    )
 
 
 def delta_sigma_gg_covariance(

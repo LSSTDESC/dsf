@@ -75,7 +75,9 @@ class HaloProfileGeneric(ccl.halos.profiles.profile_base.HaloProfile):
         _ = cosmo  # Required by the CCL HaloProfile API, unused here.
 
         if np.size(M) != 1:
-            raise ValueError("M must be a single value for HaloProfileGeneric.")
+            raise ValueError(
+                "M must be a single value for HaloProfileGeneric."
+            )
 
         k_arr = np.atleast_1d(np.asarray(k, dtype=float))
         values = np.asarray(self.pk2d(k_arr, a), dtype=float)

@@ -168,7 +168,7 @@ def hankel_projected(
     order: float | int = 2,
     use_offset: bool = False,
 ) -> tuple[FloatArray, FloatArray]:
-    """Convert projected GGL power spectrum to 2D correlation function using FFTLog:
+    """Convert an angular power spectrum to a projected correlation using FFTLog.
 
     :math:`\\gamma_t(\\theta) = \\int \\frac{\\ell d\\ell}{2\\pi} C(\\ell )J_\\mu(\\ell \\theta)`.
 

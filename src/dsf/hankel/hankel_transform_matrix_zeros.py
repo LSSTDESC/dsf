@@ -330,7 +330,9 @@ class HankelTransformMatrixZeros(HankelTransformBase):
             validate_interpolation_within_bounds(self.k[order], k_arr, "matrix k grid")
         except ValueError as e:
             raise ValueError(
-                "The tabulated radial values of the spectrum do not cover the full matrix grid."
+                "The tabulated radial values of the spectrum do not cover the full matrix grid. "
+                f"Need [{self.k[order][0]}, {self.k[order][-1]}], "
+                f"got [{k_arr[0]}, {k_arr[-1]}]."
             ) from e
 
         if taper:

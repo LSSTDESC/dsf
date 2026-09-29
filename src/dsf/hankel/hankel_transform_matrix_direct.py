@@ -114,7 +114,12 @@ class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
         validate_nonnegative_scalar(order, "order")
 
         k = np.geomspace(self.k_min, self.k_max, self.n_k)
-        dlnk = np.gradient(np.log(k))
+        log_k = np.log(k)
+        log_intervals = np.diff(log_k)
+        dlnk = np.empty_like(log_k)
+        dlnk[0] = 0.5 * log_intervals[0]
+        dlnk[-1] = 0.5 * log_intervals[-1]
+        dlnk[1:-1] = 0.5 * (log_intervals[:-1] + log_intervals[1:])
         # Projected convention: int k dk / (2 pi) P(k) J_n(k r).
         weight = k**2 * dlnk / (2.0 * np.pi)
 

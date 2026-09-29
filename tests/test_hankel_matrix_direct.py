@@ -24,6 +24,26 @@ def test_matrix_direct_builds_expected_grid_shapes():
     assert transform.weights[0].shape == (5,)
 
 
+def test_matrix_direct_uses_log_space_trapezoidal_weights():
+    """Test that integration weights give half weight to the endpoints."""
+    transform = HankelTransformMatrixDirect(
+        r_min=1.0,
+        r_max=4.0,
+        k_min=1.0,
+        k_max=16.0,
+        n_r=2,
+        n_k=5,
+        orders=(0,),
+    )
+
+    k = transform.k[0]
+    log_spacing = np.log(k[1] / k[0])
+    expected_dlnk = log_spacing * np.array([0.5, 1.0, 1.0, 1.0, 0.5])
+    expected = k**2 * expected_dlnk / (2.0 * np.pi)
+
+    np.testing.assert_allclose(transform.weights[0], expected)
+
+
 def test_matrix_direct_projected_covariance_returns_square_matrix():
     """Test that matrix-direct projects two spectra into a square covariance matrix."""
     transform = HankelTransformMatrixDirect(

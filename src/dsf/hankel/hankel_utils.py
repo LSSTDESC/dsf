@@ -196,6 +196,10 @@ def compute_bin_radial_matrix(
     the same grid ``r``. The returned quantity is the annular-bin average of
     the input matrix or tensor.
 
+    Note that the radial points are sorted into bins including the left edge
+    and excluding the right edge, i.e. a radial point exactly at the
+    right edge of the last bin will not be included in the binned result.
+
     Args:
         r: Radial grid associated with each axis of ``matrix``.
         matrix: Radial matrix or tensor to bin.

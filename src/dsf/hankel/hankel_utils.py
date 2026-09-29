@@ -22,6 +22,7 @@ from dsf.utils.validators import (
     is_non_negative_integer,
     is_positive_integer,
     validate_nonnegative_scalar,
+    validate_positive_strictly_increasing_1d_array,
 )
 
 __all__ = [
@@ -128,11 +129,12 @@ def radial_bin_centers(r_bins: FloatArray) -> FloatArray:
     """Return geometric centers of radial bins.
 
     Args:
-        r_bins: Positive radial bin edges.
+        r_bins: Radial bin edges.
 
     Returns:
         Geometric mean of each pair of neighboring radial bin edges.
     """
+    r_bins = validate_positive_strictly_increasing_1d_array(r_bins, "r_bins")
     return np.sqrt(r_bins[1:] * r_bins[:-1])
 
 

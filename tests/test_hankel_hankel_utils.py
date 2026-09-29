@@ -202,19 +202,22 @@ def test_radial_weights_without_bins_use_grid_gradient():
     np.testing.assert_allclose(weights, expected)
 
 
-def test_radial_weights_with_bins_use_union_grid_spacing():
-    """Tests that binned radial weights use spacing from the union grid."""
-    r = np.array([1.0, 2.0, 4.0])
-    r_bins = np.array([1.0, 3.0, 5.0])
+def test_radial_weights_with_bins_clip_voronoi_cells():
+    """Tests that radial Voronoi cells are clipped at bin boundaries."""
+    r = np.array([1.00, 1.04, 1.10])
+    r_bins = np.array([1.00, 1.05, 1.20])
 
     weights = radial_weights(r, r_bins=r_bins)
 
-    r_union = np.union1d(r, r_bins)
-    dr_union = np.gradient(r_union)
-    positions = np.searchsorted(r_union, r)
-    expected = r * dr_union[positions]
+    expected = 0.5 * np.array(
+        [
+            [1.02**2 - 1.00**2, 1.05**2 - 1.02**2, 0.0],
+            [0.0, 1.07**2 - 1.05**2, 1.20**2 - 1.07**2],
+        ]
+    )
 
     np.testing.assert_allclose(weights, expected)
+    np.testing.assert_allclose(weights.sum(axis=1), 0.5 * np.diff(r_bins**2))
 
 
 def test_compute_bin_radial_matrix_returns_geometric_bin_centers():
@@ -226,6 +229,25 @@ def test_compute_bin_radial_matrix_returns_geometric_bin_centers():
     centers, _ = compute_bin_radial_matrix(r, matrix, r_bins)
 
     np.testing.assert_allclose(centers, np.sqrt([3.0, 27.0]))
+
+
+def test_compute_bin_radial_matrix_uses_cross_bin_cell_weights():
+    """Tests that a Voronoi cell can contribute across a bin boundary."""
+    r = np.array([1.00, 1.04, 1.10])
+    r_bins = np.array([1.00, 1.05, 1.20])
+    values = np.array([10.0, 20.0, 30.0])
+
+    _, binned = compute_bin_radial_matrix(r, values, r_bins)
+
+    weights = 0.5 * np.array(
+        [
+            [1.02**2 - 1.00**2, 1.05**2 - 1.02**2, 0.0],
+            [0.0, 1.07**2 - 1.05**2, 1.20**2 - 1.07**2],
+        ]
+    )
+    expected = weights @ values / weights.sum(axis=1)
+
+    np.testing.assert_allclose(binned, expected)
 
 
 def test_compute_bin_radial_matrix_constant_matrix_stays_constant_in_populated_bins():
@@ -248,20 +270,11 @@ def test_compute_bin_radial_matrix_matches_manual_weighted_average():
     _, binned = compute_bin_radial_matrix(r, matrix, r_bins)
 
     weights = radial_weights(r, r_bins=r_bins)
-    bin_index = np.digitize(r, r_bins) - 1
-
     expected = np.zeros((2, 2))
     for i in range(2):
-        rows = bin_index == i
-        row_weights = weights[rows]
-
         for j in range(2):
-            cols = bin_index == j
-            col_weights = weights[cols]
-
-            submatrix = matrix[np.ix_(rows, cols)]
-            weight_matrix = np.multiply.outer(row_weights, col_weights)
-            expected[i, j] = np.sum(submatrix * weight_matrix) / np.sum(
+            weight_matrix = np.multiply.outer(weights[i], weights[j])
+            expected[i, j] = np.sum(matrix * weight_matrix) / np.sum(
                 weight_matrix
             )
 
@@ -279,18 +292,15 @@ def test_compute_bin_radial_matrix_ignores_points_outside_bins():
     np.testing.assert_allclose(binned, np.ones((2, 2)))
 
 
-def test_compute_bin_radial_matrix_empty_bins_remain_zero():
-    """Tests that bins with no radial support fail."""
+def test_compute_bin_radial_matrix_interpolates_across_empty_bins():
+    """Tests that Voronoi cells provide support between radial samples."""
     r = np.array([1.0, 2.0, 8.0])
     r_bins = np.array([1.0, 3.0, 5.0, 9.0])
     matrix = np.ones((3, 3))
 
-    try:
-        _, binned = compute_bin_radial_matrix(r, matrix, r_bins)
-    except ValueError as e:
-        assert "At least one radial bin has zero valid radial points." in str(
-            e
-        )
+    _, binned = compute_bin_radial_matrix(r, matrix, r_bins)
+
+    np.testing.assert_allclose(binned, np.ones((3, 3)))
 
 
 def test_compute_bin_radial_matrix_supports_three_dimensional_tensors():

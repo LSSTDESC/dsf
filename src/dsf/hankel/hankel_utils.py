@@ -152,17 +152,33 @@ def radial_weights(
         r_bins: Optional radial bin edges.
 
     Returns:
-        Radial weights proportional to :math:`r\\,dr`.
+        Radial weights proportional to :math:`r\\,dr`. If ``r_bins`` is
+        provided, the result has shape ``(n_bins, n_r)`` and contains the
+        measure of each radial point's Voronoi cell intersected with each
+        bin.
     """
     if r_bins is None:
         return r * np.gradient(r)
 
-    r_union = np.union1d(r, r_bins)
-    dr_union = np.gradient(r_union)
-    r_positions = np.searchsorted(r_union, r)
-    dr = dr_union[r_positions]
+    cell_midpoints = 0.5 * (r[:-1] + r[1:])
+    cell_lower = np.concatenate(([-np.inf], cell_midpoints))
+    cell_upper = np.concatenate((cell_midpoints, [np.inf]))
+    weights = np.empty((r_bins.size - 1, r.size), dtype=float)
 
-    return r * dr
+    for bin_axis, (bin_lower, bin_upper) in enumerate(
+        zip(r_bins[:-1], r_bins[1:], strict=False)
+    ):
+        clipped_lower = np.maximum(cell_lower, bin_lower)
+        clipped_upper = np.minimum(cell_upper, bin_upper)
+        np.subtract(
+            clipped_upper**2,
+            clipped_lower**2,
+            out=weights[bin_axis],
+        )
+        np.maximum(weights[bin_axis], 0.0, out=weights[bin_axis])
+        weights[bin_axis] *= 0.5
+
+    return weights
 
 
 def _outer_product(values: FloatArray, ndim: int) -> FloatArray:
@@ -196,9 +212,9 @@ def compute_bin_radial_matrix(
     the same grid ``r``. The returned quantity is the annular-bin average of
     the input matrix or tensor.
 
-    Note that the radial points are sorted into bins including the left edge
-    and excluding the right edge, i.e. a radial point exactly at the
-    right edge of the last bin will not be included in the binned result.
+    Radial samples represent piecewise-constant values over Voronoi cells.
+    Cells that cross a bin edge contribute their intersected radial measure
+    to both neighboring bins.
 
     Args:
         r: Radial grid associated with each axis of ``matrix``.
@@ -212,22 +228,11 @@ def compute_bin_radial_matrix(
     centers = radial_bin_centers(r_bins)
     n_bins = centers.size
 
-    bin_index = np.digitize(r, r_bins) - 1
-    valid = (bin_index >= 0) & (bin_index < n_bins)
-
-    weights = radial_weights(r, r_bins=r_bins)
-
-    bin_weight_sums = np.zeros(n_bins, dtype=float)
-    np.add.at(bin_weight_sums, bin_index[valid], weights[valid])
+    weighted_membership = radial_weights(r, r_bins=r_bins)
+    bin_weight_sums = np.sum(weighted_membership, axis=1)
 
     if np.any(bin_weight_sums == 0.0):
-        raise ValueError(
-            "At least one radial bin has zero valid radial points."
-        )
-
-    weighted_membership = (
-        np.arange(n_bins)[:, None] == bin_index[None, :]
-    ) * weights[None, :]
+        raise ValueError("At least one radial bin has zero radial support.")
 
     radial_axes = list(range(ndim))
     bin_axes = list(range(ndim, 2 * ndim))
@@ -241,9 +246,7 @@ def compute_bin_radial_matrix(
     binned = np.zeros_like(binned_sum)
 
     if np.any(norm == 0.0):
-        raise ValueError(
-            "At least one radial bin has zero valid radial points."
-        )
+        raise ValueError("At least one radial bin has zero radial support.")
 
     binned = binned_sum / norm
 

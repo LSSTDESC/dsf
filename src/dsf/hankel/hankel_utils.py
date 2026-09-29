@@ -234,8 +234,12 @@ def compute_bin_radial_matrix(
     norm = _outer_product(bin_weight_sums, ndim)
     binned = np.zeros_like(binned_sum)
 
-    nonzero = norm != 0.0
-    binned[nonzero] = binned_sum[nonzero] / norm[nonzero]
+    if np.any(norm == 0.0):
+        raise ValueError(
+            "At least one radial bin has zero valid radial points."
+        )
+
+    binned = binned_sum / norm
 
     return centers, binned
 

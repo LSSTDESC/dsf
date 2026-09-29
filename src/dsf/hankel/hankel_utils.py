@@ -216,6 +216,11 @@ def compute_bin_radial_matrix(
     bin_weight_sums = np.zeros(n_bins, dtype=float)
     np.add.at(bin_weight_sums, bin_index[valid], weights[valid])
 
+    if np.any(bin_weight_sums == 0.0):
+        raise ValueError(
+            "At least one radial bin has zero valid radial points."
+        )
+
     weighted_matrix = matrix * _outer_product(weights, ndim)
     binned_sum = np.zeros(tuple([n_bins] * ndim), dtype=float)
 

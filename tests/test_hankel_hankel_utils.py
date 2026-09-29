@@ -271,20 +271,17 @@ def test_compute_bin_radial_matrix_ignores_points_outside_bins():
 
 
 def test_compute_bin_radial_matrix_empty_bins_remain_zero():
-    """Tests that bins with no radial support remain zero."""
+    """Tests that bins with no radial support fail."""
     r = np.array([1.0, 2.0, 8.0])
     r_bins = np.array([1.0, 3.0, 5.0, 9.0])
     matrix = np.ones((3, 3))
 
-    _, binned = compute_bin_radial_matrix(r, matrix, r_bins)
-
-    assert binned.shape == (3, 3)
-    np.testing.assert_allclose(binned[1, :], np.zeros(3))
-    np.testing.assert_allclose(binned[:, 1], np.zeros(3))
-    assert binned[0, 0] == 1.0
-    assert binned[0, 2] == 1.0
-    assert binned[2, 0] == 1.0
-    assert binned[2, 2] == 1.0
+    try:
+        _, binned = compute_bin_radial_matrix(r, matrix, r_bins)
+    except ValueError as e:
+        assert "At least one radial bin has zero valid radial points." in str(
+            e
+        )
 
 
 def test_compute_bin_radial_matrix_supports_three_dimensional_tensors():

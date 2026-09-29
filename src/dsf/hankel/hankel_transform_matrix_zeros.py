@@ -307,6 +307,8 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         grid_spacing: str = "linear",
     ) -> FloatArray:
         """Evaluate a tabulated spectrum on the internal Hankel grid.
+        If tapering is requested, the spectrum is tapered before
+        interpolation occurs.
 
         Args:
             radial_input: Input radial grid (k or ell).

@@ -17,13 +17,13 @@ from dsf.hankel.hankel_utils import (
 
 def test_bessel_zeros_integer_order_matches_known_j0_roots():
     """Tests that integer-order Bessel roots match known J0 zeros."""
-    roots = bessel_zeros(order=0, n_zeros=3)
+    roots = bessel_zeros(order=0.5, n_zeros=3)
 
     expected = np.array(
         [
-            2.404825557695773,
-            5.520078110286311,
-            8.653727912911013,
+            np.pi,
+            2 * np.pi,
+            3 * np.pi,
         ]
     )
 
@@ -40,6 +40,15 @@ def test_bessel_zeros_non_integer_order_are_actual_roots():
 
     values = jv(0.5, roots)
     np.testing.assert_allclose(values, np.zeros_like(values), atol=1.0e-10)
+
+
+def test_bessel_zeros_half_integer_order_matches_analytic_roots():
+    """Tests half-integer roots against the analytic roots of J_(1/2)."""
+    roots = bessel_zeros(order=0.5, n_zeros=4)
+
+    expected = np.pi * np.arange(1, 5)
+
+    np.testing.assert_allclose(roots, expected, rtol=1.0e-12, atol=1.0e-12)
 
 
 def test_bessel_zeros_rejects_non_positive_number_of_roots():

@@ -221,15 +221,17 @@ def compute_bin_radial_matrix(
             "At least one radial bin has zero valid radial points."
         )
 
-    weighted_matrix = matrix * _outer_product(weights, ndim)
-    binned_sum = np.zeros(tuple([n_bins] * ndim), dtype=float)
+    weighted_membership = (
+        np.arange(n_bins)[:, None] == bin_index[None, :]
+    ) * weights[None, :]
 
-    bin_grids = np.meshgrid(*([bin_index] * ndim), indexing="ij")
-    valid_grids = np.meshgrid(*([valid] * ndim), indexing="ij")
-    valid_matrix = np.logical_and.reduce(valid_grids)
-
-    output_indices = tuple(grid[valid_matrix] for grid in bin_grids)
-    np.add.at(binned_sum, output_indices, weighted_matrix[valid_matrix])
+    radial_axes = list(range(ndim))
+    bin_axes = list(range(ndim, 2 * ndim))
+    einsum_args: list[object] = [matrix, radial_axes]
+    for radial_axis, bin_axis in zip(radial_axes, bin_axes, strict=False):
+        einsum_args.extend([weighted_membership, [bin_axis, radial_axis]])
+    einsum_args.append(bin_axes)
+    binned_sum = np.einsum(*einsum_args)
 
     norm = _outer_product(bin_weight_sums, ndim)
     binned = np.zeros_like(binned_sum)

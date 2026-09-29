@@ -13,7 +13,7 @@ Internally, different parts of the pipeline follow different conventions:
   calling the CCL-backed data-vector calculation.
 
 Delta Sigma units
-----------------
+-----------------
 
 The forecast data vector currently reports :math:`\Delta\Sigma` in
 ``Msun / pc^2``. The associated projected-radius coordinate is reported in

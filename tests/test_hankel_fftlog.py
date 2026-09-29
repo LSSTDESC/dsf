@@ -118,8 +118,8 @@ def test_projected_correlation_output_exists_and_correct_length(
     """Tests that projected_correlation has shape ``(len(ell), len(ell))``."""
     ht_fft = HankelTransform(backend="fftlog")
     theta_vals, gamma_vals = ht_fft.projected_correlation(
-        ell=ell,
-        c_ell=c_ell,
+        radial_input=ell,
+        spectrum=c_ell,
         use_offset=False,
     )
 
@@ -161,8 +161,8 @@ def test_projected_correlation_interpolated_output_exists_and_correct_length(
     ht_fft = HankelTransform(backend="fftlog")
     theta_vals, gamma_vals = ht_fft.projected_correlation_interpolated(
         theta_eval,
-        ell=ell,
-        c_ell=c_ell,
+        radial_input=ell,
+        spectrum=c_ell,
         use_offset=False,
     )
 
@@ -246,8 +246,8 @@ def test_projected_correlation_interpolated_rejects_interpolation_outside_bounds
         ht_fft = HankelTransform(backend="fftlog")
         _, gamma_vals = ht_fft.projected_correlation_interpolated(
             theta=theta_eval,
-            ell=ell,
-            c_ell=c_ell,
+            radial_input=ell,
+            spectrum=c_ell,
             use_offset=False,
         )
 
@@ -256,7 +256,7 @@ def test_fftlog_projected_correlation_requires_spectrum():
     """Test that the FFTLog backend requires a projected spectrum input."""
     transform = HankelTransformFFTLog()
 
-    with pytest.raises(ValueError, match="ell must be supplied"):
+    with pytest.raises(ValueError, match="radial_input must be supplied"):
         transform.projected_correlation(order=2)
 
 
@@ -273,7 +273,12 @@ def test_hankel_projected_returns_reversed_reciprocal_grid():
     ell = np.geomspace(1.0e-2, 1.0e2, 8)
     c_ell = np.ones_like(ell)
 
-    theta, xi = hankel_projected(ell, c_ell, order=2, use_offset=False)
+    theta, xi = hankel_projected(
+        radial_input=ell,
+        spectrum=c_ell,
+        order=2,
+        use_offset=False,
+    )
 
     np.testing.assert_allclose(theta, 1.0 / ell[::-1])
     assert xi.shape == theta.shape

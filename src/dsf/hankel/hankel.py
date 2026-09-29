@@ -68,25 +68,26 @@ class HankelTransform:
 
     def projected_correlation(
         self,
-        ell: ArrayLike | None = None,
-        c_ell: SpectrumInput | None = None,
+        radial_input: ArrayLike | None = None,
+        spectrum: SpectrumInput | None = None,
         order: float | int = 0,
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
         """Compute a projected radial statistic from one spectrum.
 
         Args:
-            ell: ell grid for tabulated spectra (unitless).
-            c_ell: Spectrum values or callable spectrum.
+            radial_input: Radial input grid for tabulated spectra.
+            spectrum: Spectrum values or callable spectrum.
             order: Bessel order to use.
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
-            Radial grid (units of radians) and projected radial statistic.
+            Radial grid, in inverse units of ``radial_input``, and the projected
+            radial statistic.
         """
         return self.backend.projected_correlation(
-            ell=ell,
-            c_ell=c_ell,
+            radial_input=radial_input,
+            spectrum=spectrum,
             order=order,
             **kwargs,
         )
@@ -120,8 +121,8 @@ class HankelTransform:
     def projected_correlation_interpolated(
         self,
         theta: FloatArray,
-        ell: FloatArray,
-        c_ell: SpectrumInput,
+        radial_input: FloatArray,
+        spectrum: SpectrumInput,
         order: float | int = 0,
         grid_spacing: str = "linear",
         **kwargs,
@@ -132,14 +133,14 @@ class HankelTransform:
 
         Args:
             theta: Theta values for interpolation (in radians).
-            ell: ell grid for tabulated spectra.
-            c_ell: Spectrum values or callable spectrum.
+            radial_input: Radial input grid for tabulated spectra.
+            spectrum: Spectrum values or callable spectrum.
             order: Bessel order to use.
             grid_spacing: Interpolate in "linear" or "log" space.
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
-            Radial grid and projected radial statistic.
+            Requested radial grid and projected radial statistic.
         """
         if grid_spacing == "linear":
             interp_func = interpolate_linear
@@ -149,7 +150,7 @@ class HankelTransform:
             raise ValueError("grid_spacing must be 'linear' or 'log'.")
 
         theta_grid, xi_grid = self.backend.projected_correlation(
-            ell=ell, c_ell=c_ell, order=order, **kwargs
+            radial_input=radial_input, spectrum=spectrum, order=order, **kwargs
         )
 
         xi_out = interp_func(

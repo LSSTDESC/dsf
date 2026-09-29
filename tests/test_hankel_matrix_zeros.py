@@ -216,8 +216,8 @@ def test_projected_correlation_projects_one_input_spectrum():
     pk = np.array([2.0, 4.0, 8.0])
 
     r, result = transform.projected_correlation(
-        ell=np.array([1.0, 2.0, 4.0]),
-        c_ell=pk,
+        radial_input=np.array([1.0, 2.0, 4.0]),
+        spectrum=pk,
         order=0,
     )
 
@@ -256,7 +256,7 @@ def test_projected_correlation_requires_power_spectrum():
     """Test that projected_correlation requires a supplied power spectrum."""
     transform = make_fake_transform()
 
-    with pytest.raises(ValueError, match="c_ell must be supplied"):
+    with pytest.raises(ValueError, match="spectrum must be supplied"):
         transform.projected_correlation(order=0)
 
 
@@ -493,7 +493,7 @@ def test_matrix_zeros_rejects_missing_projected_spectrum():
     """Test that projected correlation still requires a spectrum input."""
     transform = make_fake_transform()
 
-    with pytest.raises(ValueError, match="c_ell must be supplied"):
+    with pytest.raises(ValueError, match="spectrum must be supplied"):
         transform.projected_correlation(order=0)
 
 

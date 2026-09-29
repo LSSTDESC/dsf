@@ -103,8 +103,8 @@ class HankelTransformBase:
 
     def projected_correlation(
         self,
-        ell: ArrayLike | None = None,
-        c_ell: SpectrumInput | None = None,
+        radial_input: ArrayLike | None = None,
+        spectrum: SpectrumInput | None = None,
         order: float | int = 0,
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:

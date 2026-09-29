@@ -246,8 +246,8 @@ def _lens_mag_lss_shear(
     ht_fft = HankelTransform(backend="fftlog")
     _, gamma_t = ht_fft.projected_correlation_interpolated(
         theta_arr,
-        ell=ell_arr,
-        c_ell=angular_spectrum,
+        radial_input=ell_arr,
+        spectrum=angular_spectrum,
         order=2,
         use_offset=bool(_LENS_MAG_INTEG_PARAMS["use_hankel_offset"]),
     )

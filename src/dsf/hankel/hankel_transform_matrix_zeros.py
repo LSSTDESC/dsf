@@ -471,8 +471,8 @@ class HankelTransformMatrixZeros(HankelTransformBase):
 
     def projected_correlation(
         self,
-        ell: ArrayLike | None = None,
-        c_ell: SpectrumInput | None = None,
+        radial_input: ArrayLike | None = None,
+        spectrum: SpectrumInput | None = None,
         order: float | int = 2,
         taper: bool = False,
         taper_kwargs: dict | None = None,
@@ -481,29 +481,30 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         """Compute a projected radial statistic from one spectrum.
 
         Args:
-            ell: ell grid for tabulated spectra (unitless).
-            c_ell: Spectrum values or callable spectrum.
+            radial_input: Radial input grid for tabulated spectra.
+            spectrum: Spectrum values or callable spectrum.
             order: Bessel order to use (default is 2 for tangential shear).
             taper: Whether to suppress low-k and high-k edge power.
             taper_kwargs: Optional settings for the spectrum taper.
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
-            Radial grid (units of radians) and projected radial statistic.
+            Radial grid, in inverse units of ``radial_input``, and the projected
+            radial statistic.
         """
-        if c_ell is None:
-            raise ValueError("c_ell must be supplied.")
+        if spectrum is None:
+            raise ValueError("spectrum must be supplied.")
 
-        c_ell_eval = self._evaluate_spectrum(
-            c_ell,
+        spectrum_eval = self._evaluate_spectrum(
+            spectrum,
             order=order,
-            radial_input=ell,
+            radial_input=radial_input,
             taper=taper,
             taper_kwargs=taper_kwargs,
             **kwargs,
         )
 
-        return self._project_spectra_to_radial([c_ell_eval], order)
+        return self._project_spectra_to_radial([spectrum_eval], order)
 
     def projected_covariance(
         self,

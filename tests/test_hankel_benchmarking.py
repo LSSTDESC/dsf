@@ -52,7 +52,11 @@ def test_hankel_projected_fftlog_matches_direct_integration():
 
     ht_fft = HankelTransform(backend="fftlog")
     _, dsf_result = ht_fft.projected_correlation_interpolated(
-        theta_arr, ell=ell_arr, c_ell=c_ell_arr, order=2, use_offset=False
+        theta_arr,
+        radial_input=ell_arr,
+        spectrum=c_ell_arr,
+        order=2,
+        use_offset=False,
     )
 
     assert np.allclose(dsf_result, direct_integ_result, rtol=0.005, atol=0)
@@ -91,7 +95,11 @@ def test_hankel_projected_matrix_zeros_matches_direct_integration():
     )
 
     _, dsf_result = ht_matz.projected_correlation_interpolated(
-        theta_arr, ell=ell_arr, c_ell=c_ell_arr, order=2, use_offset=False
+        theta_arr,
+        radial_input=ell_arr,
+        spectrum=c_ell_arr,
+        order=2,
+        use_offset=False,
     )
 
     assert np.allclose(dsf_result, direct_integ_result, rtol=0.005, atol=0)
@@ -127,7 +135,11 @@ def test_hankel_projected_matrix_direct_matches_direct_integration():
     )
 
     _, dsf_result = ht_matd.projected_correlation_interpolated(
-        theta_arr, ell=ell_arr, c_ell=c_ell_arr, order=2, use_offset=False
+        theta_arr,
+        radial_input=ell_arr,
+        spectrum=c_ell_arr,
+        order=2,
+        use_offset=False,
     )
 
     assert np.allclose(dsf_result, direct_integ_result, rtol=0.005, atol=0)

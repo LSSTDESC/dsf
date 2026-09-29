@@ -15,7 +15,9 @@ def test_hankel_transform_accepts_matrix_alias(monkeypatch):
             captured["kwargs"] = kwargs
 
     monkeypatch.setitem(
-        HankelTransform.__init__.__globals__["_BACKENDS"], "matrix_zeros", DummyBackend
+        HankelTransform.__init__.__globals__["_BACKENDS"],
+        "matrix_zeros",
+        DummyBackend,
     )
 
     transform = HankelTransform(backend="matrix_zeros", foo=1)

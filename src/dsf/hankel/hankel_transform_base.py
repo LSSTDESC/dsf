@@ -110,7 +110,8 @@ class HankelTransformBase:
     ) -> tuple[FloatArray, FloatArray]:
         """Compute a projected radial statistic from one spectrum:
 
-        :math:`\\gamma_t(\\theta) = \\int \\frac{\\ell d\\ell}{2\\pi} C(\\ell )J_\\mu(\\ell \\theta)`.
+        :math:`\\gamma_t(\\theta) = \\int \\frac{\\ell d\\ell}{2\\pi}`
+        :math:`C(\\ell )J_\\mu(\\ell \\theta)`.
         """
         raise NotImplementedError(
             f"{self.__class__.__name__} does not support projected_correlation()."
@@ -177,12 +178,8 @@ class HankelTransformBase:
         Raises:
             NotImplementedError: If the backend does not support diagonal errors.
         """
-        raise NotImplementedError(
-            f"{self.__class__.__name__} does not support diagonal_error()."
-        )
+        raise NotImplementedError(f"{self.__class__.__name__} does not support diagonal_error().")
 
     def _validate_orders(self) -> None:
         """Validate the requested Bessel orders."""
-        raise NotImplementedError(
-            f"{self.__class__.__name__} does not support _validate_orders()."
-        )
+        raise NotImplementedError(f"{self.__class__.__name__} does not support _validate_orders().")

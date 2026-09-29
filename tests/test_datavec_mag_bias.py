@@ -98,7 +98,9 @@ def test_set_lens_mag_integ_params_rejects_invalid_values(kwargs):
         set_lens_mag_integ_params(**kwargs)
 
 
-def test_lens_mag_distance_kernel_uses_expected_ccl_distances(monkeypatch, cosmo):
+def test_lens_mag_distance_kernel_uses_expected_ccl_distances(
+    monkeypatch, cosmo
+):
     """Tests that the distance kernel combines angular distances correctly."""
 
     def fake_angular_diameter_distance(cosmo, a1, a2=None):
@@ -180,7 +182,9 @@ def test_inner_redshift_integrand_returns_expected_shape(monkeypatch, cosmo):
         z_source=1.0,
     )
 
-    expected = ((1.0 + z_inner) ** 2)[:, None] * np.full((z_inner.size, ell.size), 3.0)
+    expected = ((1.0 + z_inner) ** 2)[:, None] * np.full(
+        (z_inner.size, ell.size), 3.0
+    )
 
     assert result.shape == (z_inner.size, ell.size)
     np.testing.assert_allclose(result, expected)
@@ -195,7 +199,9 @@ def test_inner_redshift_integrand_returns_expected_shape(monkeypatch, cosmo):
         np.array([-0.1, 0.1]),
     ],
 )
-def test_inner_redshift_integrand_rejects_invalid_redshift_grid(z_inner, cosmo):
+def test_inner_redshift_integrand_rejects_invalid_redshift_grid(
+    z_inner, cosmo
+):
     """Tests that invalid inner-redshift grids are rejected."""
     with pytest.raises(ValueError):
         _inner_redshift_integrand(
@@ -281,7 +287,9 @@ def test_lens_mag_lss_shear_rejects_too_short_inner_redshift_grid(cosmo):
         )
 
 
-def test_lens_mag_lss_shear_rejects_interpolation_outside_grid(monkeypatch, cosmo):
+def test_lens_mag_lss_shear_rejects_interpolation_outside_grid(
+    monkeypatch, cosmo
+):
     """Tests that interpolation outside the ell grid is rejected."""
     monkeypatch.setattr(
         mag_bias,
@@ -310,7 +318,9 @@ def test_lens_mag_lss_shear_rejects_interpolation_outside_grid(monkeypatch, cosm
         (np.array([1.0, 2.0]), np.array([0.0, 0.02])),
     ],
 )
-def test_lens_mag_lss_shear_rejects_invalid_grids(monkeypatch, ell, theta, cosmo):
+def test_lens_mag_lss_shear_rejects_invalid_grids(
+    monkeypatch, ell, theta, cosmo
+):
     """Tests that invalid multipole or angular grids are rejected."""
     monkeypatch.setattr(
         validators,
@@ -343,7 +353,9 @@ def test_lens_mag_lss_shear_rejects_invalid_theta(cosmo):
         )
 
 
-def test_delta_sigma_lens_mag_correction_matches_expected_formula(monkeypatch, cosmo):
+def test_delta_sigma_lens_mag_correction_matches_expected_formula(
+    monkeypatch, cosmo
+):
     """Tests that the public correction applies the expected prefactors."""
     r = np.array([1.0, 2.0, 3.0])
     a_lens = 0.5
@@ -358,7 +370,9 @@ def test_delta_sigma_lens_mag_correction_matches_expected_formula(monkeypatch, c
     monkeypatch.setattr(
         mag_bias,
         "_lens_mag_lss_shear",
-        lambda cosmo, theta, z_lens, z_source: np.asarray(theta, dtype=float) + 1.0,
+        lambda cosmo, theta, z_lens, z_source: (
+            np.asarray(theta, dtype=float) + 1.0
+        ),
     )
     monkeypatch.setattr(
         mag_bias.ccl,
@@ -375,7 +389,9 @@ def test_delta_sigma_lens_mag_correction_matches_expected_formula(monkeypatch, c
     )
 
     theta = r * a_lens / 100.0
-    expected = 2.0 * a_lens**2 * 4.0e12 * (alpha_lens - 1.0) * (theta + 1.0) / 1.0e12
+    expected = (
+        2.0 * a_lens**2 * 4.0e12 * (alpha_lens - 1.0) * (theta + 1.0) / 1.0e12
+    )
 
     np.testing.assert_allclose(result, expected)
 
@@ -458,7 +474,11 @@ def test_delta_sigma_lens_mag_correction_matches_ccl():
 
     ell_ccl = np.geomspace(1e-5, 1e6, 5000)
     r = np.geomspace(1e0, 1e2)
-    theta = np.degrees(r / (1 + Z_LENS) / ccl.angular_diameter_distance(cosmo, 1 / (1 + Z_LENS)))
+    theta = np.degrees(
+        r
+        / (1 + Z_LENS)
+        / ccl.angular_diameter_distance(cosmo, 1 / (1 + Z_LENS))
+    )
 
     z_lens_ccl = np.linspace(0.01, 1.0, 500)
     nz_lens_ccl = np.exp(-0.5 * ((z_lens_ccl - Z_LENS) / SIGMA_NZ) ** 2)
@@ -472,16 +492,25 @@ def test_delta_sigma_lens_mag_correction_matches_ccl():
         mag_bias=(z_lens_ccl, ALPHA / 2.5 * np.ones_like(nz_lens_ccl)),
         has_rsd=False,
     )
-    t_m = ccl.WeakLensingTracer(cosmo, dndz=(z_source_ccl, nz_source_ccl), has_shear=True)
+    t_m = ccl.WeakLensingTracer(
+        cosmo, dndz=(z_source_ccl, nz_source_ccl), has_shear=True
+    )
     c_ell_ccl = ccl.angular_cl(cosmo, t_g, t_m, ell_ccl)
     gammat_ccl = ccl.correlation(
-        cosmo, ell=ell_ccl, C_ell=c_ell_ccl, theta=theta, method="FFTLog", type="NG"
+        cosmo,
+        ell=ell_ccl,
+        C_ell=c_ell_ccl,
+        theta=theta,
+        method="FFTLog",
+        type="NG",
     )
     correction_ccl = (
         gammat_ccl
         / 1e12
         * ((1 / (1 + Z_LENS)) ** 2)
-        * ccl.sigma_critical(cosmo, a_lens=1 / (1 + Z_LENS), a_source=1 / (1 + Z_SOURCE))
+        * ccl.sigma_critical(
+            cosmo, a_lens=1 / (1 + Z_LENS), a_source=1 / (1 + Z_SOURCE)
+        )
     )
 
     set_lens_mag_integ_params(

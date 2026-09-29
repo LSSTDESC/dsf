@@ -119,7 +119,9 @@ def test_build_taper_kwargs_uses_default_edges(power_spectrum_inputs):
     }
 
 
-def test_build_taper_kwargs_returns_user_kwargs_unchanged(power_spectrum_inputs):
+def test_build_taper_kwargs_returns_user_kwargs_unchanged(
+    power_spectrum_inputs,
+):
     """Tests that user-supplied taper settings are returned unchanged."""
     k, _ = power_spectrum_inputs
     user_kwargs = {
@@ -174,7 +176,9 @@ def test_covariance_on_requested_radius_grid(
     assert len(hankel.bin_calls) == expected_bin_calls
 
 
-def test_covariance_on_requested_radius_grid_rejects_wrong_covariance_shape(hankel):
+def test_covariance_on_requested_radius_grid_rejects_wrong_covariance_shape(
+    hankel,
+):
     """Tests that radius-grid covariance validation rejects shape mismatches."""
     r = np.asarray([1.0, 2.0, 3.0])
     cov = np.eye(2)
@@ -227,9 +231,13 @@ def test_delta_sigma_gm_covariance_matches_expected_block(
     p_gk = pk * galaxy_bias * rho_crit * omega_m
     shape_delta_sigma_noise = shape_noise * sigma_crit_squared_average
 
-    expected_ggkk = np.outer(p_g + shot_noise, p_kappa + shape_delta_sigma_noise)
+    expected_ggkk = np.outer(
+        p_g + shot_noise, p_kappa + shape_delta_sigma_noise
+    )
     expected_gkgk = np.outer(p_gk, p_gk)
-    expected_cov = (expected_ggkk + expected_gkgk * delta_pi_gm_squared_window) / volume
+    expected_cov = (
+        expected_ggkk + expected_gkgk * delta_pi_gm_squared_window
+    ) / volume
 
     np.testing.assert_allclose(r, [1.0, 2.0, 3.0])
     np.testing.assert_allclose(cov, expected_cov)
@@ -316,7 +324,11 @@ def test_delta_sigma_gg_covariance_matches_expected_block(
 
     p_g = pk * galaxy_bias**2
     expected_cov = (
-        np.outer(p_g + shot_noise, p_g + shot_noise) * 2.0 * delta_pi_gg * rho_crit**2 / volume
+        np.outer(p_g + shot_noise, p_g + shot_noise)
+        * 2.0
+        * delta_pi_gg
+        * rho_crit**2
+        / volume
     )
 
     np.testing.assert_allclose(r, [1.0, 2.0, 3.0])
@@ -358,7 +370,13 @@ def test_delta_sigma_gm_gg_cross_covariance_matches_expected_block(
     p_g = pk * galaxy_bias**2
     p_gk = pk * galaxy_bias * rho_crit * omega_m
 
-    expected_cov = np.outer(p_gk, p_g + shot_noise) * 2.0 * delta_pi_gm_gg * rho_crit / volume
+    expected_cov = (
+        np.outer(p_gk, p_g + shot_noise)
+        * 2.0
+        * delta_pi_gm_gg
+        * rho_crit
+        / volume
+    )
 
     np.testing.assert_allclose(r, [1.0, 2.0, 3.0])
     np.testing.assert_allclose(cov, expected_cov)

@@ -80,8 +80,7 @@ def bessel_zeros(order: float | int, n_zeros: int) -> FloatArray:
             f_upper = bessel_order_value(upper)
         else:
             raise RuntimeError(
-                f"Could not bracket Bessel zero {zero_number} "
-                f"for order={order_float}."
+                f"Could not bracket Bessel zero {zero_number} for order={order_float}."
             )
 
         roots[i] = brentq(bessel_order_value, lower, upper)
@@ -165,9 +164,7 @@ def radial_weights(
     cell_upper = np.concatenate((cell_midpoints, [np.inf]))
     weights = np.empty((r_bins.size - 1, r.size), dtype=float)
 
-    for bin_axis, (bin_lower, bin_upper) in enumerate(
-        zip(r_bins[:-1], r_bins[1:], strict=False)
-    ):
+    for bin_axis, (bin_lower, bin_upper) in enumerate(zip(r_bins[:-1], r_bins[1:], strict=False)):
         clipped_lower = np.maximum(cell_lower, bin_lower)
         clipped_upper = np.minimum(cell_upper, bin_upper)
         np.subtract(
@@ -226,7 +223,6 @@ def compute_bin_radial_matrix(
     """
     ndim = matrix.ndim
     centers = radial_bin_centers(r_bins)
-    n_bins = centers.size
 
     weighted_membership = radial_weights(r, r_bins=r_bins)
     bin_weight_sums = np.sum(weighted_membership, axis=1)
@@ -297,19 +293,12 @@ def apply_taper_spectrum(
 
     high = k > large_k_lower
 
-    phase = (
-        (k[high] - large_k_lower)
-        / (large_k_upper - large_k_lower)
-        * np.pi
-        / 2.0
-    )
+    phase = (k[high] - large_k_lower) / (large_k_upper - large_k_lower) * np.pi / 2.0
     pk_out[high] *= np.cos(phase)
     pk_out[k > large_k_upper] = 0.0
 
     low = k < low_k_upper
-    pk_out[low] *= np.cos(
-        (k[low] - low_k_upper) / (low_k_upper - low_k_lower) * np.pi / 2.0
-    )
+    pk_out[low] *= np.cos((k[low] - low_k_upper) / (low_k_upper - low_k_lower) * np.pi / 2.0)
     pk_out[k < low_k_lower] = 0.0
 
     return pk_out

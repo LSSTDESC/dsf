@@ -2,7 +2,9 @@
 
 import numpy as np
 
-from dsf.hankel.hankel_transform_matrix_direct import HankelTransformMatrixDirect
+from dsf.hankel.hankel_transform_matrix_direct import (
+    HankelTransformMatrixDirect,
+)
 
 
 def test_matrix_direct_builds_expected_grid_shapes():
@@ -45,7 +47,7 @@ def test_matrix_direct_uses_log_space_trapezoidal_weights():
 
 
 def test_matrix_direct_projected_covariance_returns_square_matrix():
-    """Test that matrix-direct projects two spectra into a square covariance matrix."""
+    """Test that matrix-direct projects two spectra into a square matrix."""
     transform = HankelTransformMatrixDirect(
         r_min=1.0,
         r_max=4.0,

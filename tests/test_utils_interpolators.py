@@ -11,7 +11,9 @@ XP_LINEAR = np.array([0.0, 1.0, 2.0])  # monotonic, positive
 FP_LINEAR = np.array([0.0, 10.0, 20.0])  # simple linear relationship
 
 XP_LOGLOG = np.array([1.0, 10.0, 100.0])  # strictly increasing, > 0
-FP_LOGLOG = np.array([1.0, 10.0, 100.0])  # same values → identity on log‑log scale
+FP_LOGLOG = np.array(
+    [1.0, 10.0, 100.0]
+)  # same values → identity on log‑log scale
 
 
 def test_interpolate_linear_vectorised():

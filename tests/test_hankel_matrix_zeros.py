@@ -3,13 +3,15 @@
 import numpy as np
 import pytest
 
-from dsf.hankel.hankel_transform_matrix_zeros import HankelTransformMatrixZeros
+from dsf.hankel.hankel_transform_matrix_zeros import (
+    HankelTransformMatrixZeros,
+)
 
 HANKEL_MODULE = "dsf.hankel.hankel_transform_matrix_zeros"
 
 
 def make_fake_transform():
-    """Return a HankelTransformMatrixZeros instance with small deterministic internal grids."""
+    """Return a HankelTransformMatrixZeros instance with small grids."""
     transform = HankelTransformMatrixZeros.__new__(HankelTransformMatrixZeros)
 
     transform.k = {0: np.array([1.0, 2.0, 4.0])}
@@ -44,7 +46,7 @@ def test_check_order_accepts_available_order():
 
 
 def test_check_order_rejects_missing_order():
-    """Test that _check_order rejects Bessel orders that were not precomputed."""
+    """Test that _check_order rejects orders that were not precomputed."""
     transform = make_fake_transform()
 
     with pytest.raises(ValueError, match="Order 2 was not precomputed"):
@@ -52,7 +54,7 @@ def test_check_order_rejects_missing_order():
 
 
 def test_evaluate_tabulated_spectrum_interpolates_to_internal_k_grid():
-    """Test that tabulated spectra are interpolated onto the internal k grid."""
+    """Test that tabulated spectra are interpolated onto the internal grid."""
     transform = make_fake_transform()
     radial_input = np.array([1.0, 2.0, 4.0])
     spectrum = np.array([10.0, 20.0, 40.0])
@@ -68,8 +70,10 @@ def test_evaluate_tabulated_spectrum_interpolates_to_internal_k_grid():
     np.testing.assert_allclose(result, expected)
 
 
-def test_evaluate_tabulated_spectrum_applies_taper_when_requested(monkeypatch):
-    """Test that tabulated spectra are tapered before interpolation if requested."""
+def test_evaluate_tabulated_spectrum_applies_taper_when_requested(
+    monkeypatch,
+):
+    """Test that tabulated spectra are tapered before interpolation."""
     transform = make_fake_transform()
     radial_input = np.array([1.0, 2.0, 4.0])
     spectrum = np.array([10.0, 20.0, 40.0])
@@ -146,7 +150,7 @@ def test_power_grid_requires_power_spectrum():
 
 
 def test_power_grid_returns_spectrum_on_internal_grid():
-    """Test that power_grid returns the spectrum evaluated on the Hankel radial grid."""
+    """Test that power_grid returns the spectrum on the Hankel radial grid."""
     transform = make_fake_transform()
 
     result = transform.power_grid(
@@ -188,7 +192,9 @@ def test_project_spectra_to_radial_projects_two_spectra_to_matrix():
     product = spectrum_1 * spectrum_2
     weighted = product / transform.j_next_at_zeros[0] ** 2
     j_matrix = transform.j[0]
-    expected = np.dot(j_matrix, (j_matrix * weighted).T) * transform.normalization[0]
+    expected = (
+        np.dot(j_matrix, (j_matrix * weighted).T) * transform.normalization[0]
+    )
 
     np.testing.assert_allclose(r, transform.r[0])
     np.testing.assert_allclose(result, expected)
@@ -252,14 +258,6 @@ def test_projected_correlation_requires_power_spectrum():
 
     with pytest.raises(ValueError, match="c_ell must be supplied"):
         transform.projected_correlation(order=0)
-
-
-# def test_spherical_correlation_requires_power_spectrum():
-#     """Test that spherical_correlation requires a supplied power spectrum."""
-#     transform = make_fake_transform()
-
-#     with pytest.raises(ValueError, match="pk must be supplied"):
-#         transform.spherical_correlation(order=0)
 
 
 def test_spherical_correlation_returns_not_implemented():
@@ -414,7 +412,7 @@ def test_taper_spectrum_delegates_valid_power_spectrum(monkeypatch):
     ],
 )
 def test_init_rejects_invalid_inputs(monkeypatch, kwargs):
-    """Test that HankelTransform initialization rejects invalid configuration."""
+    """Test that HankelTransform initialization rejects invalid config."""
     monkeypatch.setattr(
         HankelTransformMatrixZeros, "_build_all_grids", lambda self: None
     )
@@ -423,7 +421,9 @@ def test_init_rejects_invalid_inputs(monkeypatch, kwargs):
         HankelTransformMatrixZeros(**kwargs)
 
 
-def test_prune_radial_grid_returns_original_grid_when_pruning_disabled(monkeypatch):
+def test_prune_radial_grid_returns_original_grid_when_pruning_disabled(
+    monkeypatch,
+):
     """Test that radial pruning can be disabled."""
     monkeypatch.setattr(
         HankelTransformMatrixZeros, "_build_all_grids", lambda self: None
@@ -450,7 +450,9 @@ def test_prune_radial_grid_keeps_endpoints_for_linear_pruning(monkeypatch):
     assert result[-1] == r[-1]
 
 
-def test_select_radial_range_selects_grid_covering_requested_range(monkeypatch):
+def test_select_radial_range_selects_grid_covering_requested_range(
+    monkeypatch,
+):
     """Test that radial range selection includes bracketing grid points."""
     monkeypatch.setattr(
         HankelTransformMatrixZeros, "_build_all_grids", lambda self: None
@@ -496,12 +498,14 @@ def test_matrix_zeros_rejects_missing_projected_spectrum():
 
 
 def test_evaluate_spectrum_rejects_interpolation_outside_grid():
-    """Test that _evaluate_spectrum rejects tabulated spectra that do not cover the grid."""
+    """Test that _evaluate_spectrum fails for too-small grid."""
     transform = make_fake_transform()
 
     with pytest.raises(
         ValueError,
-        match="The tabulated radial values of the spectrum do not cover the full matrix grid.",
+        match=(
+            "radial values of the spectrum do not cover the full matrix grid."
+        ),
     ):
         transform._evaluate_spectrum(
             spectrum=[1.0, 1.0],
@@ -511,7 +515,7 @@ def test_evaluate_spectrum_rejects_interpolation_outside_grid():
 
 
 def test_bin_radial_matrix_rejects_r_outside_grid():
-    """Test that bin_radial_matrix rejects r interpolation values outside grid."""
+    """Test that bin_radial_matrix rejects values outside the grid."""
     transform = make_fake_transform()
 
     with pytest.raises(ValueError, match="lie outside the data grid."):

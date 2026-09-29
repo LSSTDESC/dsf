@@ -25,6 +25,7 @@ from dsf.utils.types import FloatArray
 from dsf.utils.validators import (
     as_2d_float_array,
     is_positive_integer,
+    validate_nonnegative_scalar,
     validate_positive_scalar,
 )
 
@@ -110,6 +111,7 @@ class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
         Args:
             order: Bessel order used by the projected statistic.
         """
+        validate_nonnegative_scalar(order, "order")
 
         k = np.geomspace(self.k_min, self.k_max, self.n_k)
         dlnk = np.gradient(np.log(k))

@@ -18,7 +18,9 @@ def fake_comoving_distance_h(cosmo, z, *, h=None):
     return 1000.0 * np.asarray(z, dtype=float)
 
 
-def test_sigma_crit_inverse_comoving_masks_sources_in_front_of_lens(monkeypatch):
+def test_sigma_crit_inverse_comoving_masks_sources_in_front_of_lens(
+    monkeypatch,
+):
     """Test that only sources behind the lens contribute to SigmaCrit inverse."""
     cosmo = {"h": 0.7}
     z_lens = 0.5
@@ -53,7 +55,9 @@ def test_sigma_crit_inverse_comoving_masks_sources_in_front_of_lens(monkeypatch)
     np.testing.assert_allclose(result, expected)
 
 
-def test_sigma_crit_inverse_comoving_returns_zero_for_sources_at_lens(monkeypatch):
+def test_sigma_crit_inverse_comoving_returns_zero_for_sources_at_lens(
+    monkeypatch,
+):
     """Test that sources exactly at the lens redshift get zero efficiency."""
     cosmo = {"h": 0.7}
     z_lens = 0.5
@@ -74,7 +78,9 @@ def test_sigma_crit_inverse_comoving_returns_zero_for_sources_at_lens(monkeypatc
     np.testing.assert_allclose(result, np.array([0.0]))
 
 
-def test_sigma_crit_inverse_comoving_passes_supplied_h_to_distance(monkeypatch):
+def test_sigma_crit_inverse_comoving_passes_supplied_h_to_distance(
+    monkeypatch,
+):
     """Test that supplied h is passed to comoving distance evaluations."""
     cosmo = {"h": 0.5}
     z_lens = 0.5
@@ -136,7 +142,9 @@ def test_sigma_crit_inverse_source_average_integrates_over_source_distribution(
     np.testing.assert_allclose(result, expected)
 
 
-def test_effective_sigma_crit_squared_averages_over_lens_distribution(monkeypatch):
+def test_effective_sigma_crit_squared_averages_over_lens_distribution(
+    monkeypatch,
+):
     """Test that effective SigmaCrit squared averages over lens n(z)."""
     cosmo = {"h": 0.7}
     z_lens = np.array([0.2, 0.5, 0.8])
@@ -177,7 +185,9 @@ def test_effective_sigma_crit_squared_averages_over_lens_distribution(monkeypatc
     np.testing.assert_allclose(result, expected)
 
 
-def test_effective_sigma_crit_squared_uses_supplied_h_in_nested_calls(monkeypatch):
+def test_effective_sigma_crit_squared_uses_supplied_h_in_nested_calls(
+    monkeypatch,
+):
     """Test that supplied h is propagated through effective SigmaCrit calculation."""
     cosmo = {"h": 0.5}
     z_lens = np.array([0.2, 0.5])

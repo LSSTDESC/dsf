@@ -1,6 +1,6 @@
-"""Power-spectrum ingredients for DeltaSigma covariance calculations.
+"""Power-spectrum ingredients for Delta Sigma covariance calculations.
 
-This module computes effective matter power spectra used by DeltaSigma
+This module computes effective matter power spectra used by Delta Sigma
 covariance blocks. Redshift-dependent power spectra are evaluated with CCL and
 averaged over tomographic lens-bin redshift distributions.
 """

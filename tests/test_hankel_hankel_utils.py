@@ -1,10 +1,10 @@
-"""Unit tests for ``dsf.covariance.projection.hankel_utils``."""
+"""Unit tests for ``dsf.hankel.hankel_utils``."""
 
 import numpy as np
 import pytest
 from scipy.special import jv
 
-from dsf.covariance.projection.hankel_utils import (
+from dsf.hankel.hankel_utils import (
     apply_taper_spectrum,
     bessel_zeros,
     compute_bin_radial_matrix,
@@ -17,13 +17,13 @@ from dsf.covariance.projection.hankel_utils import (
 
 def test_bessel_zeros_integer_order_matches_known_j0_roots():
     """Tests that integer-order Bessel roots match known J0 zeros."""
-    roots = bessel_zeros(order=0, n_zeros=3)
+    roots = bessel_zeros(order=0.5, n_zeros=3)
 
     expected = np.array(
         [
-            2.404825557695773,
-            5.520078110286311,
-            8.653727912911013,
+            np.pi,
+            2 * np.pi,
+            3 * np.pi,
         ]
     )
 
@@ -42,9 +42,20 @@ def test_bessel_zeros_non_integer_order_are_actual_roots():
     np.testing.assert_allclose(values, np.zeros_like(values), atol=1.0e-10)
 
 
+def test_bessel_zeros_half_integer_order_matches_analytic_roots():
+    """Tests half-integer roots against the analytic roots of J_(1/2)."""
+    roots = bessel_zeros(order=0.5, n_zeros=4)
+
+    expected = np.pi * np.arange(1, 5)
+
+    np.testing.assert_allclose(roots, expected, rtol=1.0e-12, atol=1.0e-12)
+
+
 def test_bessel_zeros_rejects_non_positive_number_of_roots():
     """Tests that requesting zero or fewer Bessel roots fails."""
-    with pytest.raises(ValueError, match="n_zeros must be positive"):
+    with pytest.raises(
+        ValueError, match="n_zeros must be a positive integer"
+    ):
         bessel_zeros(order=0, n_zeros=0)
 
 
@@ -102,7 +113,9 @@ def test_apply_taper_spectrum_uses_expected_cosine_taper_values():
         low_k_upper=1.0e-5,
     )
 
-    expected_low = 2.0 * np.cos((5.0e-6 - 1.0e-5) / (1.0e-5 - 0.0) * np.pi / 2.0)
+    expected_low = 2.0 * np.cos(
+        (5.0e-6 - 1.0e-5) / (1.0e-5 - 0.0) * np.pi / 2.0
+    )
     expected_high = 4.0 * np.cos((55.0 - 10.0) / (100.0 - 10.0) * np.pi / 2.0)
 
     np.testing.assert_allclose(tapered, [expected_low, expected_high])
@@ -189,19 +202,22 @@ def test_radial_weights_without_bins_use_grid_gradient():
     np.testing.assert_allclose(weights, expected)
 
 
-def test_radial_weights_with_bins_use_union_grid_spacing():
-    """Tests that binned radial weights use spacing from the union grid."""
-    r = np.array([1.0, 2.0, 4.0])
-    r_bins = np.array([1.0, 3.0, 5.0])
+def test_radial_weights_with_bins_clip_voronoi_cells():
+    """Tests that radial Voronoi cells are clipped at bin boundaries."""
+    r = np.array([1.00, 1.04, 1.10])
+    r_bins = np.array([1.00, 1.05, 1.20])
 
     weights = radial_weights(r, r_bins=r_bins)
 
-    r_union = np.union1d(r, r_bins)
-    dr_union = np.gradient(r_union)
-    positions = np.searchsorted(r_union, r)
-    expected = r * dr_union[positions]
+    expected = 0.5 * np.array(
+        [
+            [1.02**2 - 1.00**2, 1.05**2 - 1.02**2, 0.0],
+            [0.0, 1.07**2 - 1.05**2, 1.20**2 - 1.07**2],
+        ]
+    )
 
     np.testing.assert_allclose(weights, expected)
+    np.testing.assert_allclose(weights.sum(axis=1), 0.5 * np.diff(r_bins**2))
 
 
 def test_compute_bin_radial_matrix_returns_geometric_bin_centers():
@@ -213,6 +229,25 @@ def test_compute_bin_radial_matrix_returns_geometric_bin_centers():
     centers, _ = compute_bin_radial_matrix(r, matrix, r_bins)
 
     np.testing.assert_allclose(centers, np.sqrt([3.0, 27.0]))
+
+
+def test_compute_bin_radial_matrix_uses_cross_bin_cell_weights():
+    """Tests that a Voronoi cell can contribute across a bin boundary."""
+    r = np.array([1.00, 1.04, 1.10])
+    r_bins = np.array([1.00, 1.05, 1.20])
+    values = np.array([10.0, 20.0, 30.0])
+
+    _, binned = compute_bin_radial_matrix(r, values, r_bins)
+
+    weights = 0.5 * np.array(
+        [
+            [1.02**2 - 1.00**2, 1.05**2 - 1.02**2, 0.0],
+            [0.0, 1.07**2 - 1.05**2, 1.20**2 - 1.07**2],
+        ]
+    )
+    expected = weights @ values / weights.sum(axis=1)
+
+    np.testing.assert_allclose(binned, expected)
 
 
 def test_compute_bin_radial_matrix_constant_matrix_stays_constant_in_populated_bins():
@@ -235,20 +270,13 @@ def test_compute_bin_radial_matrix_matches_manual_weighted_average():
     _, binned = compute_bin_radial_matrix(r, matrix, r_bins)
 
     weights = radial_weights(r, r_bins=r_bins)
-    bin_index = np.digitize(r, r_bins) - 1
-
     expected = np.zeros((2, 2))
     for i in range(2):
-        rows = bin_index == i
-        row_weights = weights[rows]
-
         for j in range(2):
-            cols = bin_index == j
-            col_weights = weights[cols]
-
-            submatrix = matrix[np.ix_(rows, cols)]
-            weight_matrix = np.multiply.outer(row_weights, col_weights)
-            expected[i, j] = np.sum(submatrix * weight_matrix) / np.sum(weight_matrix)
+            weight_matrix = np.multiply.outer(weights[i], weights[j])
+            expected[i, j] = np.sum(matrix * weight_matrix) / np.sum(
+                weight_matrix
+            )
 
     np.testing.assert_allclose(binned, expected)
 
@@ -264,21 +292,15 @@ def test_compute_bin_radial_matrix_ignores_points_outside_bins():
     np.testing.assert_allclose(binned, np.ones((2, 2)))
 
 
-def test_compute_bin_radial_matrix_empty_bins_remain_zero():
-    """Tests that bins with no radial support remain zero."""
+def test_compute_bin_radial_matrix_interpolates_across_empty_bins():
+    """Tests that Voronoi cells provide support between radial samples."""
     r = np.array([1.0, 2.0, 8.0])
     r_bins = np.array([1.0, 3.0, 5.0, 9.0])
     matrix = np.ones((3, 3))
 
     _, binned = compute_bin_radial_matrix(r, matrix, r_bins)
 
-    assert binned.shape == (3, 3)
-    np.testing.assert_allclose(binned[1, :], np.zeros(3))
-    np.testing.assert_allclose(binned[:, 1], np.zeros(3))
-    assert binned[0, 0] == 1.0
-    assert binned[0, 2] == 1.0
-    assert binned[2, 0] == 1.0
-    assert binned[2, 2] == 1.0
+    np.testing.assert_allclose(binned, np.ones((3, 3)))
 
 
 def test_compute_bin_radial_matrix_supports_three_dimensional_tensors():

@@ -93,7 +93,7 @@ class DummyDeltaSigmaCovarianceBuilder:
 
 
 class DummyDeltaSigmaCalculator:
-    """Minimal DeltaSigma calculator stand-in."""
+    """Minimal Delta Sigma calculator stand-in."""
 
     instances = []
 
@@ -114,7 +114,7 @@ class DummyDeltaSigmaCalculator:
         z_max,
         trim_edge_points,
     ):
-        """Return a deterministic DeltaSigma block for one lens bin."""
+        """Return a deterministic Delta Sigma block for one lens bin."""
         self.calls.append(
             {
                 "r_mpc": np.asarray(r_mpc, dtype=float).copy(),

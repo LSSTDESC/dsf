@@ -49,7 +49,7 @@ def test_redshift_to_scale_factor_handles_arrays():
 
 
 def test_redshift_and_scale_factor_conversions_roundtrip():
-    """Tests that redshift and scale-factor conversions are inverse operations."""
+    """Tests that redshift and scale-factor conversions are inverses."""
     redshift = np.array([0.0, 0.3, 1.0, 2.0])
 
     actual = scale_factor_to_redshift(redshift_to_scale_factor(redshift))
@@ -94,7 +94,7 @@ def test_comoving_delta_sigma_to_proper_rescales_radius_and_amplitude():
 
 
 def test_rho_critical_projected_divides_comoving_density_by_pc2_factor():
-    """Tests that projected critical density uses Msun per pc squared per Mpc."""
+    """Tests that projected critical density uses Msun / pc^2 / Mpc."""
     cosmo = ccl.CosmologyVanillaLCDM()
 
     rho_crit = rho_critical_comoving_msun_mpc3(cosmo)
@@ -168,7 +168,9 @@ def test_resolve_omega_m_reads_value_from_cosmology():
     """Tests that missing Omega_m values are read from the cosmology."""
     cosmo = ccl.CosmologyVanillaLCDM()
 
-    assert resolve_omega_m(cosmo, None) == pytest.approx(float(cosmo["Omega_m"]))
+    assert resolve_omega_m(cosmo, None) == pytest.approx(
+        float(cosmo["Omega_m"])
+    )
 
 
 @pytest.mark.parametrize("bad_omega_m", [0.0, -0.1, np.nan])

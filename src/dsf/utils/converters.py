@@ -151,7 +151,9 @@ def comoving_delta_sigma_to_proper(
     return wrapper
 
 
-def rho_critical_comoving_msun_mpc3(cosmo: ccl.Cosmology, *, h: float | None = None) -> float:
+def rho_critical_comoving_msun_mpc3(
+    cosmo: ccl.Cosmology, *, h: float | None = None
+) -> float:
     """Return critical density in comoving Msun / Mpc^3.
 
     Args:
@@ -172,7 +174,7 @@ def rho_critical_projected_msun_pc2_per_mpc(
     *,
     h: float | None = None,
 ) -> float:
-    """Return critical density in projected DeltaSigma units.
+    """Return critical density in projected Delta Sigma units.
 
     Args:
         cosmo: CCL cosmology object.
@@ -256,7 +258,7 @@ def sigma_crit_prefactor_msun_h_pc2() -> float:
 
     This is the inverse of the prefactor used to compute comoving
     Sigma_crit^{-1} in units of pc^2 / (Msol h). It is intended for
-    calculations where distances are supplied in Mpc / h and DeltaSigma-like
+    calculations where distances are supplied in Mpc / h and Delta Sigma-like
     quantities are expressed in Msol h / pc^2.
     """
     sigma_crit_inverse_prefactor = (

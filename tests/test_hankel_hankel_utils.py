@@ -1,6 +1,7 @@
 """Unit tests for ``dsf.hankel.hankel_utils``."""
 
 import itertools
+
 import numpy as np
 import pytest
 from scipy.special import jv
@@ -188,15 +189,12 @@ def test_radial_bin_centers_are_geometric_centers():
     np.testing.assert_allclose(centers, [2.0, 8.0, 32.0])
 
 
-def test_radial_weights_without_bins_use_grid_gradient():
-    """Tests that unbinned radial weights use r times the grid gradient."""
+def test_radial_weights_without_bins_fails_for_voronoi():
+    """Tests that unbinned radial weights fail for Voronoi method."""
     r = np.array([1.0, 2.0, 4.0, 8.0])
 
-    weights = radial_weights(r)
-
-    expected = r * np.gradient(r)
-
-    np.testing.assert_allclose(weights, expected)
+    with pytest.raises(ValueError, match="r_bins is required for Voronoi radial weights."):
+        radial_weights(r, radial_weight_method="voronoi")
 
 
 def test_radial_weights_with_bins_clip_voronoi_cells():
@@ -320,7 +318,7 @@ def test_radial_weights_gradient_matches_original_union_spacing():
     bins = np.array([1.0, 3.0, 5.0])
     union = np.union1d(r, bins)
     expected = r * np.gradient(union)[np.searchsorted(union, r)]
-    np.testing.assert_allclose(radial_weights(r, bins), expected)
+    np.testing.assert_allclose(radial_weights(r, bins, radial_weight_method="gradient"), expected)
 
 
 def test_radial_weights_polynomial_matches_independent_cubic_fit():

@@ -1,6 +1,6 @@
-"""DeltaSigma covariance builder.
+"""Delta Sigma covariance builder.
 
-This module assembles covariance matrices for projected DeltaSigma forecast
+This module assembles covariance matrices for projected Delta Sigma forecast
 data vectors. Binny provides the tomographic redshift distributions, bin
 metadata, densities, and selected lens-source pairs. This builder combines
 those tomography products with covariance ingredients such as matter power
@@ -8,7 +8,7 @@ spectra, survey volume, shape noise, shot noise, galaxy bias, and critical
 surface density factors.
 
 The main class is designed for forecasts where the observable may be the
-galaxy-matter DeltaSigma signal alone, the projected clustering-like signal
+galaxy-matter Delta Sigma signal alone, the projected clustering-like signal
 alone, or a joint data vector containing both. The block-diagonal scripts give
 simple first-pass covariances in which different tomographic lens-source pairs
 are treated as independent.
@@ -37,9 +37,11 @@ from dsf.covariance.ingredients.geometry import (
     survey_volume_from_edges,
 )
 from dsf.covariance.ingredients.noise import projected_shape_noise, shot_noise
-from dsf.covariance.ingredients.power_spectrum import lens_averaged_matter_power
+from dsf.covariance.ingredients.power_spectrum import (
+    lens_averaged_matter_power,
+)
 from dsf.covariance.ingredients.sigma_crit import effective_squared_sigma_crit
-from dsf.covariance.projection.hankel_transform import HankelTransform
+from dsf.hankel.hankel import HankelTransform
 from dsf.utils.converters import (
     resolve_h,
     resolve_omega_m,
@@ -54,7 +56,7 @@ __all__ = [
 
 
 class DeltaSigmaCovarianceBuilder:
-    """Build projected DeltaSigma covariance matrices from tomography outputs.
+    """Build projected Delta Sigma covariance matrices from tomography outputs.
 
     The builder collects the survey, cosmology, tomography, nuisance, and
     projection inputs needed to evaluate covariance blocks for tomographic
@@ -62,7 +64,7 @@ class DeltaSigmaCovarianceBuilder:
 
     It supports three useful covariance views:
 
-    - ``gm x gm`` for the galaxy-matter DeltaSigma signal.
+    - ``gm x gm`` for the galaxy-matter Delta Sigma signal.
     - ``gg x gg`` for a projected clustering-like contribution.
     - a joint ``gm + gg`` covariance including the cross block.
 
@@ -236,7 +238,7 @@ class DeltaSigmaCovarianceBuilder:
         lens_bin_index: int,
         source_bin_index: int,
     ) -> dict[str, Any]:
-        """Return all DeltaSigma covariance blocks for one bin pair.
+        """Return all Delta Sigma covariance blocks for one bin pair.
 
         Args:
             lens_bin_index: Index of the lens tomographic bin.
@@ -291,7 +293,7 @@ class DeltaSigmaCovarianceBuilder:
         source_bin_index: int,
         ingredients: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Return the ``gm x gm`` DeltaSigma covariance for one bin pair.
+        """Return the ``gm x gm`` Delta Sigma covariance for one bin pair.
 
         Args:
             lens_bin_index: Index of the lens tomographic bin.
@@ -536,7 +538,7 @@ class DeltaSigmaCovarianceBuilder:
         self,
         bin_pairs: BinPairs | None = None,
     ) -> tuple[list[tuple[int, int]], np.ndarray]:
-        """Return a block-diagonal covariance for the DeltaSigma signal.
+        """Return a block-diagonal covariance for the Delta Sigma signal.
 
         Args:
             bin_pairs: Optional set of ``(lens_bin, source_bin)`` pairs. If
@@ -788,19 +790,25 @@ class DeltaSigmaCovarianceBuilder:
         """
         kwargs = {} if hankel_kwargs is None else dict(hankel_kwargs)
 
+        kwargs.setdefault("backend", "matrix_zeros")
         kwargs.setdefault("r_min", 0.6)
         kwargs.setdefault("r_max", 110.0)
         kwargs.setdefault("k_min", float(self.k[0]))
         kwargs.setdefault("k_max", float(self.k[-1]))
+        kwargs.setdefault("radial_weight_method", "voronoi")
         kwargs.setdefault(
             "orders",
             tuple(sorted({self.order_gm, self.order_gg, self.order_cross})),
         )
-        kwargs.setdefault("n_zeros", 28000)
-        kwargs.setdefault("n_zeros_step", 1000)
-        kwargs.setdefault("prune_r", None)
-        kwargs.setdefault("verbose", False)
-        kwargs.setdefault("max_iterations", 1000)
+        if kwargs["backend"] == "matrix_direct":
+            kwargs.setdefault("n_r", 3000)
+            kwargs.setdefault("n_k", 3000)
+        elif kwargs["backend"] == "matrix_zeros":
+            kwargs.setdefault("n_zeros", 28000)
+            kwargs.setdefault("n_zeros_step", 1000)
+            kwargs.setdefault("prune_r", 0)
+            kwargs.setdefault("verbose", False)
+            kwargs.setdefault("max_iterations", 1000)
 
         return HankelTransform(**kwargs)
 

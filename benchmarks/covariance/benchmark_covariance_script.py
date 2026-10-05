@@ -67,7 +67,7 @@ covariance_builder = DeltaSigmaCovarianceBuilder(
     area_deg2=5000.0,
     sigma_e=0.26,
     galaxy_bias=params['b'],
-    k=np.geomspace(10**(-4), 30.0, 5000),
+    k=np.geomspace(8e-5, 30.0, 5000),
     nonlinear=True,
     #pi = pi_grid,
     hankel_kwargs={
@@ -76,11 +76,12 @@ covariance_builder = DeltaSigmaCovarianceBuilder(
         "k_min": 10**(-4),
         "k_max": 30.0,
         "orders": (2,), 
-        "n_zeros": 480000, # Starting here after some trial and error.
+        "n_zeros": 490000, # Starting here after some trial and error.
         "n_zeros_step": 1000,
         "prune_r": 0,
         "verbose": True,
         "max_iterations": 1000, 
+        "radial_weight_method": "gradient",
     },
     taper=True,
 )

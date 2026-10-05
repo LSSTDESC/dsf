@@ -1,7 +1,7 @@
-"""Noise terms for projected DeltaSigma covariance calculations.
+"""Noise terms for projected Delta Sigma covariance calculations.
 
 This module defines the discreteness and shape-noise terms that enter simple
-DeltaSigma covariance models. The functions distinguish between lens shot noise,
+Delta Sigma covariance models. The functions distinguish between lens shot noise,
 which comes from the finite number of lens galaxies, and source shape noise,
 which comes from the intrinsic ellipticity scatter of source galaxies.
 
@@ -77,7 +77,7 @@ def projected_shape_noise(
     """Return source shape noise in projected comoving coordinates.
 
     This is the shape-noise contribution expressed on the transverse comoving
-    plane at an effective lens distance. It is useful for DeltaSigma covariance
+    plane at an effective lens distance. It is useful for Delta Sigma covariance
     calculations written in projected physical or comoving coordinates rather
     than purely angular coordinates.
 

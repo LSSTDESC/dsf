@@ -62,12 +62,14 @@ def test_normalize_distribution_rejects_non_positive_integral():
     x = np.array([0.0, 1.0, 2.0])
     y = np.array([0.0, 0.0, 0.0])
 
-    with pytest.raises(ValueError, match="Distribution integral must be positive"):
+    with pytest.raises(
+        ValueError, match="Distribution integral must be positive"
+    ):
         normalize_distribution(x, y)
 
 
 def test_weighted_trapezoid_average_returns_scalar_for_1d_values():
-    """Tests that weighted averaging returns a scalar for one-dimensional values."""
+    """Tests that weighted averaging returns a scalar for 1D values."""
     x = np.array([0.0, 1.0, 2.0])
     values = np.array([2.0, 4.0, 6.0])
     weights = np.array([1.0, 1.0, 1.0])
@@ -89,7 +91,7 @@ def test_weighted_trapezoid_average_integrates_along_requested_axis():
 
 
 def test_weighted_trapezoid_average_can_return_weighted_integral():
-    """Tests that disabling weight normalization returns the weighted integral."""
+    """Tests that disabling weight normalization returns weighted integral."""
     x = np.array([0.0, 1.0, 2.0])
     values = np.array([2.0, 4.0, 6.0])
     weights = np.array([1.0, 1.0, 1.0])

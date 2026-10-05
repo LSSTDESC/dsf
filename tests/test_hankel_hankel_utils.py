@@ -1,5 +1,6 @@
 """Unit tests for ``dsf.hankel.hankel_utils``."""
 
+import itertools
 import numpy as np
 import pytest
 from scipy.special import jv
@@ -53,9 +54,7 @@ def test_bessel_zeros_half_integer_order_matches_analytic_roots():
 
 def test_bessel_zeros_rejects_non_positive_number_of_roots():
     """Tests that requesting zero or fewer Bessel roots fails."""
-    with pytest.raises(
-        ValueError, match="n_zeros must be a positive integer"
-    ):
+    with pytest.raises(ValueError, match="n_zeros must be a positive integer"):
         bessel_zeros(order=0, n_zeros=0)
 
 
@@ -113,9 +112,7 @@ def test_apply_taper_spectrum_uses_expected_cosine_taper_values():
         low_k_upper=1.0e-5,
     )
 
-    expected_low = 2.0 * np.cos(
-        (5.0e-6 - 1.0e-5) / (1.0e-5 - 0.0) * np.pi / 2.0
-    )
+    expected_low = 2.0 * np.cos((5.0e-6 - 1.0e-5) / (1.0e-5 - 0.0) * np.pi / 2.0)
     expected_high = 4.0 * np.cos((55.0 - 10.0) / (100.0 - 10.0) * np.pi / 2.0)
 
     np.testing.assert_allclose(tapered, [expected_low, expected_high])
@@ -207,7 +204,7 @@ def test_radial_weights_with_bins_clip_voronoi_cells():
     r = np.array([1.00, 1.04, 1.10])
     r_bins = np.array([1.00, 1.05, 1.20])
 
-    weights = radial_weights(r, r_bins=r_bins)
+    weights = radial_weights(r, r_bins=r_bins, radial_weight_method="voronoi")
 
     expected = 0.5 * np.array(
         [
@@ -237,7 +234,7 @@ def test_compute_bin_radial_matrix_uses_cross_bin_cell_weights():
     r_bins = np.array([1.00, 1.05, 1.20])
     values = np.array([10.0, 20.0, 30.0])
 
-    _, binned = compute_bin_radial_matrix(r, values, r_bins)
+    _, binned = compute_bin_radial_matrix(r, values, r_bins, radial_weight_method="voronoi")
 
     weights = 0.5 * np.array(
         [
@@ -261,22 +258,23 @@ def test_compute_bin_radial_matrix_constant_matrix_stays_constant_in_populated_b
     np.testing.assert_allclose(binned, np.full((2, 2), 7.0))
 
 
-def test_compute_bin_radial_matrix_matches_manual_weighted_average():
+@pytest.mark.parametrize("method", ["gradient", "voronoi", "polynomial"])
+def test_compute_bin_radial_matrix_matches_manual_weighted_average(method):
     """Test that radial matrix binning against a manual weighted average."""
     r = np.array([1.0, 2.0, 4.0, 8.0])
     r_bins = np.array([1.0, 3.0, 9.0])
     matrix = np.add.outer(r, 10.0 * r)
 
-    _, binned = compute_bin_radial_matrix(r, matrix, r_bins)
+    _, binned = compute_bin_radial_matrix(r, matrix, r_bins, radial_weight_method=method)
 
-    weights = radial_weights(r, r_bins=r_bins)
+    weights = radial_weights(r, r_bins=r_bins, radial_weight_method=method)
+    if method != "voronoi":
+        bin_index = np.digitize(r, r_bins) - 1
+        weights = (np.arange(2)[:, None] == bin_index[None, :]) * weights
     expected = np.zeros((2, 2))
-    for i in range(2):
-        for j in range(2):
-            weight_matrix = np.multiply.outer(weights[i], weights[j])
-            expected[i, j] = np.sum(matrix * weight_matrix) / np.sum(
-                weight_matrix
-            )
+    for i, j in itertools.product(range(2), range(2)):
+        weight_matrix = np.multiply.outer(weights[i], weights[j])
+        expected[i, j] = np.sum(matrix * weight_matrix) / np.sum(weight_matrix)
 
     np.testing.assert_allclose(binned, expected)
 
@@ -298,19 +296,51 @@ def test_compute_bin_radial_matrix_interpolates_across_empty_bins():
     r_bins = np.array([1.0, 3.0, 5.0, 9.0])
     matrix = np.ones((3, 3))
 
-    _, binned = compute_bin_radial_matrix(r, matrix, r_bins)
+    _, binned = compute_bin_radial_matrix(r, matrix, r_bins, radial_weight_method="voronoi")
 
     np.testing.assert_allclose(binned, np.ones((3, 3)))
 
 
-def test_compute_bin_radial_matrix_supports_three_dimensional_tensors():
+@pytest.mark.parametrize("method", ["gradient", "voronoi", "polynomial"])
+def test_compute_bin_radial_matrix_supports_three_dimensional_tensors(method):
     """Tests that radial binning supports higher-dimensional tensors."""
     r = np.array([1.0, 2.0, 4.0, 8.0])
     r_bins = np.array([1.0, 3.0, 9.0])
     tensor = np.ones((4, 4, 4))
 
-    centers, binned = compute_bin_radial_matrix(r, tensor, r_bins)
+    centers, binned = compute_bin_radial_matrix(r, tensor, r_bins, radial_weight_method=method)
 
     np.testing.assert_allclose(centers, np.sqrt([3.0, 27.0]))
     assert binned.shape == (2, 2, 2)
     np.testing.assert_allclose(binned, np.ones((2, 2, 2)))
+
+
+def test_radial_weights_gradient_matches_original_union_spacing():
+    r = np.array([1.0, 2.0, 4.0])
+    bins = np.array([1.0, 3.0, 5.0])
+    union = np.union1d(r, bins)
+    expected = r * np.gradient(union)[np.searchsorted(union, r)]
+    np.testing.assert_allclose(radial_weights(r, bins), expected)
+
+
+def test_radial_weights_polynomial_matches_independent_cubic_fit():
+    r = np.array([1.0, 4.0, 16.0])
+    bins = np.array([1.0, 2.0, 8.0, 16.0])
+    actual = radial_weights(r, bins, radial_weight_method="polynomial")
+    np.testing.assert_allclose(actual, [33.0 / 28.0, 11.0, 1156.0 / 7.0])
+
+
+@pytest.mark.parametrize("method", ["gradient", "polynomial"])
+def test_gradient_methods_reject_bins_without_samples(method):
+    with pytest.raises(ValueError, match="zero radial support"):
+        compute_bin_radial_matrix(
+            np.array([1.0, 2.0, 8.0]),
+            np.ones((3, 3)),
+            np.array([1.0, 3.0, 5.0, 9.0]),
+            radial_weight_method=method,
+        )
+
+
+def test_radial_weights_reject_unknown_method():
+    with pytest.raises(ValueError, match="radial_weight_method"):
+        radial_weights(np.array([1.0, 2.0]), radial_weight_method="invalid")

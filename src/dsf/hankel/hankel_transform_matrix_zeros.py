@@ -16,6 +16,8 @@ from scipy.special import jv
 
 from dsf.hankel.hankel_transform_base import HankelTransformBase
 from dsf.hankel.hankel_utils import (
+    RadialWeightMethod,
+    _validate_radial_weight_method,
     bessel_zeros,
     compute_bin_radial_matrix,
     compute_correlation_matrix,
@@ -62,6 +64,8 @@ class HankelTransformMatrixZeros(HankelTransformBase):
             radial spacing.
         verbose: Whether to print grid-construction diagnostics.
         max_iterations: Maximum number of grid-construction attempts per order.
+        radial_weight_method: Radial bin weights: ``voronoi`` (default),
+            ``gradient``, or ``polynomial``.
     """
 
     def __init__(
@@ -77,6 +81,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         prune_log_space: bool = True,
         verbose: bool = False,
         max_iterations: int = 100,
+        radial_weight_method: RadialWeightMethod = "voronoi",
     ) -> None:
         super().__init__()
 
@@ -91,6 +96,8 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         self.prune_log_space = bool(prune_log_space)
         self.verbose = bool(verbose)
         self.max_iterations = max_iterations
+        _validate_radial_weight_method(radial_weight_method)
+        self.radial_weight_method = radial_weight_method
 
         self._validate_init_inputs()
         self._init_cache()
@@ -141,9 +148,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
             if not np.isfinite(order):
                 raise ValueError("orders must contain only finite values.")
             if order < 0:
-                raise ValueError(
-                    "orders must contain non-negative Bessel orders."
-                )
+                raise ValueError("orders must contain non-negative Bessel orders.")
 
     def _log(self, message: str) -> None:
         """Print grid diagnostics when verbose mode is enabled."""
@@ -180,18 +185,12 @@ class HankelTransformMatrixZeros(HankelTransformBase):
 
             if np.max(r) < self.r_max:
                 n_zeros += self.n_zeros_step
-                self._log(
-                    f"order={order}: increasing n_zeros to {n_zeros} "
-                    "to cover r_max"
-                )
+                self._log(f"order={order}: increasing n_zeros to {n_zeros} to cover r_max")
                 continue
 
             if np.min(k) > self.k_min:
                 n_zeros += self.n_zeros_step
-                self._log(
-                    f"order={order}: increasing n_zeros to {n_zeros} "
-                    "to cover k_min"
-                )
+                self._log(f"order={order}: increasing n_zeros to {n_zeros} to cover k_min")
                 continue
 
             break
@@ -279,9 +278,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
 
         validate_strictly_increasing(indices, "indices", min_size=2)
         if np.min(indices) != 0 or np.max(indices) != n - 1:
-            raise ValueError(
-                "Pruned array must include the first and last values."
-            )
+            raise ValueError("Pruned array must include the first and last values.")
 
         return r[indices]
 
@@ -345,9 +342,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         )
 
         try:
-            validate_interpolation_within_bounds(
-                self.k[order], radial_arr, "matrix k grid"
-            )
+            validate_interpolation_within_bounds(self.k[order], radial_arr, "matrix k grid")
         except ValueError as e:
             raise ValueError(
                 "The tabulated radial values of the spectrum do not cover "
@@ -401,9 +396,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         if callable(spectrum):
             values = np.asarray(spectrum(target_k, **kwargs), dtype=float)
         elif radial_input is None:
-            raise ValueError(
-                "radial_input must be supplied for tabulated spectra."
-            )
+            raise ValueError("radial_input must be supplied for tabulated spectra.")
         else:
             values = self._evaluate_tabulated_spectrum(
                 radial_input=radial_input,
@@ -419,9 +412,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
                 f"Got {values.shape}, expected {target_k.shape}."
             )
         if np.any(~np.isfinite(values)):
-            raise ValueError(
-                "Evaluated spectrum must contain only finite values."
-            )
+            raise ValueError("Evaluated spectrum must contain only finite values.")
 
         return values
 
@@ -448,9 +439,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         product = np.ones_like(self.k[order])
         for spectrum in spectra:
             if spectrum.shape != self.k[order].shape:
-                raise ValueError(
-                    "Each spectrum must be evaluated on the internal k grid."
-                )
+                raise ValueError("Each spectrum must be evaluated on the internal k grid.")
             product *= spectrum
 
         weighted = product / self.j_next_at_zeros[order] ** 2
@@ -463,9 +452,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         elif ndim == 2:
             transformed = np.dot(j_matrix, (j_matrix * weighted).T) * norm
         else:
-            raise ValueError(
-                f"Only 1 or 2 spectra are supported. Got {ndim}."
-            )
+            raise ValueError(f"Only 1 or 2 spectra are supported. Got {ndim}.")
 
         return self.r[order], np.asarray(transformed, dtype=float)
 
@@ -586,12 +573,14 @@ class HankelTransformMatrixZeros(HankelTransformBase):
 
         expected_shape = tuple([r_arr.size] * matrix_arr.ndim)
         if matrix_arr.shape != expected_shape:
-            raise ValueError(
-                f"matrix shape must be {expected_shape}. "
-                f"Got {matrix_arr.shape}."
-            )
+            raise ValueError(f"matrix shape must be {expected_shape}. Got {matrix_arr.shape}.")
 
-        return compute_bin_radial_matrix(r_arr, matrix_arr, r_bins_arr)
+        return compute_bin_radial_matrix(
+            r_arr,
+            matrix_arr,
+            r_bins_arr,
+            radial_weight_method=self.radial_weight_method,
+        )
 
     def correlation_matrix(self, covariance: FloatArray) -> FloatArray:
         """Return the correlation matrix associated with a covariance matrix.
@@ -611,9 +600,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         if np.any(~np.isfinite(covariance_arr)):
             raise ValueError("covariance must contain only finite values.")
         if np.any(np.diag(covariance_arr) <= 0.0):
-            raise ValueError(
-                "covariance diagonal must contain only positive values."
-            )
+            raise ValueError("covariance diagonal must contain only positive values.")
 
         return compute_correlation_matrix(covariance_arr)
 
@@ -635,8 +622,6 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         if np.any(~np.isfinite(covariance_arr)):
             raise ValueError("covariance must contain only finite values.")
         if np.any(np.diag(covariance_arr) <= 0.0):
-            raise ValueError(
-                "covariance diagonal must contain only positive values."
-            )
+            raise ValueError("covariance diagonal must contain only positive values.")
 
         return compute_diagonal_error(covariance_arr)

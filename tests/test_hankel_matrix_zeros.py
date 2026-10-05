@@ -13,6 +13,7 @@ HANKEL_MODULE = "dsf.hankel.hankel_transform_matrix_zeros"
 def make_fake_transform():
     """Return a HankelTransformMatrixZeros instance with small grids."""
     transform = HankelTransformMatrixZeros.__new__(HankelTransformMatrixZeros)
+    transform.radial_weight_method = "gradient"
 
     transform.k = {0: np.array([1.0, 2.0, 4.0])}
     transform.r = {0: np.array([10.0, 20.0])}
@@ -192,9 +193,7 @@ def test_project_spectra_to_radial_projects_two_spectra_to_matrix():
     product = spectrum_1 * spectrum_2
     weighted = product / transform.j_next_at_zeros[0] ** 2
     j_matrix = transform.j[0]
-    expected = (
-        np.dot(j_matrix, (j_matrix * weighted).T) * transform.normalization[0]
-    )
+    expected = np.dot(j_matrix, (j_matrix * weighted).T) * transform.normalization[0]
 
     np.testing.assert_allclose(r, transform.r[0])
     np.testing.assert_allclose(result, expected)
@@ -243,10 +242,7 @@ def test_projected_covariance_projects_two_input_spectra():
 
     product = pk1 * pk2
     weighted = product / transform.j_next_at_zeros[0] ** 2
-    expected = (
-        np.dot(transform.j[0], (transform.j[0] * weighted).T)
-        * transform.normalization[0]
-    )
+    expected = np.dot(transform.j[0], (transform.j[0] * weighted).T) * transform.normalization[0]
 
     np.testing.assert_allclose(r, transform.r[0])
     np.testing.assert_allclose(result, expected)
@@ -264,9 +260,7 @@ def test_spherical_correlation_returns_not_implemented():
     """Test that the FFTLog backend does not support spherical_correlation."""
     transform = make_fake_transform()
 
-    with pytest.raises(
-        NotImplementedError, match="does not support spherical_correlation"
-    ):
+    with pytest.raises(NotImplementedError, match="does not support spherical_correlation"):
         transform.spherical_correlation(order=0)
 
 
@@ -287,7 +281,8 @@ def test_bin_radial_matrix_delegates_valid_inputs(monkeypatch):
     expected_centers = np.array([1.5, 2.5])
     expected_matrix = np.eye(2)
 
-    def fake_compute_bin_radial_matrix(r_arg, matrix_arg, r_bins_arg):
+    def fake_compute_bin_radial_matrix(r_arg, matrix_arg, r_bins_arg, *, radial_weight_method):
+        assert radial_weight_method == "gradient"
         np.testing.assert_allclose(r_arg, r)
         np.testing.assert_allclose(matrix_arg, matrix)
         np.testing.assert_allclose(r_bins_arg, r_bins)
@@ -413,9 +408,7 @@ def test_taper_spectrum_delegates_valid_power_spectrum(monkeypatch):
 )
 def test_init_rejects_invalid_inputs(monkeypatch, kwargs):
     """Test that HankelTransform initialization rejects invalid config."""
-    monkeypatch.setattr(
-        HankelTransformMatrixZeros, "_build_all_grids", lambda self: None
-    )
+    monkeypatch.setattr(HankelTransformMatrixZeros, "_build_all_grids", lambda self: None)
 
     with pytest.raises(ValueError):
         HankelTransformMatrixZeros(**kwargs)
@@ -425,9 +418,7 @@ def test_prune_radial_grid_returns_original_grid_when_pruning_disabled(
     monkeypatch,
 ):
     """Test that radial pruning can be disabled."""
-    monkeypatch.setattr(
-        HankelTransformMatrixZeros, "_build_all_grids", lambda self: None
-    )
+    monkeypatch.setattr(HankelTransformMatrixZeros, "_build_all_grids", lambda self: None)
     transform = HankelTransformMatrixZeros(prune_r=0)
     r = np.array([1.0, 2.0, 3.0])
 
@@ -438,9 +429,7 @@ def test_prune_radial_grid_returns_original_grid_when_pruning_disabled(
 
 def test_prune_radial_grid_keeps_endpoints_for_linear_pruning(monkeypatch):
     """Test that linearly pruned radial grids keep both endpoints."""
-    monkeypatch.setattr(
-        HankelTransformMatrixZeros, "_build_all_grids", lambda self: None
-    )
+    monkeypatch.setattr(HankelTransformMatrixZeros, "_build_all_grids", lambda self: None)
     transform = HankelTransformMatrixZeros(prune_r=2, prune_log_space=False)
     r = np.arange(1.0, 8.0)
 
@@ -454,9 +443,7 @@ def test_select_radial_range_selects_grid_covering_requested_range(
     monkeypatch,
 ):
     """Test that radial range selection includes bracketing grid points."""
-    monkeypatch.setattr(
-        HankelTransformMatrixZeros, "_build_all_grids", lambda self: None
-    )
+    monkeypatch.setattr(HankelTransformMatrixZeros, "_build_all_grids", lambda self: None)
     transform = HankelTransformMatrixZeros(r_min=2.5, r_max=6.5)
     r = np.array([1.0, 2.0, 3.0, 5.0, 7.0, 9.0])
 
@@ -471,7 +458,8 @@ def test_matrix_zeros_bin_radial_matrix_delegates_to_helper(monkeypatch):
     """Test that matrix binning delegates to the shared helper."""
     transform = make_fake_transform()
 
-    def fake_compute_bin_radial_matrix(r, matrix, r_bins):
+    def fake_compute_bin_radial_matrix(r, matrix, r_bins, *, radial_weight_method):
+        assert radial_weight_method == "gradient"
         return np.array([1.5, 2.5]), matrix[:2, :2]
 
     monkeypatch.setattr(
@@ -503,9 +491,7 @@ def test_evaluate_spectrum_rejects_interpolation_outside_grid():
 
     with pytest.raises(
         ValueError,
-        match=(
-            "radial values of the spectrum do not cover the full matrix grid."
-        ),
+        match=("radial values of the spectrum do not cover the full matrix grid."),
     ):
         transform._evaluate_spectrum(
             spectrum=[1.0, 1.0],

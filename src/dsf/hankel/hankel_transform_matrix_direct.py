@@ -21,6 +21,10 @@ from scipy.special import jv
 from dsf.hankel.hankel_transform_matrix_zeros import (
     HankelTransformMatrixZeros,
 )
+from dsf.hankel.hankel_utils import (
+    RadialWeightMethod,
+    _validate_radial_weight_method,
+)
 from dsf.utils.types import FloatArray
 from dsf.utils.validators import (
     as_2d_float_array,
@@ -50,6 +54,8 @@ class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
         n_r: Number of radial grid points to use for the Hankel transform.
         n_k: Number of wavenumber grid points to use for Hankel transform.
         orders: Bessel orders to precompute.
+        radial_weight_method: Radial bin weights: ``voronoi`` (default),
+            ``gradient``, or ``polynomial``.
     """
 
     def __init__(
@@ -61,6 +67,7 @@ class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
         n_r: int = 1000,
         n_k: int = 1000,
         orders: Iterable[float | int] = (0, 2),
+        radial_weight_method: RadialWeightMethod = "voronoi",
     ) -> None:
         self.r_min = float(r_min)
         self.r_max = float(r_max)
@@ -70,6 +77,8 @@ class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
         self.n_k = n_k
 
         self.orders = tuple(orders)
+        _validate_radial_weight_method(radial_weight_method)
+        self.radial_weight_method = radial_weight_method
 
         self._validate_init_inputs()
         self._init_cache()
@@ -159,9 +168,7 @@ class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
         product = np.ones_like(self.k[order])
         for spectrum in spectra:
             if spectrum.shape != self.k[order].shape:
-                raise ValueError(
-                    "Each spectrum must be evaluated on the internal k grid."
-                )
+                raise ValueError("Each spectrum must be evaluated on the internal k grid.")
             product *= spectrum
 
         weight = self.weights[order]
@@ -175,8 +182,6 @@ class HankelTransformMatrixDirect(HankelTransformMatrixZeros):
         elif ndim == 2:
             transformed = (j * weight * product) @ j_t
         else:
-            raise ValueError(
-                f"Only 1 or 2 spectra are supported. Got {ndim}."
-            )
+            raise ValueError(f"Only 1 or 2 spectra are supported. Got {ndim}.")
 
         return self.r[order], np.asarray(transformed, dtype=float)

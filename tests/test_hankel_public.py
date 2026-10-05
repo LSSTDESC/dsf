@@ -4,6 +4,38 @@ import numpy as np
 import pytest
 
 from dsf.hankel.hankel import HankelTransform
+from dsf.hankel.hankel_utils import compute_bin_radial_matrix
+
+
+@pytest.mark.parametrize("backend", ["matrix_zeros", "matrix_direct"])
+@pytest.mark.parametrize("method", ["gradient", "voronoi", "polynomial"])
+def test_public_radial_weight_selection(backend, method):
+    """Constructor selection must reach the shared radial binning helper."""
+    kwargs = (
+        {"n_zeros": 100, "n_zeros_step": 100} if backend == "matrix_zeros" else {"n_r": 4, "n_k": 5}
+    )
+    transform = HankelTransform(
+        backend=backend,
+        r_min=1.0,
+        r_max=4.0,
+        k_min=0.1,
+        k_max=10.0,
+        orders=(0,),
+        radial_weight_method=method,
+        **kwargs,
+    )
+    r = np.array([1.0, 2.0, 3.0, 4.0])
+    bins = np.array([1.0, 2.5, 4.0])
+    matrix = np.add.outer(r, r)
+    _, expected = compute_bin_radial_matrix(r, matrix, bins, radial_weight_method=method)
+    _, actual = transform.bin_radial_matrix(r, matrix, bins)
+    np.testing.assert_allclose(actual, expected)
+
+
+@pytest.mark.parametrize("backend", ["matrix_zeros", "matrix_direct"])
+def test_public_rejects_unknown_radial_weight_method(backend):
+    with pytest.raises(ValueError, match="radial_weight_method"):
+        HankelTransform(backend=backend, radial_weight_method="invalid")
 
 
 def test_hankel_transform_accepts_matrix_alias(monkeypatch):

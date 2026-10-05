@@ -12,7 +12,12 @@ the public calling layer.
 
 from __future__ import annotations
 
+from typing import Literal
+
 import numpy as np
+from derivkit.derivatives.local_polynomial_derivative.fit import (
+    centered_polyfit_least_squares,
+)
 from scipy.optimize import brentq
 from scipy.special import jn_zeros, jv
 
@@ -137,9 +142,43 @@ def radial_bin_centers(r_bins: FloatArray) -> FloatArray:
     return np.sqrt(r_bins[1:] * r_bins[:-1])
 
 
+RadialWeightMethod = Literal["gradient", "voronoi", "polynomial"]
+
+
+def _validate_radial_weight_method(method: str) -> None:
+    if method not in ("gradient", "voronoi", "polynomial"):
+        raise ValueError("radial_weight_method must be 'gradient', 'voronoi', or 'polynomial'.")
+
+
+def _polynomial_gradient(values: FloatArray) -> FloatArray:
+    """Differentiate the sample-index grid using local cubic regression."""
+
+    sample_indices = np.arange(values.size, dtype=float)
+    stencil_size = min(9, values.size)
+    stencil_start = np.clip(
+        np.arange(values.size) - stencil_size // 2,
+        0,
+        values.size - stencil_size,
+    )
+    polynomial_degree = min(3, stencil_size - 1)
+    gradient = np.empty_like(values)
+    for position, start in enumerate(stencil_start):
+        local_indices = np.arange(start, start + stencil_size)
+        coefficients, _, _ = centered_polyfit_least_squares(
+            sample_indices[position],
+            sample_indices[local_indices],
+            values[local_indices, None],
+            polynomial_degree,
+        )
+        gradient[position] = coefficients[1, 0]
+    return gradient
+
+
 def radial_weights(
     r: FloatArray,
     r_bins: FloatArray | None = None,
+    *,
+    radial_weight_method: RadialWeightMethod = "voronoi",
 ) -> FloatArray:
     """Return radial averaging weights.
 
@@ -149,15 +188,34 @@ def radial_weights(
     Args:
         r: Radial grid.
         r_bins: Optional radial bin edges.
+        radial_weight_method: ``gradient`` uses NumPy spacing on the union
+            grid; ``polynomial`` uses DerivKit local cubic regression on
+            up to nine union-grid samples; ``voronoi`` integrates clipped
+            midpoint cells exactly with respect to the annular measure.
 
     Returns:
         Radial weights proportional to :math:`r\\,dr`. If ``r_bins`` is
-        provided, the result has shape ``(n_bins, n_r)`` and contains the
+        provided and the method is ``voronoi``, the result has shape
+        ``(n_bins, n_r)`` and contains the
         measure of each radial point's Voronoi cell intersected with each
         bin.
     """
+    _validate_radial_weight_method(radial_weight_method)
     if r_bins is None:
+        if radial_weight_method == "voronoi":
+            raise ValueError("r_bins is required for Voronoi radial weights.")
+        if radial_weight_method == "polynomial":
+            return r * _polynomial_gradient(r)
         return r * np.gradient(r)
+
+    if radial_weight_method != "voronoi":
+        r_union = np.union1d(r, r_bins)
+        dr_union = (
+            np.gradient(r_union)
+            if radial_weight_method == "gradient"
+            else _polynomial_gradient(r_union)
+        )
+        return r * dr_union[np.searchsorted(r_union, r)]
 
     cell_midpoints = 0.5 * (r[:-1] + r[1:])
     cell_lower = np.concatenate(([-np.inf], cell_midpoints))
@@ -202,6 +260,8 @@ def compute_bin_radial_matrix(
     r: FloatArray,
     matrix: FloatArray,
     r_bins: FloatArray,
+    *,
+    radial_weight_method: RadialWeightMethod = "voronoi",
 ) -> tuple[FloatArray, FloatArray]:
     """Average a radial matrix or tensor into radial bins.
 
@@ -209,14 +269,15 @@ def compute_bin_radial_matrix(
     the same grid ``r``. The returned quantity is the annular-bin average of
     the input matrix or tensor.
 
-    Radial samples represent piecewise-constant values over Voronoi cells.
-    Cells that cross a bin edge contribute their intersected radial measure
-    to both neighboring bins.
+    Gradient and polynomial methods assign each sample to a single left-inclusive,
+    right-exclusive bin. Voronoi cells crossing a bin edge contribute to
+    both neighboring bins, assuming piecewise-constant sample values.
 
     Args:
         r: Radial grid associated with each axis of ``matrix``.
         matrix: Radial matrix or tensor to bin.
         r_bins: Radial bin edges.
+        radial_weight_method: ``gradient``, ``voronoi``, or ``polynomial``.
 
     Returns:
         Radial bin centers and the binned matrix or tensor.
@@ -224,7 +285,14 @@ def compute_bin_radial_matrix(
     ndim = matrix.ndim
     centers = radial_bin_centers(r_bins)
 
-    weighted_membership = radial_weights(r, r_bins=r_bins)
+    weights = radial_weights(r, r_bins=r_bins, radial_weight_method=radial_weight_method)
+    if radial_weight_method == "voronoi":
+        weighted_membership = weights
+    else:
+        bin_index = np.digitize(r, r_bins) - 1
+        weighted_membership = (np.arange(centers.size)[:, None] == bin_index[None, :]) * weights[
+            None, :
+        ]
     bin_weight_sums = np.sum(weighted_membership, axis=1)
 
     if np.any(bin_weight_sums == 0.0):

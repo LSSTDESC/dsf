@@ -59,9 +59,7 @@ class HankelTransform:
             backend_class = _BACKENDS[backend]
         except KeyError as e:
             valid = "', '".join(_BACKENDS)
-            raise ValueError(
-                f"Unsupported backend '{backend}'. Use one of: '{valid}'."
-            ) from e
+            raise ValueError(f"Unsupported backend '{backend}'. Use one of: '{valid}'.") from e
 
         self.backend_name = backend
         self.backend = backend_class(**kwargs)

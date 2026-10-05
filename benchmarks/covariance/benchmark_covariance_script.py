@@ -81,6 +81,7 @@ covariance_builder = DeltaSigmaCovarianceBuilder(
         "prune_r": 0,
         "verbose": True,
         "max_iterations": 1000, 
+        "radial_weight_method": "gradient",
     },
     taper=True,
 )

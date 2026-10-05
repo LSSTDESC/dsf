@@ -795,6 +795,7 @@ class DeltaSigmaCovarianceBuilder:
         kwargs.setdefault("r_max", 110.0)
         kwargs.setdefault("k_min", float(self.k[0]))
         kwargs.setdefault("k_max", float(self.k[-1]))
+        kwargs.setdefault("radial_weight_method", "voronoi")
         kwargs.setdefault(
             "orders",
             tuple(sorted({self.order_gm, self.order_gg, self.order_cross})),

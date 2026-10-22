@@ -10,6 +10,7 @@ perform the FFTLog-based Hankel transforms directly, without requiring a
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 import numpy as np
@@ -37,7 +38,7 @@ class HankelTransformFFTLog(HankelTransformBase):
         order: float | int = 0,
         radial_input: ArrayLike | None = None,
         taper: bool = False,
-        taper_kwargs: dict[str, Any] | None = None,
+        taper_kwargs: Mapping[str, Any] | None = None,
         **kwargs,
     ) -> FloatArray:
         """Evaluate a spectrum on a supplied wavenumber grid.
@@ -70,9 +71,7 @@ class HankelTransformFFTLog(HankelTransformBase):
             )
 
         if np.any(~np.isfinite(values)):
-            raise ValueError(
-                "Evaluated spectrum must contain only finite values."
-            )
+            raise ValueError("Evaluated spectrum must contain only finite values.")
 
         return values
 
@@ -82,7 +81,7 @@ class HankelTransformFFTLog(HankelTransformBase):
         spectrum: SpectrumInput | None = None,
         order: float | int = 2,
         taper: bool = False,
-        taper_kwargs: dict | None = None,
+        taper_kwargs: Mapping[str, Any] | None = None,
         use_offset: bool = False,
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
@@ -106,9 +105,7 @@ class HankelTransformFFTLog(HankelTransformBase):
         if spectrum is None:
             raise ValueError("spectrum must be supplied.")
 
-        radial_input_arr = as_1d_float_array(
-            radial_input, "radial_input", min_size=2
-        )
+        radial_input_arr = as_1d_float_array(radial_input, "radial_input", min_size=2)
 
         spectrum_eval = self._evaluate_spectrum(
             spectrum,
@@ -132,7 +129,7 @@ class HankelTransformFFTLog(HankelTransformBase):
         pk: SpectrumInput | None = None,
         order: float | int = 0,
         taper: bool = False,
-        taper_kwargs: dict | None = None,
+        taper_kwargs: Mapping[str, Any] | None = None,
         use_offset: bool = False,
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
@@ -165,9 +162,7 @@ class HankelTransformFFTLog(HankelTransformBase):
             **kwargs,
         )
 
-        return hankel_spherical(
-            k=k_pk_arr, pk=pk_eval, order=order, use_offset=use_offset
-        )
+        return hankel_spherical(k=k_pk_arr, pk=pk_eval, order=order, use_offset=use_offset)
 
 
 def hankel_projected(
@@ -190,9 +185,7 @@ def hankel_projected(
             Radial grid, in inverse units of ``radial_input``, and the projected
             radial statistic.
     """
-    radial_input_arr = validate_hankel_1d_grid_spacing(
-        radial_input, "radial_input"
-    )
+    radial_input_arr = validate_hankel_1d_grid_spacing(radial_input, "radial_input")
     spectrum_arr = as_1d_float_array(spectrum, "spectrum", min_size=2)
     validate_power_spectrum_inputs(
         radial_input_arr,
@@ -201,12 +194,8 @@ def hankel_projected(
         pk_name="spectrum",
     )
 
-    dln_radial_input = float(
-        np.log(radial_input_arr[1] / radial_input_arr[0])
-    )
-    offset = (
-        fhtoffset(dln=dln_radial_input, mu=order) if use_offset else 0.0
-    )
+    dln_radial_input = float(np.log(radial_input_arr[1] / radial_input_arr[0]))
+    offset = fhtoffset(dln=dln_radial_input, mu=order) if use_offset else 0.0
 
     transformed_power = ifht(
         spectrum_arr * radial_input_arr,

@@ -9,7 +9,8 @@ radial tensors that appear in weak-lensing and Delta Sigma calculations.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
+from typing import Any
 
 import numpy as np
 from scipy.special import jv
@@ -300,7 +301,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         spectrum: ArrayLike,
         order: float | int,
         taper: bool = False,
-        taper_kwargs: dict | None = None,
+        taper_kwargs: Mapping[str, Any] | None = None,
         grid_spacing: str = "linear",
     ) -> FloatArray:
         """Evaluate a tabulated spectrum on the internal Hankel grid.
@@ -374,7 +375,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         order: float | int = 0,
         radial_input: ArrayLike | None = None,
         taper: bool = False,
-        taper_kwargs: dict | None = None,
+        taper_kwargs: Mapping[str, Any] | None = None,
         **kwargs,
     ) -> FloatArray:
         """Evaluate a spectrum on the internal Hankel grid.
@@ -462,7 +463,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         spectrum: SpectrumInput | None = None,
         order: float | int = 2,
         taper: bool = False,
-        taper_kwargs: dict | None = None,
+        taper_kwargs: Mapping[str, Any] | None = None,
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
         """Compute a projected radial statistic from one spectrum.
@@ -500,7 +501,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         pk2: SpectrumInput | None = None,
         order: float | int = 0,
         taper: bool = False,
-        taper_kwargs: dict | None = None,
+        taper_kwargs: Mapping[str, Any] | None = None,
         **kwargs,
     ) -> tuple[FloatArray, FloatArray]:
         """Compute a projected covariance matrix from two spectra.

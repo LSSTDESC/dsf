@@ -17,6 +17,9 @@ message.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from typing import Any
+
 from dsf.hankel.hankel_utils import apply_taper_spectrum
 from dsf.utils.types import ArrayLike, FloatArray, SpectrumInput
 from dsf.utils.validators import (
@@ -57,7 +60,7 @@ class HankelTransformBase:
         power_spectrum: SpectrumInput | None = None,
         order: float | int = 0,
         taper: bool = False,
-        taper_kwargs: dict | None = None,
+        taper_kwargs: Mapping[str, Any] | None = None,
         **kwargs,
     ) -> FloatArray:
         """Return a power spectrum evaluated on a Hankel grid.

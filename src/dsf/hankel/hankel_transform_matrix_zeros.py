@@ -284,7 +284,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
 
     def available_orders(self) -> tuple[float | int, ...]:
         """Return the Bessel orders available for projection."""
-        return tuple(self.k.keys())
+        return tuple(self.orders)
 
     def _check_order(self, order: float | int) -> None:
         """Validate that a requested Bessel order is available."""

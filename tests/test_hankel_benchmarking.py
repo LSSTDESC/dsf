@@ -25,9 +25,7 @@ def test_hankel_spherical_fftlog_matches_ccl():
         pk=cosmo.nonlin_matter_power(k_arr, 1 / (1 + z)),
         use_offset=False,
     )
-    xi_ccl = ccl.correlation_3d(
-        cosmo, r=r_arr, a=1 / (1 + z), p_of_k_a=cosmo.get_nonlin_power()
-    )
+    xi_ccl = ccl.correlation_3d(cosmo, r=r_arr, a=1 / (1 + z), p_of_k_a=cosmo.get_nonlin_power())
 
     assert np.allclose(xi_dsf, xi_ccl, rtol=0.005, atol=0)
 
@@ -41,9 +39,7 @@ def test_hankel_projected_fftlog_matches_direct_integration():
     theta_arr = np.radians(np.geomspace(0.1, 100, 100))
     c_ell_arr = cosmo.nonlin_power(ell_arr, 1)
 
-    bessel_kernel = (
-        jv(2, ell_arr[:, None] * theta_arr[None, :]) * ell_arr[:, None]
-    )
+    bessel_kernel = jv(2, ell_arr[:, None] * theta_arr[None, :]) * ell_arr[:, None]
     direct_integ_result = trapezoid_integral(
         bessel_kernel * c_ell_arr[:, None],
         ell_arr,
@@ -71,9 +67,7 @@ def test_hankel_projected_matrix_zeros_matches_direct_integration():
     theta_arr = np.radians(np.geomspace(3, 100, 100))
     c_ell_arr = cosmo.nonlin_power(ell_arr, 1)
 
-    bessel_kernel = (
-        jv(2, ell_arr[:, None] * theta_arr[None, :]) * ell_arr[:, None]
-    )
+    bessel_kernel = jv(2, ell_arr[:, None] * theta_arr[None, :]) * ell_arr[:, None]
     direct_integ_result = trapezoid_integral(
         bessel_kernel * c_ell_arr[:, None],
         ell_arr,
@@ -106,6 +100,53 @@ def test_hankel_projected_matrix_zeros_matches_direct_integration():
 
 
 @pytest.mark.slow
+def test_hankel_projected_covariance_matrix_zeros_matches_direct_integration():
+    """Tests that matrix_zeros covariance agrees with direct 2D Bessel integration."""
+    cosmo = ccl.cosmology.CosmologyVanillaLCDM()
+
+    ell_arr = np.geomspace(1e-6, 1e6, 30000)
+    theta_arr = np.radians(np.geomspace(3, 100, 100))
+    c_ell_arr = cosmo.nonlin_power(ell_arr, 1)
+
+    ht_matz = HankelTransform(
+        backend="matrix_zeros",
+        r_min=np.min(theta_arr),
+        r_max=np.max(theta_arr),
+        k_min=8.0e-2,
+        k_max=1.0e3,
+        max_iterations=300,
+        n_zeros=25000,
+        n_zeros_step=5000,
+        prune_r=0,
+        verbose=True,
+        orders=[2],
+    )
+
+    r, dsf_result = ht_matz.projected_covariance(
+        k_pk=ell_arr,
+        pk1=c_ell_arr,
+        pk2=c_ell_arr,
+        order=2,
+    )
+
+    # Sample the native grid to avoid interpolation and keep the reference small.
+    indices = np.unique(np.geomspace(1, r.size, 30).astype(int) - 1)
+    bessel_kernel = jv(2, ell_arr[:, None] * r[indices][None, :])
+    direct_integ_result = np.empty((indices.size, indices.size))
+    for i in range(indices.size):
+        # Cov(r_i, r_j) = integral ell d ell C_ell^2 J_2(ell r_i) J_2(ell r_j) / (2 pi).
+        direct_integ_result[i] = trapezoid_integral(
+            (ell_arr * c_ell_arr**2 * bessel_kernel[:, i])[:, None] * bessel_kernel,
+            ell_arr,
+            axis=0,
+        ) / (2 * np.pi)
+
+    assert np.allclose(
+        dsf_result[np.ix_(indices, indices)], direct_integ_result, rtol=0.005, atol=0
+    )
+
+
+@pytest.mark.slow
 def test_hankel_projected_matrix_direct_matches_direct_integration():
     """Tests that matrix_direct hankel_projected agrees with direct Bessel integration."""
     cosmo = ccl.cosmology.CosmologyVanillaLCDM()
@@ -114,9 +155,7 @@ def test_hankel_projected_matrix_direct_matches_direct_integration():
     theta_arr = np.radians(np.geomspace(3, 100, 100))
     c_ell_arr = cosmo.nonlin_power(ell_arr, 1)
 
-    bessel_kernel = (
-        jv(2, ell_arr[:, None] * theta_arr[None, :]) * ell_arr[:, None]
-    )
+    bessel_kernel = jv(2, ell_arr[:, None] * theta_arr[None, :]) * ell_arr[:, None]
     direct_integ_result = trapezoid_integral(
         bessel_kernel * c_ell_arr[:, None],
         ell_arr,
@@ -143,6 +182,50 @@ def test_hankel_projected_matrix_direct_matches_direct_integration():
     )
 
     assert np.allclose(dsf_result, direct_integ_result, rtol=0.005, atol=0)
+
+
+@pytest.mark.slow
+def test_hankel_projected_covariance_matrix_direct_matches_direct_integration():
+    """Tests that matrix_direct covariance agrees with direct 2D Bessel integration."""
+    cosmo = ccl.cosmology.CosmologyVanillaLCDM()
+
+    ell_arr = np.geomspace(1e-6, 1e6, 30000)
+    theta_arr = np.radians(np.geomspace(3, 100, 100))
+    c_ell_arr = cosmo.nonlin_power(ell_arr, 1)
+
+    ht_matd = HankelTransform(
+        backend="matrix_direct",
+        r_min=np.min(theta_arr),
+        r_max=np.max(theta_arr),
+        k_min=8.0e-2,
+        k_max=1.0e3,
+        n_k=5000,
+        n_r=2000,
+        orders=[2],
+    )
+
+    r, dsf_result = ht_matd.projected_covariance(
+        k_pk=ell_arr,
+        pk1=c_ell_arr,
+        pk2=c_ell_arr,
+        order=2,
+    )
+
+    # Sample the native grid to avoid interpolation and keep the reference small.
+    indices = np.unique(np.geomspace(1, r.size, 30).astype(int) - 1)
+    bessel_kernel = jv(2, ell_arr[:, None] * r[indices][None, :])
+    direct_integ_result = np.empty((indices.size, indices.size))
+    for i in range(indices.size):
+        # Cov(r_i, r_j) = integral ell d ell C_ell^2 J_2(ell r_i) J_2(ell r_j) / (2 pi).
+        direct_integ_result[i] = trapezoid_integral(
+            (ell_arr * c_ell_arr**2 * bessel_kernel[:, i])[:, None] * bessel_kernel,
+            ell_arr,
+            axis=0,
+        ) / (2 * np.pi)
+
+    assert np.allclose(
+        dsf_result[np.ix_(indices, indices)], direct_integ_result, rtol=0.005, atol=0
+    )
 
 
 @pytest.mark.slow
@@ -175,9 +258,7 @@ def test_hankel_projected_covariance_agrees_between_zeros_and_direct():
         pk2=cosmo.nonlin_power(ell_z, a),
         order=2,
     )
-    r_matz, cov_matz = ht_matz.bin_radial_matrix(
-        r_gkgk_z, cov_gkgk_z, r_out * cosmo["h"]
-    )
+    r_matz, cov_matz = ht_matz.bin_radial_matrix(r_gkgk_z, cov_gkgk_z, r_out * cosmo["h"])
 
     ht_matd = HankelTransform(
         backend="matrix_direct",
@@ -197,9 +278,7 @@ def test_hankel_projected_covariance_agrees_between_zeros_and_direct():
         pk2=cosmo.nonlin_power(ell_d, a),
         order=2,
     )
-    r_matd, cov_matd = ht_matd.bin_radial_matrix(
-        r_gkgk_d, cov_gkgk_d, r_out * cosmo["h"]
-    )
+    r_matd, cov_matd = ht_matd.bin_radial_matrix(r_gkgk_d, cov_gkgk_d, r_out * cosmo["h"])
 
     assert np.allclose(cov_matz, cov_matd, rtol=0.05, atol=0)
     assert np.all(r_matz == r_matd)

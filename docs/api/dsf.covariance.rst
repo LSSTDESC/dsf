@@ -8,7 +8,6 @@ Subpackages
    :maxdepth: 2
 
    dsf.covariance.ingredients
-   dsf.covariance.projection
 
 Submodules
 ----------

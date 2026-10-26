@@ -4,7 +4,7 @@ This module contains reusable ``Pk2D`` model components that can be passed to
 ``DeltaSigmaForecastBuilder`` through its ``pk2d_func`` argument.
 
 The basic two-halo density profiles live in ``dsf.data_vector.profiles``.
-Additive DeltaSigma-level terms, such as stellar point mass and lens
+Additive Delta Sigma-level terms, such as stellar point mass and lens
 magnification bias, live in the data-vector and magnification-bias modules.
 
 The functions here are for model components that naturally enter through a CCL

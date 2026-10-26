@@ -44,7 +44,9 @@ def test_halo_profile_generic_stores_pk2d_object(record_fftlog_precision):
     assert profile.pk2d is pk2d
 
 
-def test_halo_profile_generic_sets_expected_profile_flags(record_fftlog_precision):
+def test_halo_profile_generic_sets_expected_profile_flags(
+    record_fftlog_precision,
+):
     """Tests that the generic profile configures CCL projection flags."""
     profile = HaloProfileGeneric(pk2d=DummyPk2D())
 

@@ -1,4 +1,4 @@
-"""Critical-surface-density ingredients for DeltaSigma covariance calculations.
+"""Critical-surface-density ingredients for Delta Sigma covariance calculations.
 
 This module computes inverse comoving critical surface densities and effective
 source-noise conversion factors for lens-source tomographic bin pairs.
@@ -185,7 +185,7 @@ def effective_sigma_crit_squared(
 ) -> float:
     r"""Return the effective critical-surface-density squared factor.
 
-    This quantity converts source shape noise into DeltaSigma covariance units
+    This quantity converts source shape noise into Delta Sigma covariance units
     for a lens-source tomographic bin pair.
 
     Args:

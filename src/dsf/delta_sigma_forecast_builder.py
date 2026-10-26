@@ -1,16 +1,16 @@
-r"""Forecast-ready DeltaSigma inputs.
+r"""Forecast-ready Delta Sigma inputs.
 
-This module provides the high-level builder used to prepare DeltaSigma forecast
+This module provides the high-level builder used to prepare Delta Sigma forecast
 inputs for Fisher or DALI analyses. It connects three pieces of the forecast:
 
 - tomographic lens and source samples,
-- the stacked DeltaSigma data vector,
+- the stacked Delta Sigma data vector,
 - the covariance matrix matched to the selected lens-source bin pairs.
 
 The builder is intentionally model-agnostic. It assumes that the data vector is
 computed with ``DeltaSigmaCalculator``, but it does not assume a fixed physical
 parameterization. Users provide a function that maps a parameter vector into the
-cosmology and profile parameters used by the DeltaSigma calculation.
+cosmology and profile parameters used by the Delta Sigma calculation.
 
 This makes the class suitable for simple amplitude-only forecasts, cosmology
 forecasts, HOD or SHMR parameter forecasts, and later Fisher/DALI comparisons.
@@ -46,15 +46,15 @@ __all__ = [
 
 
 class DeltaSigmaForecastBuilder:
-    """Prepare DeltaSigma data vectors and covariance inputs for forecasts.
+    """Prepare Delta Sigma data vectors and covariance inputs for forecasts.
 
-    This class is the user-facing forecast layer for DeltaSigma analyses. It
+    This class is the user-facing forecast layer for Delta Sigma analyses. It
     builds the tomographic samples, selects valid lens-source bin pairs,
     constructs the matching covariance, and exposes a model function that can be
     passed directly to forecast tools.
 
     The current forecast data vector contains only the galaxy-matter
-    DeltaSigma signal, so this builder currently supports only the matching
+    Delta Sigma signal, so this builder currently supports only the matching
     ``gm`` covariance block. The covariance layer also contains heleprs for
     ``gg`` and joint covariance blocks, which are intended for future forecast
     builders once the corresponding ``gg`` or joint data vectors are added.
@@ -114,10 +114,10 @@ class DeltaSigmaForecastBuilder:
                 cosmology for the data vector and covariance unless a
                 ``theta_mapper`` supplies a parameter-dependent cosmology.
             pk2d_func: Function that returns the ``Pk2D`` object used by the
-                DeltaSigma model.
+                Delta Sigma model.
             theta0: Fiducial parameter vector used as the expansion point for
                 forecast calculations.
-            r: Projected radii where the DeltaSigma data vector is evaluated.
+            r: Projected radii where the Delta Sigma data vector is evaluated.
             rp_bin_edges: Projected-radius bin edges used when constructing the
                 covariance.
             area_deg2: Survey overlap area in square degrees.
@@ -172,19 +172,19 @@ class DeltaSigmaForecastBuilder:
             covariance_orders: Bessel orders used by covariance projections.
             covariance_kind: Covariance product to use. Only ``"gm"`` is currently
                 supported by this builder because the forecast data vector is
-                DeltaSigma-only. The ``"gg"`` and ``"joint"`` covariance paths are
+                Delta Sigma-only. The ``"gg"`` and ``"joint"`` covariance paths are
                 reserved for future builders with matching data vectors.
             taper: Whether covariance spectra are tapered before projection.
             taper_kwargs: Optional taper settings.
             trim_edge_points: Number of edge points removed from each lens-bin
-                redshift distribution before averaging DeltaSigma.
+                redshift distribution before averaging Delta Sigma.
             verbose: Whether progress messages are printed while preparing the
                 forecast.
         """
         if covariance_kind != "gm":
             raise NotImplementedError(
                 "Only covariance_kind='gm' is currently supported because "
-                "the forecast data vector is DeltaSigma-only. Add a joint data-vector "
+                "the forecast data vector is Delta Sigma-only. Add a joint data-vector "
                 "builder before using 'gg' or 'joint' covariance."
             )
 
@@ -273,7 +273,7 @@ class DeltaSigmaForecastBuilder:
         Returns:
             Dictionary containing the model callable, fiducial parameters,
             covariance matrix, fiducial data vector, selected bin pairs,
-            tomography products, covariance builder, DeltaSigma calculator, and
+            tomography products, covariance builder, Delta Sigma calculator, and
             shared forecast context.
 
         Notes:
@@ -291,7 +291,7 @@ class DeltaSigmaForecastBuilder:
         )
         self._log(f"Selected bin pairs: {tomography['bin_pairs']}")
 
-        self._log("[2/5] Initializing DeltaSigma covariance builder...")
+        self._log("[2/5] Initializing Delta Sigma covariance builder...")
 
         cov_builder = DeltaSigmaCovarianceBuilder(
             cosmo=self.cosmo,
@@ -309,11 +309,14 @@ class DeltaSigmaForecastBuilder:
         self._log("[2/5] Done: covariance builder initialized.")
 
         data_pairs = [
-            (int(lens_bin), int(source_bin)) for lens_bin, source_bin in tomography["bin_pairs"]
+            (int(lens_bin), int(source_bin))
+            for lens_bin, source_bin in tomography["bin_pairs"]
         ]
 
         if covariance is None:
-            self._log(f"[3/5] Computing {self.covariance_kind} block-diagonal covariance...")
+            self._log(
+                f"[3/5] Computing {self.covariance_kind} block-diagonal covariance..."
+            )
 
             cov_pairs, cov = self._covariance(
                 cov_builder=cov_builder,
@@ -340,7 +343,9 @@ class DeltaSigmaForecastBuilder:
                 )
 
             if cov.shape[0] != cov.shape[1]:
-                raise ValueError(f"Supplied covariance must be square, but got shape {cov.shape}.")
+                raise ValueError(
+                    f"Supplied covariance must be square, but got shape {cov.shape}."
+                )
 
             if not np.all(np.isfinite(cov)):
                 raise ValueError("Supplied covariance contains non-finite values.")
@@ -358,13 +363,15 @@ class DeltaSigmaForecastBuilder:
         self._log("[4/5] Done: forecast context prepared.")
 
         self._log(
-            "[5/5] Computing fiducial DeltaSigma data vector in selected lens-source pair order..."
+            "[5/5] Computing fiducial Delta Sigma data vector in selected lens-source pair order..."
         )
 
         data_vector = self.model(self.theta0, context=context)
         data_vector, cov = validate_forecast_vector_and_covariance(data_vector, cov)
 
-        self._log(f"[5/5] Done: fiducial data vector computed with length {len(data_vector)}.")
+        self._log(
+            f"[5/5] Done: fiducial data vector computed with length {len(data_vector)}."
+        )
 
         forecast: dict[str, Any] = {
             "model": self.model,
@@ -429,7 +436,7 @@ class DeltaSigmaForecastBuilder:
         self.prepare(covariance=covariance)
 
         if self._forecast is None:
-            raise RuntimeError("DeltaSigma forecast products were not prepared.")
+            raise RuntimeError("Delta Sigma forecast products were not prepared.")
 
         return self._forecast
 
@@ -439,15 +446,15 @@ class DeltaSigmaForecastBuilder:
         *,
         context: Mapping[str, Any] | None = None,
     ) -> FloatArray:
-        """Return the stacked DeltaSigma data vector for one parameter vector.
+        """Return the stacked Delta Sigma data vector for one parameter vector.
 
         Args:
-            theta: Parameter vector at which the DeltaSigma model is evaluated.
+            theta: Parameter vector at which the Delta Sigma model is evaluated.
             context: Optional forecast context. If omitted, the cached forecast
                 context is used.
 
         Returns:
-            One-dimensional stacked data vector containing the DeltaSigma blocks
+            One-dimensional stacked data vector containing the Delta Sigma blocks
             for all selected lens-source bin pairs.
 
         Notes:
@@ -534,7 +541,7 @@ class DeltaSigmaForecastBuilder:
 
         Returns:
             Dictionary containing the cosmology and profile keyword arguments
-            used to evaluate the DeltaSigma model.
+            used to evaluate the Delta Sigma model.
 
         Notes:
             If no ``theta_mapper`` is supplied, the model uses the fiducial
@@ -605,7 +612,7 @@ class DeltaSigmaForecastBuilder:
         pk2d_kwargs: Mapping[str, Any],
         tomography: Mapping[str, Any],
     ) -> FloatArray:
-        """Return the stacked lens-bin DeltaSigma vector in pair order.
+        """Return the stacked lens-bin Delta Sigma vector in pair order.
 
         Args:
             cosmo: Cosmology used for the current model evaluation.
@@ -614,12 +621,12 @@ class DeltaSigmaForecastBuilder:
                 lens-source bin pairs.
 
         Returns:
-            One-dimensional stacked DeltaSigma vector ordered by the selected
+            One-dimensional stacked Delta Sigma vector ordered by the selected
             lens-source bin pairs.
 
         Notes:
-            DeltaSigma is computed once per unique lens bin because the mean
-            DeltaSigma profile is lens-bin dependent. The resulting blocks are
+            Delta Sigma is computed once per unique lens bin because the mean
+            Delta Sigma profile is lens-bin dependent. The resulting blocks are
             then repeated according to the exact Binny-selected pair order so
             that the data vector remains matched to the covariance.
         """
@@ -637,7 +644,7 @@ class DeltaSigmaForecastBuilder:
         block_by_lens_bin = {}
 
         # Keep the user-facing forecast and covariance radius grid in comoving
-        # Mpc / h. Convert to comoving Mpc here because the DeltaSigma
+        # Mpc / h. Convert to comoving Mpc here because the Delta Sigma
         # data-vector calculation passes radii to the CCL-backed profile
         # evaluation, which expects Mpc.
         h = float(cosmo["h"])
@@ -676,7 +683,7 @@ class DeltaSigmaForecastBuilder:
 
         Args:
             cov_builder: Covariance builder matched to the selected tomography.
-            bin_pairs: Lens-source bin pairs used by the DeltaSigma data vector.
+            bin_pairs: Lens-source bin pairs used by the Delta Sigma data vector.
 
         Returns:
             Bin-pair ordering and covariance matrix for the selected covariance
@@ -684,7 +691,7 @@ class DeltaSigmaForecastBuilder:
 
         Notes:
             The default is ``gm`` because the current forecast data vector is the
-            lensing-style DeltaSigma signal. The ``joint`` option should only be
+            lensing-style Delta Sigma signal. The ``joint`` option should only be
             used when the data vector is also expanded to include the matching
             galaxy-galaxy observable.
         """

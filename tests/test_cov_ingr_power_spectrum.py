@@ -3,12 +3,16 @@
 import numpy as np
 import pytest
 
-from dsf.covariance.ingredients.power_spectrum import lens_averaged_matter_power
+from dsf.covariance.ingredients.power_spectrum import (
+    lens_averaged_matter_power,
+)
 
 POWER_SPECTRUM_MODULE = "dsf.covariance.ingredients.power_spectrum"
 
 
-def test_lens_averaged_matter_power_uses_weighted_redshift_average(monkeypatch):
+def test_lens_averaged_matter_power_uses_weighted_redshift_average(
+    monkeypatch,
+):
     """Test that the lens-averaged power spectrum is weighted over lens redshift."""
     cosmo = {"h": 0.7}
     k = np.array([0.1, 1.0, 10.0])
@@ -83,7 +87,9 @@ def test_lens_averaged_matter_power_uses_supplied_h(monkeypatch):
     np.testing.assert_allclose(result, expected)
 
 
-def test_lens_averaged_matter_power_converts_power_to_mpc_over_h_units(monkeypatch):
+def test_lens_averaged_matter_power_converts_power_to_mpc_over_h_units(
+    monkeypatch,
+):
     """Test that CCL power values are multiplied by h cubed."""
     cosmo = {"h": 0.7}
     k = np.array([0.1, 1.0, 10.0])
@@ -111,7 +117,9 @@ def test_lens_averaged_matter_power_converts_power_to_mpc_over_h_units(monkeypat
     np.testing.assert_allclose(result, expected)
 
 
-def test_lens_averaged_matter_power_uses_nonlinear_power_by_default(monkeypatch):
+def test_lens_averaged_matter_power_uses_nonlinear_power_by_default(
+    monkeypatch,
+):
     """Test that nonlinear matter power is used by default."""
     cosmo = {"h": 0.7}
     k = np.array([0.1, 1.0])
@@ -143,7 +151,9 @@ def test_lens_averaged_matter_power_uses_nonlinear_power_by_default(monkeypatch)
     assert calls["linear"] == 0
 
 
-def test_lens_averaged_matter_power_uses_linear_power_when_requested(monkeypatch):
+def test_lens_averaged_matter_power_uses_linear_power_when_requested(
+    monkeypatch,
+):
     """Test that linear matter power is used when nonlinear is false."""
     cosmo = {"h": 0.7}
     k = np.array([0.1, 1.0])
@@ -226,7 +236,9 @@ def test_lens_averaged_matter_power_passes_correct_scale_factors(monkeypatch):
     np.testing.assert_allclose(called_scale_factors, expected)
 
 
-def test_lens_averaged_matter_power_does_not_renormalize_lens_weights(monkeypatch):
+def test_lens_averaged_matter_power_does_not_renormalize_lens_weights(
+    monkeypatch,
+):
     """Test that lens weights are integrated as supplied without renormalization."""
     cosmo = {"h": 1.0}
     k = np.array([0.1, 1.0])

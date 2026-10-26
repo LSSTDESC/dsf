@@ -31,7 +31,9 @@ __all__ = [
 
 def density_weighted_power_spectrum(
     cosmo: ccl.Cosmology,
-    power_spectrum: Callable[[ccl.Cosmology, NDArray[np.float64], float], NDArray[np.float64]],
+    power_spectrum: Callable[
+        [ccl.Cosmology, NDArray[np.float64], float], NDArray[np.float64]
+    ],
 ) -> ccl.Pk2D:
     r"""Build a density-weighted matter power spectrum.
 
@@ -56,7 +58,9 @@ def density_weighted_power_spectrum(
         CCL ``Pk2D`` object for the density-weighted matter power spectrum.
     """
 
-    def density_weighted_power(k: NDArray[np.float64], a: float) -> NDArray[np.float64]:
+    def density_weighted_power(
+        k: NDArray[np.float64], a: float
+    ) -> NDArray[np.float64]:
         r"""Evaluate :math:`\rho_\mathrm{m}(a) P_\mathrm{mm}(k, a)`.
 
         Args:

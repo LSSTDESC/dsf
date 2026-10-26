@@ -1,6 +1,6 @@
 # Covariance benchmarks
 
-Benchmarks for the DSF DeltaSigma covariance calculation.
+Benchmarks for the DSF Delta Sigma covariance calculation.
 
 These scripts compare DSF covariance predictions against legacy or reference implementations.
 

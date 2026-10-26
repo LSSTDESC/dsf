@@ -65,7 +65,9 @@ class DummyNZTomography:
         )
 
         if self.shape_stats_result is None:
-            raise RuntimeError("DummyNZTomography shape stats were not configured.")
+            raise RuntimeError(
+                "DummyNZTomography shape stats were not configured."
+            )
 
         return self.shape_stats_result
 
@@ -74,7 +76,9 @@ class DummyNZTomography:
         self.population_stats_calls.append(kwargs)
 
         if self.population_stats_result is None:
-            raise RuntimeError("DummyNZTomography population stats were not configured.")
+            raise RuntimeError(
+                "DummyNZTomography population stats were not configured."
+            )
 
         return self.population_stats_result
 
@@ -94,7 +98,9 @@ def make_result(
 
     return SimpleNamespace(
         z=np.asarray(z, dtype=float),
-        bins={key: np.asarray(value, dtype=float) for key, value in bins.items()},
+        bins={
+            key: np.asarray(value, dtype=float) for key, value in bins.items()
+        },
         spec={"sample_properties": sample_properties},
         tomo_meta={} if tomo_meta is None else tomo_meta,
     )

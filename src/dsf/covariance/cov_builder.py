@@ -839,9 +839,6 @@ class DeltaSigmaCovarianceBuilder:
 
         Returns:
             List of integer ``(lens_bin, source_bin)`` pairs.
-
-        Raises:
-            ValueError: If a requested pair is not among the selected bin pairs.
         """
         if bin_pairs is None:
             return list(self.bin_pairs)

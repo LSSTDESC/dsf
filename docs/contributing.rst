@@ -116,7 +116,7 @@ important scientific or numerical assumptions where applicable.
 Documentation
 -------------
 
-The documentation is written in reStructuredText and built with Sphinx.
+The documentation is written in `reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_ and built with `Sphinx <https://www.sphinx-doc.org/en/master/index.html>`_.
 
 Build the documentation with:
 

@@ -106,7 +106,7 @@ Code must follow PEP 8 and the general docstring conventions in PEP 257.
 
 All Python modules must include a module-level docstring describing their
 purpose. Public classes, functions, and methods must include clear, concise
-Google-style docstrings.
+`Google-style docstrings <https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings>`_.
 
 Docstrings should describe the purpose and public interface of a module,
 class, or function, rather than its implementation details.

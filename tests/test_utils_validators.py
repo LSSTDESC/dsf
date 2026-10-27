@@ -11,6 +11,7 @@ from dsf.utils.validators import (
     occupied_redshift_range_from_nz,
     redshift_window_mask,
     validate_1d_pair,
+    validate_bin_pair,
     validate_finite_scalar,
     validate_forecast_vector_and_covariance,
     validate_hankel_1d_grid_spacing,
@@ -84,6 +85,34 @@ def test_validate_scale_factor_rejects_values_outside_unit_interval(a):
 def test_validate_redshift_pair_accepts_source_behind_lens():
     """Tests that source redshifts behind lens redshifts are accepted."""
     validate_redshift_pair(0.3, 0.8)
+
+
+def test_validate_bin_pair_accepts_selected_pair():
+    """Tests that selected lens-source bin pairs are accepted."""
+    validate_bin_pair(0, 4, [(0, 4)])
+
+
+def test_validate_bin_pair_accepts_multiple_selected_pairs():
+    """Tests that any selected lens-source bin pair is accepted."""
+    validate_bin_pair(1, 3, [(0, 4), (1, 3)])
+
+
+def test_validate_bin_pair_rejects_unselected_pair():
+    """Tests that unselected lens-source bin pairs are rejected."""
+    with pytest.raises(ValueError, match="not among the selected bin pairs"):
+        validate_bin_pair(0, 0, [(0, 4)])
+
+
+def test_validate_bin_pair_rejects_reversed_pair():
+    """Tests that lens and source bin indices cannot be interchanged."""
+    with pytest.raises(ValueError, match="not among the selected bin pairs"):
+        validate_bin_pair(4, 0, [(0, 4)])
+
+
+def test_validate_bin_pair_rejects_empty_selection():
+    """Tests that bin pairs cannot be requested from an empty selection."""
+    with pytest.raises(ValueError, match="not among the selected bin pairs"):
+        validate_bin_pair(0, 0, [])
 
 
 def test_validate_redshift_pair_rejects_source_not_behind_lens():

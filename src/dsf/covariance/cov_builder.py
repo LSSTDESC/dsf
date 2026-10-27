@@ -49,6 +49,7 @@ from dsf.utils.converters import (
     sigma_crit_prefactor_msun_h_pc2,
 )
 from dsf.utils.types import ArrayLike, BinPairs, FloatArray, ScalarOrPerBin
+from dsf.utils.validators import validate_bin_pair
 
 __all__ = [
     "DeltaSigmaCovarianceBuilder",
@@ -71,6 +72,10 @@ class DeltaSigmaCovarianceBuilder:
     The class assumes that the input tomography objects already contain the
     redshift grids, binned distributions, bin edges, bin summaries, and sample
     metadata needed for the forecast.
+
+    Tomographic bin indices refer to the original lens and source bins.
+    Selecting bin pairs does not renumber the underlying tomography.
+    Covariance calculations are restricted to the selected bin pairs.
     """
 
     def __init__(
@@ -111,7 +116,8 @@ class DeltaSigmaCovarianceBuilder:
             source_result: Binny tomography result for the source sample.
             lens_population_stats: Lens sample population summary.
             source_population_stats: Source sample population summary.
-            bin_pairs: Selected ``(lens_bin, source_bin)`` pairs.
+            bin_pairs: Selected ``(lens_bin, source_bin)`` pairs using original
+                tomographic bin indices.
             rp_bin_edges: Projected-radius bin edges in ``Mpc / h``.
             area_deg2: Survey area in square degrees.
             sigma_e: Source ellipticity dispersion.
@@ -303,6 +309,8 @@ class DeltaSigmaCovarianceBuilder:
         Returns:
             Dictionary containing the ``gm x gm`` covariance block and metadata.
         """
+        validate_bin_pair(lens_bin_index, source_bin_index, self.bin_pairs)
+
         if ingredients is None:
             ingredients = self.pair_ingredients(lens_bin_index, source_bin_index)
 
@@ -349,6 +357,8 @@ class DeltaSigmaCovarianceBuilder:
         Returns:
             Dictionary containing the ``gg x gg`` covariance block and metadata.
         """
+        validate_bin_pair(lens_bin_index, source_bin_index, self.bin_pairs)
+
         if ingredients is None:
             ingredients = self.pair_ingredients(lens_bin_index, source_bin_index)
 
@@ -392,6 +402,8 @@ class DeltaSigmaCovarianceBuilder:
         Returns:
             Dictionary containing the cross-covariance block and metadata.
         """
+        validate_bin_pair(lens_bin_index, source_bin_index, self.bin_pairs)
+
         if ingredients is None:
             ingredients = self.pair_ingredients(lens_bin_index, source_bin_index)
 
@@ -722,6 +734,8 @@ class DeltaSigmaCovarianceBuilder:
             survey volume, lens and source noise terms, galaxy bias, redshift
             limits, and line-of-sight projection factors for the requested pair.
         """
+        validate_bin_pair(lens_bin_index, source_bin_index, self.bin_pairs)
+
         lens = self.lens_ingredients(lens_bin_index)
         source = self.source_ingredients(source_bin_index)
 
@@ -816,19 +830,28 @@ class DeltaSigmaCovarianceBuilder:
         self,
         bin_pairs: BinPairs | None = None,
     ) -> list[tuple[int, int]]:
-        """Return requested bin pairs in a consistent integer format.
+        """Return selected pairs using original tomographic bin indices.
 
         Args:
             bin_pairs: Optional set of ``(lens_bin, source_bin)`` pairs. If
-                omitted, the builder's stored bin pairs are used.
+                omitted, the builder's stored bin pairs are used. Requested
+                pairs must belong to the builder's selected bin pairs.
 
         Returns:
             List of integer ``(lens_bin, source_bin)`` pairs.
+
+        Raises:
+            ValueError: If a requested pair is not among the selected bin pairs.
         """
         if bin_pairs is None:
             return list(self.bin_pairs)
 
-        return [(int(lens_bin), int(source_bin)) for lens_bin, source_bin in bin_pairs]
+        pairs = [(int(lens_bin), int(source_bin)) for lens_bin, source_bin in bin_pairs]
+
+        for lens_bin, source_bin in pairs:
+            validate_bin_pair(lens_bin, source_bin, self.bin_pairs)
+
+        return pairs
 
     @staticmethod
     def bin_value(value: ScalarOrPerBin, bin_index: int) -> float:

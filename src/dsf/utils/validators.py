@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 from numpy.typing import NDArray
 
-from dsf.utils.types import FloatArray
+from dsf.utils.types import BinPairs, FloatArray
 
 __all__ = [
     "as_1d_float_array",
@@ -18,6 +18,7 @@ __all__ = [
     "occupied_redshift_range_from_nz",
     "redshift_window_mask",
     "validate_1d_pair",
+    "validate_bin_pair",
     "validate_finite_scalar",
     "validate_forecast_vector_and_covariance",
     "validate_hankel_1d_grid_spacing",
@@ -817,3 +818,27 @@ def validate_interpolation_within_bounds(
         )
 
     return x_eval_arr
+
+
+def validate_bin_pair(
+    lens_bin_index: int,
+    source_bin_index: int,
+    bin_pairs: BinPairs,
+) -> None:
+    """Validate that a lens-source bin pair belongs to the selected tomography.
+
+    Args:
+        lens_bin_index: Original lens tomographic bin index.
+        source_bin_index: Original source tomographic bin index.
+        bin_pairs: Selected lens-source bin pairs.
+
+    Raises:
+        ValueError: If the requested pair is not among the selected bin pairs.
+    """
+    pair = (int(lens_bin_index), int(source_bin_index))
+
+    if pair not in bin_pairs:
+        raise ValueError(
+            f"Bin pair {pair} is not among the selected bin pairs: "
+            f"{bin_pairs}. Indices refer to the original tomographic bins."
+        )

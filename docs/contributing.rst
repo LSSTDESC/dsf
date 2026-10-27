@@ -11,6 +11,15 @@ Development takes place in the
 Before starting substantial development, please open an issue or contact the
 project maintainers so that the proposed work can be discussed and coordinated.
 
+Contributors
+------------
+
+DSF is developed collaboratively within the `LSST Dark Energy Science
+Collaboration <https://lsstdesc.org/>`_ together with contributions from the wider community.
+
+A current list of contributors is available on the
+`GitHub contributors page <https://github.com/LSSTDESC/dsf/graphs/contributors>`__.
+
 Submitting issues and pull requests
 -----------------------------------
 
@@ -146,11 +155,4 @@ Build the documentation for the main branch and release versions with:
 Generated documentation is written to ``docs/_build``. New documentation pages
 should also be added to the appropriate Sphinx ``toctree``.
 
-Contributors
-------------
 
-DSF is developed collaboratively within the `LSST Dark Energy Science
-Collaboration <https://lsstdesc.org/>`_ together with contributions from the wider community.
-
-A current list of contributors is available on the
-`GitHub contributors page <https://github.com/LSSTDESC/dsf/graphs/contributors>`__.

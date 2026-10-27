@@ -44,11 +44,17 @@ root:
 
    pip install --group dev -e .
 
-Run all configured workflows with:
+List all available development environments with:
 
 .. code-block:: console
 
-   tox
+   tox list
+
+Run a specific environment with:
+
+.. code-block:: console
+
+   tox -e <environment>
 
 Testing
 -------

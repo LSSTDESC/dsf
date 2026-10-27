@@ -102,7 +102,7 @@ Automatically fix supported linting errors with:
 Code style
 ----------
 
-Code must follow PEP 8 and the general docstring conventions in PEP 257.
+Code must follow `PEP 8 <https://peps.python.org/pep-0008/>`_ and the general docstring conventions in `PEP 257 <https://peps.python.org/pep-0257/>`_.
 
 All Python modules must include a module-level docstring describing their
 purpose. Public classes, functions, and methods must include clear, concise

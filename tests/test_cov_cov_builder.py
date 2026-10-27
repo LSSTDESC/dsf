@@ -1,6 +1,7 @@
 """Unit tests for ``dsf.covariance.cov_builder``."""
 
 import numpy as np
+import pytest
 
 from dsf.covariance.cov_builder import DeltaSigmaCovarianceBuilder
 
@@ -16,11 +17,20 @@ def test_selected_pairs_returns_stored_pairs_as_integer_tuples():
 def test_selected_pairs_casts_requested_pairs_to_integer_tuples():
     """Tests that requested bin pairs are cast to integer tuples."""
     builder = object.__new__(DeltaSigmaCovarianceBuilder)
-    builder.bin_pairs = [(0, 1)]
+    builder.bin_pairs = [(0, 2), (1, 3)]
 
     actual = builder.selected_pairs([(0.0, 2.0), ("1", "3")])
 
     assert actual == [(0, 2), (1, 3)]
+
+
+def test_selected_pairs_rejects_unselected_pairs():
+    """Tests that requested pairs must belong to the selected tomography."""
+    builder = object.__new__(DeltaSigmaCovarianceBuilder)
+    builder.bin_pairs = [(0, 4)]
+
+    with pytest.raises(ValueError, match="not among the selected bin pairs"):
+        builder.selected_pairs([(0, 0)])
 
 
 def test_bin_value_returns_scalar_value_for_all_bins():
@@ -242,3 +252,55 @@ def test_covariance_for_pairs_uses_selected_pairs():
         (0, 2): {"pair": (0, 2)},
         (1, 3): {"pair": (1, 3)},
     }
+
+
+def test_pair_ingredients_rejects_unselected_pair():
+    """Tests that covariance ingredients reject unselected tomographic pairs."""
+    builder = object.__new__(DeltaSigmaCovarianceBuilder)
+    builder.bin_pairs = [(0, 4)]
+
+    with pytest.raises(ValueError, match="not among the selected bin pairs"):
+        builder.pair_ingredients(0, 0)
+
+
+def test_covariance_for_pair_rejects_unselected_pair():
+    """Tests that joint covariance rejects unselected tomographic pairs."""
+    builder = object.__new__(DeltaSigmaCovarianceBuilder)
+    builder.bin_pairs = [(0, 4)]
+
+    with pytest.raises(ValueError, match="not among the selected bin pairs"):
+        builder.covariance_for_pair(0, 0)
+
+
+@pytest.mark.parametrize(
+    "method_name",
+    [
+        "gm_covariance_for_pair",
+        "gg_covariance_for_pair",
+        "cross_covariance_for_pair",
+    ],
+)
+def test_covariance_blocks_reject_unselected_pair(method_name):
+    """Tests that individual covariance blocks reject unselected pairs."""
+    builder = object.__new__(DeltaSigmaCovarianceBuilder)
+    builder.bin_pairs = [(0, 4)]
+
+    method = getattr(builder, method_name)
+
+    with pytest.raises(ValueError, match="not among the selected bin pairs"):
+        method(0, 0)
+
+
+def test_pair_ingredients_accepts_selected_pair(monkeypatch):
+    """Tests that selected pairs use their original tomographic indices."""
+    builder = object.__new__(DeltaSigmaCovarianceBuilder)
+    builder.bin_pairs = [(0, 4)]
+
+    def lens_ingredients(index):
+        assert index == 0
+        raise RuntimeError("lens ingredients reached")
+
+    monkeypatch.setattr(builder, "lens_ingredients", lens_ingredients)
+
+    with pytest.raises(RuntimeError, match="lens ingredients reached"):
+        builder.pair_ingredients(0, 4)

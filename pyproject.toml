@@ -101,7 +101,7 @@ exclude = [
 [tool.coverage.run]
 branch = true
 parallel = true
-source = ["dsf"]
+source = ["src"]
 
 [tool.coverage.report]
 exclude_lines = [

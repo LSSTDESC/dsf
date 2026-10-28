@@ -91,8 +91,6 @@ class DeltaSigmaCovarianceBuilder:
         area_deg2: float,
         sigma_e: ScalarOrPerBin,
         galaxy_bias: ScalarOrPerBin | None = None,
-        galaxy_bias_prefactor: float = 1.0,
-        galaxy_bias_round_decimals: int | None = 4,
         k: FloatArray | None = None,
         nonlinear: bool = True,
         pi: FloatArray | None = None,
@@ -118,10 +116,6 @@ class DeltaSigmaCovarianceBuilder:
             area_deg2: Survey area in square degrees.
             sigma_e: Source ellipticity dispersion.
             galaxy_bias: Galaxy bias for the lens sample.
-            galaxy_bias_prefactor: Normalization used by the default linear
-                galaxy-bias model.
-            galaxy_bias_round_decimals: Optional decimal rounding applied to the
-                default linear galaxy-bias values.
             k: Wavenumber grid in ``h / Mpc``.
             nonlinear: Whether to use nonlinear matter power.
             pi: Optional line-of-sight grid in ``Mpc / h``.
@@ -192,8 +186,6 @@ class DeltaSigmaCovarianceBuilder:
             else linear_galaxy_bias(
                 self.cosmo,
                 self.lens_centers,
-                bias_prefactor=galaxy_bias_prefactor,
-                round_decimals=galaxy_bias_round_decimals,
             )
         )
 

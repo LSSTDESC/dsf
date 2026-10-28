@@ -89,8 +89,6 @@ class DeltaSigmaForecastBuilder:
         source_overrides: Mapping[str, Any] | None = None,
         observable: str = "delta_sigma",
         galaxy_bias: ScalarOrPerBin | None = None,
-        galaxy_bias_prefactor: float = 1.0,
-        galaxy_bias_round_decimals: int | None = 4,
         k: FloatArray | None = None,
         nonlinear: bool = True,
         pi: FloatArray | None = None,
@@ -146,10 +144,6 @@ class DeltaSigmaForecastBuilder:
             observable: Forecast observable to evaluate. Currently only
                 ``"delta_sigma"`` is supported.
             galaxy_bias: Galaxy bias value or per-lens-bin values.
-            galaxy_bias_prefactor: Normalization for the default galaxy-bias
-                model.
-            galaxy_bias_round_decimals: Optional rounding applied to the default
-                galaxy-bias values.
             k: Wavenumber grid in ``h / Mpc`` used by the covariance.
             nonlinear: Whether covariance matter spectra should use nonlinear
                 power.
@@ -224,8 +218,6 @@ class DeltaSigmaForecastBuilder:
 
         self.covariance_kwargs: dict[str, Any] = {
             "galaxy_bias": galaxy_bias,
-            "galaxy_bias_prefactor": galaxy_bias_prefactor,
-            "galaxy_bias_round_decimals": galaxy_bias_round_decimals,
             "k": k,
             "nonlinear": nonlinear,
             "pi": pi,

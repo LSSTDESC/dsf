@@ -17,9 +17,6 @@ Contributors
 DSF is developed collaboratively within the `LSST Dark Energy Science
 Collaboration <https://lsstdesc.org/>`_ together with contributions from the wider community.
 
-A current list of contributors is available on the
-`GitHub contributors page <https://github.com/LSSTDESC/dsf/graphs/contributors>`__.
-
 Submitting issues and pull requests
 -----------------------------------
 

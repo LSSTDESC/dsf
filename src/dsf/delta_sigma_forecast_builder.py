@@ -88,14 +88,10 @@ class DeltaSigmaForecastBuilder:
         lens_overrides: Mapping[str, Any] | None = None,
         source_overrides: Mapping[str, Any] | None = None,
         observable: str = "delta_sigma",
-        sigma_crit_prefactor: float | None = None,
         galaxy_bias: ScalarOrPerBin | None = None,
         galaxy_bias_prefactor: float = 1.0,
         galaxy_bias_round_decimals: int | None = 4,
         k: FloatArray | None = None,
-        h: float | None = None,
-        omega_m: float | None = None,
-        rho_crit: float | None = None,
         nonlinear: bool = True,
         pi: FloatArray | None = None,
         gm_window: FloatArray | None = None,
@@ -149,21 +145,12 @@ class DeltaSigmaForecastBuilder:
                 source sample.
             observable: Forecast observable to evaluate. Currently only
                 ``"delta_sigma"`` is supported.
-            sigma_crit_prefactor: Optional unit-conversion factor applied to the
-                effective critical surface density used in the covariance.
-                If omitted, the covariance builder uses its internal default.
             galaxy_bias: Galaxy bias value or per-lens-bin values.
             galaxy_bias_prefactor: Normalization for the default galaxy-bias
                 model.
             galaxy_bias_round_decimals: Optional rounding applied to the default
                 galaxy-bias values.
             k: Wavenumber grid in ``h / Mpc`` used by the covariance.
-            h: Dimensionless Hubble parameter used by covariance ingredients
-                when needed explicitly.
-            omega_m: Matter density fraction used by covariance ingredients
-                when needed explicitly.
-            rho_crit: Critical-density normalization used by covariance
-                ingredients when needed explicitly.
             nonlinear: Whether covariance matter spectra should use nonlinear
                 power.
             pi: Optional line-of-sight grid in ``Mpc / h``.
@@ -236,14 +223,10 @@ class DeltaSigmaForecastBuilder:
         }
 
         self.covariance_kwargs: dict[str, Any] = {
-            "sigma_crit_prefactor": sigma_crit_prefactor,
             "galaxy_bias": galaxy_bias,
             "galaxy_bias_prefactor": galaxy_bias_prefactor,
             "galaxy_bias_round_decimals": galaxy_bias_round_decimals,
             "k": k,
-            "h": h,
-            "omega_m": omega_m,
-            "rho_crit": rho_crit,
             "nonlinear": nonlinear,
             "pi": pi,
             "gm_window": gm_window,

@@ -90,14 +90,10 @@ class DeltaSigmaCovarianceBuilder:
         rp_bin_edges: ArrayLike,
         area_deg2: float,
         sigma_e: ScalarOrPerBin,
-        sigma_crit_prefactor: float | None = None,
         galaxy_bias: ScalarOrPerBin | None = None,
         galaxy_bias_prefactor: float = 1.0,
         galaxy_bias_round_decimals: int | None = 4,
         k: FloatArray | None = None,
-        h: float | None = None,
-        omega_m: float | None = None,
-        rho_crit: float | None = None,
         nonlinear: bool = True,
         pi: FloatArray | None = None,
         gm_window: FloatArray | None = None,
@@ -121,16 +117,12 @@ class DeltaSigmaCovarianceBuilder:
             rp_bin_edges: Projected-radius bin edges in ``Mpc / h``.
             area_deg2: Survey area in square degrees.
             sigma_e: Source ellipticity dispersion.
-            sigma_crit_prefactor: Optional unit-conversion prefactor.
             galaxy_bias: Galaxy bias for the lens sample.
             galaxy_bias_prefactor: Normalization used by the default linear
                 galaxy-bias model.
             galaxy_bias_round_decimals: Optional decimal rounding applied to the
                 default linear galaxy-bias values.
             k: Wavenumber grid in ``h / Mpc``.
-            h: Dimensionless Hubble parameter.
-            omega_m: Matter density fraction.
-            rho_crit: Projected critical-density normalization.
             nonlinear: Whether to use nonlinear matter power.
             pi: Optional line-of-sight grid in ``Mpc / h``.
             gm_window: Optional galaxy-matter line-of-sight window.
@@ -184,19 +176,15 @@ class DeltaSigmaCovarianceBuilder:
         self.area_deg2 = float(area_deg2)
 
         self.sigma_e = sigma_e
-        self.sigma_crit_prefactor = (
-            sigma_crit_prefactor_msun_h_pc2()
-            if sigma_crit_prefactor is None
-            else float(sigma_crit_prefactor)
+        self.h = resolve_h(cosmo, None)
+        self.omega_m = resolve_omega_m(cosmo, None)
+
+        self.rho_crit = rho_critical_projected_msun_pc2_per_mpc(
+            cosmo,
+            h=self.h,
         )
 
-        self.h = resolve_h(cosmo, h)
-        self.omega_m = resolve_omega_m(cosmo, omega_m)
-        self.rho_crit = (
-            rho_critical_projected_msun_pc2_per_mpc(self.cosmo, h=self.h)
-            if rho_crit is None
-            else float(rho_crit)
-        )
+        self.sigma_crit_prefactor = sigma_crit_prefactor_msun_h_pc2()
 
         self.galaxy_bias = (
             galaxy_bias

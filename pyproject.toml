@@ -68,6 +68,7 @@ docs = [
   "sphinx-copybutton",
   "sphinx-design",
   "sphinx-multiversion",
+  "sphinxcontrib-bibtex",
   "furo",
   { include-group = "dev" },
 ]
@@ -185,7 +186,7 @@ commands = [
   [
     "pytest",
     "-q",
-    "--cov=src",
+    "--cov=dsf",
     "--cov-branch",
     "--cov-report=term-missing:skip-covered",
     { replace = "posargs", extend = true },

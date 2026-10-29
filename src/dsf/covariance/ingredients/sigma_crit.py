@@ -9,13 +9,15 @@ from __future__ import annotations
 import numpy as np
 import pyccl as ccl
 
-from dsf.utils.converters import comoving_distance_h, resolve_h
+from dsf.utils.converters import (
+    comoving_distance_h,
+    sigma_crit_prefactor_msun_h_pc2,
+)
 from dsf.utils.integrators import trapezoid_integral
 from dsf.utils.types import FloatArray
 from dsf.utils.validators import (
     validate_finite_scalar,
     validate_nonnegative_1d_array,
-    validate_positive_scalar,
     validate_redshift_distribution,
 )
 
@@ -29,13 +31,13 @@ __all__ = [
 ]
 
 
+_SIGMA_CRIT_PREFACTOR = sigma_crit_prefactor_msun_h_pc2()
+
+
 def sigma_crit_inverse_comoving(
     cosmo: ccl.Cosmology,
     z_lens: float,
     z_source: FloatArray,
-    *,
-    h: float | None = None,
-    sigma_crit_prefactor: float,
 ) -> FloatArray:
     """Return the inverse comoving critical surface density for one lens redshift.
 
@@ -46,16 +48,11 @@ def sigma_crit_inverse_comoving(
         cosmo: CCL cosmology object.
         z_lens: Lens redshift.
         z_source: Source redshift grid.
-        h: Dimensionless Hubble parameter. If not supplied, read from ``cosmo["h"]``.
-        sigma_crit_prefactor: Unit-conversion prefactor defining the desired
-            critical-surface-density convention.
 
     Returns:
-        Inverse comoving critical surface density evaluated on ``z_source``.
+        Inverse comoving critical surface density in
+        ``pc^2 / (h Msun)`` evaluated on ``z_source``.
     """
-    h = resolve_h(cosmo, h)
-
-    validate_positive_scalar(sigma_crit_prefactor, "sigma_crit_prefactor")
     validate_finite_scalar(z_lens, "z_lens")
 
     if z_lens < 0.0:
@@ -67,8 +64,8 @@ def sigma_crit_inverse_comoving(
         min_size=1,
     )
 
-    chi_lens = comoving_distance_h(cosmo, z_lens, h=h)
-    chi_source = comoving_distance_h(cosmo, z_source_arr, h=h)
+    chi_lens = comoving_distance_h(cosmo, z_lens)
+    chi_source = comoving_distance_h(cosmo, z_source_arr)
 
     sigma_crit_inv = np.zeros_like(z_source_arr, dtype=float)
     behind = chi_source > chi_lens
@@ -77,7 +74,7 @@ def sigma_crit_inverse_comoving(
         chi_lens
         * (chi_source[behind] - chi_lens)
         / chi_source[behind]
-        / sigma_crit_prefactor
+        / _SIGMA_CRIT_PREFACTOR
         * (1.0 + z_lens)
     )
 
@@ -90,8 +87,6 @@ def sigma_crit_inverse_source_average(
     z_lens: float,
     z_source: FloatArray,
     nz_source: FloatArray,
-    h: float | None = None,
-    sigma_crit_prefactor: float,
 ) -> float:
     """Return the source-averaged inverse comoving critical surface density.
 
@@ -103,30 +98,20 @@ def sigma_crit_inverse_source_average(
         z_lens: Lens redshift.
         z_source: Source redshift grid.
         nz_source: Normalized source redshift distribution.
-        h: Dimensionless Hubble parameter. If not supplied, read from ``cosmo["h"]``.
-        sigma_crit_prefactor: Unit-conversion prefactor defining the desired
-            critical-surface-density convention.
 
     Returns:
         Source-averaged inverse comoving critical surface density.
     """
-    h = resolve_h(cosmo, h)
-
     z_source_arr, nz_source_arr = validate_redshift_distribution(
         z_source,
         nz_source,
         name="nz_source",
     )
 
-    sigma_inv = sigma_crit_inverse_comoving(
-        cosmo,
-        z_lens,
-        z_source_arr,
-        h=h,
-        sigma_crit_prefactor=sigma_crit_prefactor,
-    )
+    sigma_inv = sigma_crit_inverse_comoving(cosmo, z_lens, z_source_arr)
 
     return float(trapezoid_integral(sigma_inv * nz_source_arr, z_source_arr))
+
 
 def sigma_crit_squared_inverse_source_average(
     cosmo: ccl.Cosmology,
@@ -134,8 +119,6 @@ def sigma_crit_squared_inverse_source_average(
     z_lens: float,
     z_source: FloatArray,
     nz_source: FloatArray,
-    h: float | None = None,
-    sigma_crit_prefactor: float,
 ) -> float:
     """Return the source-averaged squared inverse comoving critical surface density.
 
@@ -147,30 +130,68 @@ def sigma_crit_squared_inverse_source_average(
         z_lens: Lens redshift.
         z_source: Source redshift grid.
         nz_source: Normalized source redshift distribution.
-        h: Dimensionless Hubble parameter. If not supplied, read from ``cosmo["h"]``.
-        sigma_crit_prefactor: Unit-conversion prefactor defining the desired
-            critical-surface-density convention.
 
     Returns:
-        Source-averaged inverse comoving critical surface density.
+        Source-averaged squared inverse comoving critical surface density.
     """
-    h = resolve_h(cosmo, h)
-
     z_source_arr, nz_source_arr = validate_redshift_distribution(
         z_source,
         nz_source,
         name="nz_source",
     )
 
-    sigma_inv = sigma_crit_inverse_comoving(
-        cosmo,
-        z_lens,
-        z_source_arr,
-        h=h,
-        sigma_crit_prefactor=sigma_crit_prefactor,
-    )
+    sigma_inv = sigma_crit_inverse_comoving(cosmo, z_lens, z_source_arr)
 
     return float(trapezoid_integral(sigma_inv**2 * nz_source_arr, z_source_arr))
+
+
+def _sigma_crit_inverse_grid(
+    cosmo: ccl.Cosmology,
+    z_lens: FloatArray,
+    z_source: FloatArray,
+) -> FloatArray:
+    """Compute inverse critical surface densities on a lens-source grid.
+
+    Args:
+        cosmo: CCL cosmology object.
+        z_lens: Lens redshift grid.
+        z_source: Source redshift grid.
+
+    Returns:
+        Inverse critical surface densities with shape
+        ``(n_lens, n_source)``.
+    """
+    chi_lens = np.asarray(
+        comoving_distance_h(cosmo, z_lens),
+        dtype=float,
+    )
+
+    chi_source = np.asarray(
+        comoving_distance_h(cosmo, z_source),
+        dtype=float,
+    )
+
+    chi_l = chi_lens[:, None]
+    chi_s = chi_source[None, :]
+
+    efficiency = np.zeros(
+        (z_lens.size, z_source.size),
+        dtype=float,
+    )
+
+    np.divide(
+        chi_s - chi_l,
+        chi_s,
+        out=efficiency,
+        where=chi_s > chi_l,
+    )
+
+    return (
+        chi_l
+        * efficiency
+        * (1.0 + z_lens[:, None])
+        / _SIGMA_CRIT_PREFACTOR
+    )
 
 
 def effective_sigma_crit_squared(
@@ -180,10 +201,8 @@ def effective_sigma_crit_squared(
     nz_lens: FloatArray,
     z_source: FloatArray,
     nz_source: FloatArray,
-    h: float | None = None,
-    sigma_crit_prefactor: float,
 ) -> float:
-    r"""Return the effective critical-surface-density squared factor.
+    r"""Return the inverse squared mean inverse critical surface density.
 
     This quantity converts source shape noise into Delta Sigma covariance units
     for a lens-source tomographic bin pair.
@@ -194,15 +213,10 @@ def effective_sigma_crit_squared(
         nz_lens: Normalized lens redshift distribution.
         z_source: Source redshift grid.
         nz_source: Normalized source redshift distribution.
-        h: Dimensionless Hubble parameter. If not supplied, read from ``cosmo["h"]``.
-        sigma_crit_prefactor: Unit-conversion prefactor defining the desired
-            critical-surface-density convention.
 
     Returns:
         Effective :math:`\Sigma_c^2` factor for the lens-source bin pair.
     """
-    h = resolve_h(cosmo, h)
-
     z_lens_arr, nz_lens_arr = validate_redshift_distribution(
         z_lens,
         nz_lens,
@@ -215,25 +229,22 @@ def effective_sigma_crit_squared(
         name="nz_source",
     )
 
-    sigma_inv_source_avg = np.asarray(
-        [
-            sigma_crit_inverse_source_average(
-                cosmo,
-                z_lens=z_value,
-                z_source=z_source_arr,
-                nz_source=nz_source_arr,
-                h=h,
-                sigma_crit_prefactor=sigma_crit_prefactor,
-            )
-            for z_value in z_lens_arr
-        ],
-        dtype=float,
+    sigma_inv = _sigma_crit_inverse_grid(
+        cosmo,
+        z_lens_arr,
+        z_source_arr,
+    )
+
+    source_average = np.trapezoid(
+        sigma_inv * nz_source_arr[None, :],
+        x=z_source_arr,
+        axis=1,
     )
 
     sigma_inv_avg = float(
-        trapezoid_integral(
-            sigma_inv_source_avg * nz_lens_arr,
-            z_lens_arr,
+        np.trapezoid(
+            source_average * nz_lens_arr,
+            x=z_lens_arr,
         )
     )
 
@@ -242,6 +253,7 @@ def effective_sigma_crit_squared(
 
     return 1.0 / sigma_inv_avg**2
 
+
 def effective_squared_sigma_crit(
     cosmo: ccl.Cosmology,
     *,
@@ -249,11 +261,11 @@ def effective_squared_sigma_crit(
     nz_lens: FloatArray,
     z_source: FloatArray,
     nz_source: FloatArray,
-    h: float | None = None,
-    sigma_crit_prefactor: float,
 ) -> float:
-    r"""Return the critical-surface-density squared and thenaveraged
-     over the source and lens redshift distributions.
+    r"""Return the inverse of the averaged squared inverse critical surface density.
+
+    This computes the inverse of the lens- and source-averaged
+    :math:`\Sigma_{\mathrm{crit}}^{-2}`.
 
     This quantity converts source shape noise into DeltaSigma covariance units
     for a lens-source tomographic bin pair.
@@ -264,15 +276,10 @@ def effective_squared_sigma_crit(
         nz_lens: Normalized lens redshift distribution.
         z_source: Source redshift grid.
         nz_source: Normalized source redshift distribution.
-        h: Dimensionless Hubble parameter. If not supplied, read from ``cosmo["h"]``.
-        sigma_crit_prefactor: Unit-conversion prefactor defining the desired
-            critical-surface-density convention.
 
     Returns:
         Effective :math:`\Sigma_c^2` factor for the lens-source bin pair.
     """
-    h = resolve_h(cosmo, h)
-
     z_lens_arr, nz_lens_arr = validate_redshift_distribution(
         z_lens,
         nz_lens,
@@ -285,25 +292,22 @@ def effective_squared_sigma_crit(
         name="nz_source",
     )
 
-    sigma_sq_inv_source_avg = np.asarray(
-        [
-            sigma_crit_squared_inverse_source_average(
-                cosmo,
-                z_lens=z_value,
-                z_source=z_source_arr,
-                nz_source=nz_source_arr,
-                h=h,
-                sigma_crit_prefactor=sigma_crit_prefactor,
-            )
-            for z_value in z_lens_arr
-        ],
-        dtype=float,
+    sigma_inv = _sigma_crit_inverse_grid(
+        cosmo,
+        z_lens_arr,
+        z_source_arr,
+    )
+
+    source_average = np.trapezoid(
+        sigma_inv**2 * nz_source_arr[None, :],
+        x=z_source_arr,
+        axis=1,
     )
 
     sigma_sq_inv_avg = float(
-        trapezoid_integral(
-            sigma_sq_inv_source_avg * nz_lens_arr,
-            z_lens_arr,
+        np.trapezoid(
+            source_average * nz_lens_arr,
+            x=z_lens_arr,
         )
     )
 
@@ -320,8 +324,6 @@ def sigma_crit_squared_average(
     nz_lens: FloatArray,
     z_source: FloatArray,
     nz_source: FloatArray,
-    h: float | None = None,
-    sigma_crit_prefactor: float,
 ) -> float:
     """Return the effective critical-surface-density squared factor.
 
@@ -333,6 +335,4 @@ def sigma_crit_squared_average(
         nz_lens=nz_lens,
         z_source=z_source,
         nz_source=nz_source,
-        h=h,
-        sigma_crit_prefactor=sigma_crit_prefactor,
     )

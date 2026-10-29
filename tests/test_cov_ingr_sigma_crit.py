@@ -9,12 +9,13 @@ from dsf.covariance.ingredients.sigma_crit import (
     sigma_crit_inverse_source_average,
     sigma_crit_squared_average,
 )
+from dsf.utils.converters import sigma_crit_prefactor_msun_h_pc2
 
 SIGMA_CRIT_MODULE = "dsf.covariance.ingredients.sigma_crit"
 
 
-def fake_comoving_distance_h(cosmo, z, *, h=None):
-    """Return a simple monotonic comoving distance for tests."""
+def fake_comoving_distance_h(cosmo, z):
+    """Returns a linear comoving distance for testing."""
     return 1000.0 * np.asarray(z, dtype=float)
 
 
@@ -25,7 +26,7 @@ def test_sigma_crit_inverse_comoving_masks_sources_in_front_of_lens(
     cosmo = {"h": 0.7}
     z_lens = 0.5
     z_source = np.array([0.1, 0.5, 1.0, 2.0])
-    sigma_crit_prefactor = 10.0
+    sigma_crit_prefactor = sigma_crit_prefactor_msun_h_pc2()
 
     monkeypatch.setattr(
         f"{SIGMA_CRIT_MODULE}.comoving_distance_h",
@@ -36,7 +37,6 @@ def test_sigma_crit_inverse_comoving_masks_sources_in_front_of_lens(
         cosmo,
         z_lens,
         z_source,
-        sigma_crit_prefactor=sigma_crit_prefactor,
     )
 
     chi_lens = 1000.0 * z_lens
@@ -72,40 +72,9 @@ def test_sigma_crit_inverse_comoving_returns_zero_for_sources_at_lens(
         cosmo,
         z_lens,
         z_source,
-        sigma_crit_prefactor=10.0,
     )
 
     np.testing.assert_allclose(result, np.array([0.0]))
-
-
-def test_sigma_crit_inverse_comoving_passes_supplied_h_to_distance(
-    monkeypatch,
-):
-    """Test that supplied h is passed to comoving distance evaluations."""
-    cosmo = {"h": 0.5}
-    z_lens = 0.5
-    z_source = np.array([1.0, 2.0])
-    supplied_h = 0.8
-    called_h_values = []
-
-    def recording_comoving_distance_h(cosmo, z, *, h=None):
-        called_h_values.append(h)
-        return 1000.0 * np.asarray(z, dtype=float)
-
-    monkeypatch.setattr(
-        f"{SIGMA_CRIT_MODULE}.comoving_distance_h",
-        recording_comoving_distance_h,
-    )
-
-    sigma_crit_inverse_comoving(
-        cosmo,
-        z_lens,
-        z_source,
-        h=supplied_h,
-        sigma_crit_prefactor=10.0,
-    )
-
-    assert called_h_values == [supplied_h, supplied_h]
 
 
 def test_sigma_crit_inverse_source_average_integrates_over_source_distribution(
@@ -116,7 +85,6 @@ def test_sigma_crit_inverse_source_average_integrates_over_source_distribution(
     z_lens = 0.5
     z_source = np.array([0.0, 1.0, 2.0])
     nz_source = np.array([1.0, 2.0, 1.0])
-    sigma_crit_prefactor = 10.0
 
     monkeypatch.setattr(
         f"{SIGMA_CRIT_MODULE}.comoving_distance_h",
@@ -128,14 +96,12 @@ def test_sigma_crit_inverse_source_average_integrates_over_source_distribution(
         z_lens=z_lens,
         z_source=z_source,
         nz_source=nz_source,
-        sigma_crit_prefactor=sigma_crit_prefactor,
     )
 
     sigma_inv = sigma_crit_inverse_comoving(
         cosmo,
         z_lens,
         z_source,
-        sigma_crit_prefactor=sigma_crit_prefactor,
     )
     expected = np.trapezoid(sigma_inv * nz_source, z_source)
 
@@ -151,7 +117,6 @@ def test_effective_sigma_crit_squared_averages_over_lens_distribution(
     nz_lens = np.array([1.0, 2.0, 1.0])
     z_source = np.array([0.0, 1.0, 2.0])
     nz_source = np.array([1.0, 2.0, 1.0])
-    sigma_crit_prefactor = 10.0
 
     monkeypatch.setattr(
         f"{SIGMA_CRIT_MODULE}.comoving_distance_h",
@@ -164,7 +129,6 @@ def test_effective_sigma_crit_squared_averages_over_lens_distribution(
         nz_lens=nz_lens,
         z_source=z_source,
         nz_source=nz_source,
-        sigma_crit_prefactor=sigma_crit_prefactor,
     )
 
     sigma_inv_source_avg = np.array(
@@ -174,7 +138,6 @@ def test_effective_sigma_crit_squared_averages_over_lens_distribution(
                 z_lens=z_value,
                 z_source=z_source,
                 nz_source=nz_source,
-                sigma_crit_prefactor=sigma_crit_prefactor,
             )
             for z_value in z_lens
         ]
@@ -183,41 +146,6 @@ def test_effective_sigma_crit_squared_averages_over_lens_distribution(
     expected = 1.0 / sigma_inv_avg**2
 
     np.testing.assert_allclose(result, expected)
-
-
-def test_effective_sigma_crit_squared_uses_supplied_h_in_nested_calls(
-    monkeypatch,
-):
-    """Test that supplied h is propagated through effective SigmaCrit calculation."""
-    cosmo = {"h": 0.5}
-    z_lens = np.array([0.2, 0.5])
-    nz_lens = np.array([1.0, 1.0])
-    z_source = np.array([1.0, 2.0])
-    nz_source = np.array([1.0, 1.0])
-    supplied_h = 0.8
-    called_h_values = []
-
-    def recording_comoving_distance_h(cosmo, z, *, h=None):
-        called_h_values.append(h)
-        return 1000.0 * np.asarray(z, dtype=float)
-
-    monkeypatch.setattr(
-        f"{SIGMA_CRIT_MODULE}.comoving_distance_h",
-        recording_comoving_distance_h,
-    )
-
-    effective_sigma_crit_squared(
-        cosmo,
-        z_lens=z_lens,
-        nz_lens=nz_lens,
-        z_source=z_source,
-        nz_source=nz_source,
-        h=supplied_h,
-        sigma_crit_prefactor=10.0,
-    )
-
-    assert called_h_values
-    assert all(h_value == supplied_h for h_value in called_h_values)
 
 
 def test_effective_sigma_crit_squared_raises_when_no_sources_are_behind_lenses(
@@ -245,7 +173,6 @@ def test_effective_sigma_crit_squared_raises_when_no_sources_are_behind_lenses(
             nz_lens=nz_lens,
             z_source=z_source,
             nz_source=nz_source,
-            sigma_crit_prefactor=10.0,
         )
 
 
@@ -270,7 +197,6 @@ def test_sigma_crit_squared_average_is_alias_for_effective_sigma_crit_squared(
         nz_lens=nz_lens,
         z_source=z_source,
         nz_source=nz_source,
-        sigma_crit_prefactor=10.0,
     )
     alias = sigma_crit_squared_average(
         cosmo,
@@ -278,7 +204,6 @@ def test_sigma_crit_squared_average_is_alias_for_effective_sigma_crit_squared(
         nz_lens=nz_lens,
         z_source=z_source,
         nz_source=nz_source,
-        sigma_crit_prefactor=10.0,
     )
 
     np.testing.assert_allclose(alias, direct)
@@ -295,24 +220,6 @@ def test_sigma_crit_inverse_comoving_rejects_negative_lens_redshift(z_lens):
             cosmo,
             z_lens,
             z_source,
-            sigma_crit_prefactor=10.0,
-        )
-
-
-@pytest.mark.parametrize("sigma_crit_prefactor", [0.0, -1.0])
-def test_sigma_crit_inverse_comoving_rejects_nonpositive_prefactor(
-    sigma_crit_prefactor,
-):
-    """Test that SigmaCrit inverse rejects non-positive prefactors."""
-    cosmo = {"h": 0.7}
-    z_source = np.array([1.0, 2.0])
-
-    with pytest.raises(ValueError, match="sigma_crit_prefactor"):
-        sigma_crit_inverse_comoving(
-            cosmo,
-            0.5,
-            z_source,
-            sigma_crit_prefactor=sigma_crit_prefactor,
         )
 
 
@@ -332,7 +239,6 @@ def test_sigma_crit_inverse_comoving_rejects_invalid_source_grid(z_source):
             cosmo,
             0.5,
             z_source,
-            sigma_crit_prefactor=10.0,
         )
 
 
@@ -359,7 +265,6 @@ def test_sigma_crit_inverse_source_average_rejects_invalid_source_distribution(
             z_lens=0.5,
             z_source=z_source,
             nz_source=nz_source,
-            sigma_crit_prefactor=10.0,
         )
 
 
@@ -389,7 +294,6 @@ def test_effective_sigma_crit_squared_rejects_invalid_lens_distribution(
             nz_lens=nz_lens,
             z_source=z_source,
             nz_source=nz_source,
-            sigma_crit_prefactor=10.0,
         )
 
 
@@ -419,5 +323,4 @@ def test_effective_sigma_crit_squared_rejects_invalid_source_distribution(
             nz_lens=nz_lens,
             z_source=z_source,
             nz_source=nz_source,
-            sigma_crit_prefactor=10.0,
         )

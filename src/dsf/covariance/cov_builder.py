@@ -46,7 +46,6 @@ from dsf.utils.converters import (
     resolve_h,
     resolve_omega_m,
     rho_critical_projected_msun_pc2_per_mpc,
-    sigma_crit_prefactor_msun_h_pc2,
 )
 from dsf.utils.types import ArrayLike, BinPairs, FloatArray, ScalarOrPerBin
 from dsf.utils.validators import validate_bin_pair
@@ -162,13 +161,7 @@ class DeltaSigmaCovarianceBuilder:
         self.sigma_e = sigma_e
         self.h = resolve_h(cosmo, None)
         self.omega_m = resolve_omega_m(cosmo, None)
-
-        self.rho_crit = rho_critical_projected_msun_pc2_per_mpc(
-            cosmo,
-            h=self.h,
-        )
-
-        self.sigma_crit_prefactor = sigma_crit_prefactor_msun_h_pc2()
+        self.rho_crit = rho_critical_projected_msun_pc2_per_mpc(cosmo)
 
         self.galaxy_bias = (
             galaxy_bias
@@ -609,7 +602,6 @@ class DeltaSigmaCovarianceBuilder:
                 z_min=z_min,
                 z_max=z_max,
                 area_deg2=self.area_deg2,
-                h=self.h,
             )
 
         pk = lens_averaged_matter_power(
@@ -617,7 +609,6 @@ class DeltaSigmaCovarianceBuilder:
             self.k,
             self.z_lens,
             nz_lens,
-            h=self.h,
         )
 
         volume = survey_volume_from_edges(
@@ -625,7 +616,6 @@ class DeltaSigmaCovarianceBuilder:
             z_min=z_min,
             z_max=z_max,
             area_deg2=self.area_deg2,
-            h=self.h,
         )
 
         lens_shot_noise = shot_noise(n_lens_3d)
@@ -634,14 +624,12 @@ class DeltaSigmaCovarianceBuilder:
             self.cosmo,
             self.z_lens,
             nz_lens,
-            h=self.h,
         )
 
         delta_pi_gg = delta_pi_gg_from_edges(
             self.cosmo,
             z_min=z_min,
             z_max=z_max,
-            h=self.h,
         )
 
         ingredients = {
@@ -727,8 +715,6 @@ class DeltaSigmaCovarianceBuilder:
             z_min=lens["z_min"],
             z_max=lens["z_max"],
             z_center=lens["z_center"],
-            h=self.h,
-            sigma_crit_prefactor=self.sigma_crit_prefactor,
             pi=self.pi,
             gm_window=self.gm_window,
         )
@@ -739,8 +725,6 @@ class DeltaSigmaCovarianceBuilder:
             nz_lens=lens["nz_lens"],
             z_source=self.z_source,
             nz_source=source["nz_source"],
-            h=self.h,
-            sigma_crit_prefactor=self.sigma_crit_prefactor,
         )
 
         return {

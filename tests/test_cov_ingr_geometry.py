@@ -19,6 +19,14 @@ from dsf.covariance.ingredients.geometry import (
 MODULE = "dsf.covariance.ingredients.geometry"
 
 
+def patch_linear_comoving_distance(monkeypatch, *, factor=1000.0):
+    """Patches comoving distance to a linear function of redshift."""
+    monkeypatch.setattr(
+        f"{MODULE}.comoving_distance_h",
+        lambda cosmo, z: factor * np.asarray(z, dtype=float),
+    )
+
+
 @pytest.fixture
 def cosmo():
     """Returns a dummy cosmology object."""
@@ -34,30 +42,14 @@ def redshift_distribution():
     return z, nz
 
 
-def patch_resolve_h(monkeypatch):
-    """Patches the Hubble-parameter resolver."""
-    monkeypatch.setattr(
-        f"{MODULE}.resolve_h",
-        lambda cosmo, h=None: 0.7 if h is None else h,
-    )
-
-
-def patch_linear_comoving_distance(monkeypatch, *, factor=1000.0):
-    """Patches comoving distance to a linear function of redshift."""
-    monkeypatch.setattr(
-        f"{MODULE}.comoving_distance_h",
-        lambda cosmo, z, h=None: factor * np.asarray(z, dtype=float),
-    )
-
-
 def test_effective_comoving_distance_integrates_distance_weighted_nz(
     monkeypatch,
     cosmo,
     redshift_distribution,
 ):
     """Tests that effective distance integrates chi weighted by n(z)."""
-    patch_resolve_h(monkeypatch)
-    patch_linear_comoving_distance(monkeypatch, factor=1000.0)
+    patch_linear_comoving_distance(monkeypatch)
+
     z, nz = redshift_distribution
 
     distance = effective_comoving_distance(cosmo, z, nz)
@@ -69,8 +61,7 @@ def test_effective_comoving_distance_integrates_distance_weighted_nz(
 
 def test_delta_pi_gg_from_edges_returns_comoving_width(monkeypatch, cosmo):
     """Tests that gg line-of-sight width is the distance difference."""
-    patch_resolve_h(monkeypatch)
-    patch_linear_comoving_distance(monkeypatch, factor=1000.0)
+    patch_linear_comoving_distance(monkeypatch)
 
     delta_pi = delta_pi_gg_from_edges(
         cosmo,
@@ -167,8 +158,7 @@ def test_delta_pi_gm_gg_from_window_rejects_too_few_selected_points():
 
 def test_survey_volume_from_edges_returns_shell_volume(monkeypatch, cosmo):
     """Tests that survey volume is computed from shell distance limits and area."""
-    patch_resolve_h(monkeypatch)
-    patch_linear_comoving_distance(monkeypatch, factor=1000.0)
+    patch_linear_comoving_distance(monkeypatch)
 
     volume = survey_volume_from_edges(
         cosmo,
@@ -185,9 +175,6 @@ def test_survey_volume_from_edges_returns_shell_volume(monkeypatch, cosmo):
 
 def test_survey_volume_from_edges_rejects_non_positive_area(monkeypatch, cosmo):
     """Tests that survey volume rejects non-positive survey area."""
-    patch_resolve_h(monkeypatch)
-    patch_linear_comoving_distance(monkeypatch)
-
     with pytest.raises(ValueError):
         survey_volume_from_edges(
             cosmo,
@@ -202,11 +189,10 @@ def test_lens_number_density_3d_from_angular_density_uses_volume(
     cosmo,
 ):
     """Tests that lens density divides total angular counts by survey volume."""
-    patch_resolve_h(monkeypatch)
 
     monkeypatch.setattr(
         f"{MODULE}.survey_volume_from_edges",
-        lambda cosmo, z_min, z_max, area_deg2, h=None: 2.0e6,
+        lambda cosmo, z_min, z_max, area_deg2: 2.0e6,
     )
 
     density = lens_number_density_3d_from_angular_density(
@@ -241,8 +227,7 @@ def test_pi_limits_from_lens_edges_returns_limits_relative_to_center(
     cosmo,
 ):
     """Tests that pi limits are measured relative to the center distance."""
-    patch_resolve_h(monkeypatch)
-    patch_linear_comoving_distance(monkeypatch, factor=1000.0)
+    patch_linear_comoving_distance(monkeypatch)
 
     pi_min, pi_max = pi_limits_from_lens_edges(
         cosmo,
@@ -260,9 +245,6 @@ def test_pi_limits_from_lens_edges_rejects_center_outside_edges(
     cosmo,
 ):
     """Tests that pi limits reject centers outside the lens-bin edges."""
-    patch_resolve_h(monkeypatch)
-    patch_linear_comoving_distance(monkeypatch)
-
     with pytest.raises(ValueError, match="z_center must lie"):
         pi_limits_from_lens_edges(
             cosmo,
@@ -274,8 +256,7 @@ def test_pi_limits_from_lens_edges_rejects_center_outside_edges(
 
 def test_gm_lensing_window_uses_supplied_pi_grid(monkeypatch, cosmo):
     """Tests that gm lensing window returns values on the supplied pi grid."""
-    patch_resolve_h(monkeypatch)
-    patch_linear_comoving_distance(monkeypatch, factor=1000.0)
+    patch_linear_comoving_distance(monkeypatch)
 
     monkeypatch.setattr(
         f"{MODULE}.effective_squared_sigma_crit",
@@ -299,7 +280,6 @@ def test_gm_lensing_window_uses_supplied_pi_grid(monkeypatch, cosmo):
         nz_lens=nz_lens,
         z_source=z_source,
         nz_source=nz_source,
-        sigma_crit_prefactor=1.0,
         pi=pi,
         n_z_interp=20,
     )
@@ -310,8 +290,7 @@ def test_gm_lensing_window_uses_supplied_pi_grid(monkeypatch, cosmo):
 
 def test_gm_lensing_window_builds_default_symmetric_pi_grid(monkeypatch, cosmo):
     """Tests that gm lensing window builds a symmetric default pi grid."""
-    patch_resolve_h(monkeypatch)
-    patch_linear_comoving_distance(monkeypatch, factor=1000.0)
+    patch_linear_comoving_distance(monkeypatch)
 
     monkeypatch.setattr(
         f"{MODULE}.effective_squared_sigma_crit",
@@ -334,7 +313,6 @@ def test_gm_lensing_window_builds_default_symmetric_pi_grid(monkeypatch, cosmo):
         nz_lens=nz_lens,
         z_source=z_source,
         nz_source=nz_source,
-        sigma_crit_prefactor=1.0,
         pi_min=1.0,
         pi_max=10.0,
         n_pi=3,
@@ -359,9 +337,6 @@ def test_gm_lensing_window_rejects_invalid_supplied_pi_grid(
     bad_pi,
 ):
     """Tests that gm lensing window rejects invalid supplied pi grids."""
-    patch_resolve_h(monkeypatch)
-    patch_linear_comoving_distance(monkeypatch)
-
     with pytest.raises(ValueError):
         gm_lensing_window(
             cosmo,
@@ -369,16 +344,12 @@ def test_gm_lensing_window_rejects_invalid_supplied_pi_grid(
             nz_lens=[0.0, 1.0, 0.0],
             z_source=[0.5, 0.6, 0.7],
             nz_source=[0.0, 1.0, 0.0],
-            sigma_crit_prefactor=1.0,
             pi=bad_pi,
         )
 
 
 def test_gm_lensing_window_rejects_invalid_default_pi_limits(monkeypatch, cosmo):
     """Tests that gm lensing window rejects invalid default pi limits."""
-    patch_resolve_h(monkeypatch)
-    patch_linear_comoving_distance(monkeypatch)
-
     with pytest.raises(ValueError, match="pi_max must be greater than pi_min"):
         gm_lensing_window(
             cosmo,
@@ -386,7 +357,6 @@ def test_gm_lensing_window_rejects_invalid_default_pi_limits(monkeypatch, cosmo)
             nz_lens=[0.0, 1.0, 0.0],
             z_source=[0.5, 0.6, 0.7],
             nz_source=[0.0, 1.0, 0.0],
-            sigma_crit_prefactor=1.0,
             pi_min=10.0,
             pi_max=1.0,
         )
@@ -394,11 +364,9 @@ def test_gm_lensing_window_rejects_invalid_default_pi_limits(monkeypatch, cosmo)
 
 def test_delta_pi_gm_factors_uses_supplied_window(monkeypatch, cosmo):
     """Tests that gm factors use supplied pi and window arrays."""
-    patch_resolve_h(monkeypatch)
-
     monkeypatch.setattr(
         f"{MODULE}.pi_limits_from_lens_edges",
-        lambda cosmo, z_min, z_max, z_center, h=None: (-1.0, 1.0),
+        lambda cosmo, z_min, z_max, z_center: (-1.0, 1.0),
     )
 
     pi = np.asarray([-2.0, -1.0, 0.0, 1.0, 2.0], dtype=float)
@@ -413,7 +381,6 @@ def test_delta_pi_gm_factors_uses_supplied_window(monkeypatch, cosmo):
         z_min=0.1,
         z_max=0.3,
         z_center=0.2,
-        sigma_crit_prefactor=1.0,
         pi=pi,
         gm_window=window,
     )
@@ -448,7 +415,6 @@ def test_delta_pi_gm_factors_rejects_partially_supplied_window(
             z_min=0.1,
             z_max=0.3,
             z_center=0.2,
-            sigma_crit_prefactor=1.0,
             pi=pi,
             gm_window=gm_window,
         )
@@ -456,8 +422,6 @@ def test_delta_pi_gm_factors_rejects_partially_supplied_window(
 
 def test_delta_pi_gm_factors_builds_window_when_not_supplied(monkeypatch, cosmo):
     """Tests that gm factors build the lensing window when none is supplied."""
-    patch_resolve_h(monkeypatch)
-
     monkeypatch.setattr(
         f"{MODULE}.gm_lensing_window",
         lambda *args, **kwargs: (
@@ -468,7 +432,7 @@ def test_delta_pi_gm_factors_builds_window_when_not_supplied(monkeypatch, cosmo)
 
     monkeypatch.setattr(
         f"{MODULE}.pi_limits_from_lens_edges",
-        lambda cosmo, z_min, z_max, z_center, h=None: (-1.0, 1.0),
+        lambda cosmo, z_min, z_max, z_center: (-1.0, 1.0),
     )
 
     delta_pi_gm, delta_pi_gm_gg = delta_pi_gm_factors(
@@ -480,7 +444,6 @@ def test_delta_pi_gm_factors_builds_window_when_not_supplied(monkeypatch, cosmo)
         z_min=0.1,
         z_max=0.3,
         z_center=0.2,
-        sigma_crit_prefactor=1.0,
     )
 
     expected_gm = np.trapezoid([4.0, 9.0, 16.0], [-1.0, 0.0, 1.0])

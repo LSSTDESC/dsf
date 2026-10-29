@@ -16,7 +16,6 @@ import pyccl as ccl
 from dsf.utils.converters import (
     comoving_distance_h,
     deg2_to_arcmin2,
-    resolve_h,
 )
 from dsf.utils.integrators import trapezoid_integral
 from dsf.utils.types import FloatArray
@@ -51,8 +50,6 @@ def effective_comoving_distance(
     cosmo: ccl.Cosmology,
     z: FloatArray,
     nz: FloatArray,
-    *,
-    h: float | None = None,
 ) -> float:
     """Return the effective comoving distance of a tomographic sample.
 
@@ -60,15 +57,12 @@ def effective_comoving_distance(
         cosmo: CCL cosmology object.
         z: Redshift grid.
         nz: Normalized redshift distribution evaluated on ``z``.
-        h: Dimensionless Hubble parameter. If not supplied, read from ``cosmo["h"]``.
 
     Returns:
         Mean comoving radial distance in ``Mpc / h``.
     """
-    h = resolve_h(cosmo, h)
-
     z_arr, nz_arr = validate_redshift_distribution(z, nz)
-    chi = comoving_distance_h(cosmo, z_arr, h=h)
+    chi = comoving_distance_h(cosmo, z_arr)
 
     return float(trapezoid_integral(chi * nz_arr, z_arr))
 
@@ -78,7 +72,6 @@ def delta_pi_gg_from_edges(
     *,
     z_min: float,
     z_max: float,
-    h: float | None = None,
 ) -> float:
     """Return the line-of-sight width of a lens redshift bin.
 
@@ -86,17 +79,14 @@ def delta_pi_gg_from_edges(
         cosmo: CCL cosmology object.
         z_min: Lower lens-bin redshift edge.
         z_max: Upper lens-bin redshift edge.
-        h: Dimensionless Hubble parameter. If not supplied, read from ``cosmo["h"]``.
 
     Returns:
         Comoving line-of-sight width in ``Mpc / h``.
     """
     validate_redshift_edges(z_min, z_max)
 
-    h = resolve_h(cosmo, h)
-
-    chi_min = float(comoving_distance_h(cosmo, z_min, h=h))
-    chi_max = float(comoving_distance_h(cosmo, z_max, h=h))
+    chi_min = float(comoving_distance_h(cosmo, z_min))
+    chi_max = float(comoving_distance_h(cosmo, z_max))
 
     return chi_max - chi_min
 
@@ -186,7 +176,6 @@ def survey_volume_from_edges(
     z_min: float,
     z_max: float,
     area_deg2: float,
-    h: float | None = None,
 ) -> float:
     """Return the comoving survey volume of a redshift shell.
 
@@ -195,7 +184,6 @@ def survey_volume_from_edges(
         z_min: Lower redshift edge.
         z_max: Upper redshift edge.
         area_deg2: Survey area in square degrees.
-        h: Dimensionless Hubble parameter. If not supplied, read from ``cosmo["h"]``.
 
     Returns:
         Comoving shell volume in ``(Mpc / h)^3``.
@@ -206,10 +194,8 @@ def survey_volume_from_edges(
     validate_positive_scalar(area_deg2, name="area_deg2")
     validate_redshift_edges(z_min, z_max)
 
-    h = resolve_h(cosmo, h)
-
-    chi_min = comoving_distance_h(cosmo, z_min, h=h)
-    chi_max = comoving_distance_h(cosmo, z_max, h=h)
+    chi_min = comoving_distance_h(cosmo, z_min)
+    chi_max = comoving_distance_h(cosmo, z_max)
 
     area_sr = area_deg2 * (np.pi / 180.0) ** 2
 
@@ -223,7 +209,6 @@ def lens_number_density_3d_from_angular_density(
     z_min: float,
     z_max: float,
     area_deg2: float,
-    h: float | None = None,
 ) -> float:
     """Return the three-dimensional lens number density for a redshift bin.
 
@@ -233,21 +218,17 @@ def lens_number_density_3d_from_angular_density(
         z_min: Lower lens-bin redshift edge.
         z_max: Upper lens-bin redshift edge.
         area_deg2: Survey area in square degrees.
-        h: Dimensionless Hubble parameter. If not supplied, read from ``cosmo["h"]``.
 
     Returns:
         Comoving lens number density in ``(h / Mpc)^3``.
     """
     validate_positive_scalar(n_lens_arcmin2, "n_lens_arcmin2")
 
-    h = resolve_h(cosmo, h)
-
     volume = survey_volume_from_edges(
         cosmo,
         z_min=z_min,
         z_max=z_max,
         area_deg2=area_deg2,
-        h=h,
     )
 
     area_arcmin2 = deg2_to_arcmin2(area_deg2)
@@ -262,7 +243,6 @@ def pi_limits_from_lens_edges(
     z_min: float,
     z_max: float,
     z_center: float,
-    h: float | None = None,
 ) -> tuple[float, float]:
     """Return line-of-sight limits relative to a central lens redshift.
 
@@ -271,7 +251,6 @@ def pi_limits_from_lens_edges(
         z_min: Lower lens-bin redshift edge.
         z_max: Upper lens-bin redshift edge.
         z_center: Effective or central lens redshift.
-        h: Dimensionless Hubble parameter. If not supplied, read from ``cosmo["h"]``.
 
     Returns:
         Lower and upper line-of-sight limits in ``Mpc / h``.
@@ -279,14 +258,12 @@ def pi_limits_from_lens_edges(
     validate_redshift_edges(z_min, z_max)
     validate_finite_scalar(z_center, "z_center")
 
-    h = resolve_h(cosmo, h)
-
     if z_center < z_min or z_center > z_max:
         raise ValueError("z_center must lie between z_min and z_max.")
 
-    chi_min = float(comoving_distance_h(cosmo, z_min, h=h))
-    chi_max = float(comoving_distance_h(cosmo, z_max, h=h))
-    chi_center = float(comoving_distance_h(cosmo, z_center, h=h))
+    chi_min = float(comoving_distance_h(cosmo, z_min))
+    chi_max = float(comoving_distance_h(cosmo, z_max))
+    chi_center = float(comoving_distance_h(cosmo, z_center))
 
     return chi_min - chi_center, chi_max - chi_center
 
@@ -298,9 +275,7 @@ def gm_lensing_window(
     nz_lens: FloatArray,
     z_source: FloatArray,
     nz_source: FloatArray,
-    sigma_crit_prefactor: float,
     pi: FloatArray | None = None,
-    h: float | None = None,
     pi_min: float = 0.1,
     pi_max: float = 3000.0,
     n_pi: int = 4000,
@@ -322,13 +297,9 @@ def gm_lensing_window(
         nz_lens: Normalized lens redshift distribution.
         z_source: Source redshift grid.
         nz_source: Normalized source redshift distribution.
-        sigma_crit_prefactor: Unit-conversion prefactor used by the
-            critical-surface-density ingredient.
         pi: Optional line-of-sight separation grid in ``Mpc / h``. If not
             supplied, a symmetric logarithmic grid from ``-pi_max`` to
             ``pi_max`` is built.
-        h: Dimensionless Hubble parameter. If not supplied, read from
-            ``cosmo["h"]``.
         pi_min: Minimum positive line-of-sight separation used when building
             the default grid.
         pi_max: Maximum positive line-of-sight separation used when building
@@ -343,15 +314,12 @@ def gm_lensing_window(
         Tuple containing the line-of-sight grid in ``Mpc / h`` and the
         dimensionless lensing window evaluated on that grid.
     """
-    h = resolve_h(cosmo, h)
-
     z_lens_arr, nz_lens_arr = validate_redshift_distribution(z_lens, nz_lens)
     z_source_arr, nz_source_arr = validate_redshift_distribution(
         z_source,
         nz_source,
     )
 
-    validate_positive_scalar(sigma_crit_prefactor, "sigma_crit_prefactor")
     validate_positive_scalar(pi_min, "pi_min")
     validate_positive_scalar(pi_max, "pi_max")
     validate_positive_scalar(float(n_pi), "n_pi")
@@ -370,7 +338,7 @@ def gm_lensing_window(
         if pi_arr.size < 2:
             raise ValueError("pi must contain at least two points.")
 
-    chi_lens = comoving_distance_h(cosmo, z_lens_arr, h=h)
+    chi_lens = comoving_distance_h(cosmo, z_lens_arr)
 
     max_target_chi = float(np.max(chi_lens) + np.max(np.abs(pi_arr)))
     if z_interp_max is None:
@@ -381,11 +349,11 @@ def gm_lensing_window(
         )
 
     z_interp = np.linspace(0.0, float(z_interp_max), int(n_z_interp))
-    chi_interp = comoving_distance_h(cosmo, z_interp, h=h)
+    chi_interp = comoving_distance_h(cosmo, z_interp)
 
     while float(chi_interp[-1]) < max_target_chi:
         z_interp = np.linspace(0.0, 2.0 * float(z_interp[-1]), int(n_z_interp))
-        chi_interp = comoving_distance_h(cosmo, z_interp, h=h)
+        chi_interp = comoving_distance_h(cosmo, z_interp)
 
     sigma_crit_average = np.sqrt(
         effective_squared_sigma_crit(
@@ -394,8 +362,6 @@ def gm_lensing_window(
             nz_lens=nz_lens_arr,
             z_source=z_source_arr,
             nz_source=nz_source_arr,
-            h=h,
-            sigma_crit_prefactor=sigma_crit_prefactor,
         )
     )
 
@@ -425,8 +391,6 @@ def gm_lensing_window(
                 cosmo,
                 z_lens=float(z_displaced),
                 z_source=z_source_arr,
-                h=h,
-                sigma_crit_prefactor=sigma_crit_prefactor,
             )
 
             source_averaged_sigma_crit_inv[lens_index] = trapezoid_integral(
@@ -454,10 +418,8 @@ def delta_pi_gm_factors(
     z_min: float,
     z_max: float,
     z_center: float,
-    sigma_crit_prefactor: float,
     pi: FloatArray | None = None,
     gm_window: FloatArray | None = None,
-    h: float | None = None,
 ) -> tuple[float, float]:
     """Return line-of-sight factors for Delta Sigma ``gm`` covariance blocks.
 
@@ -470,12 +432,8 @@ def delta_pi_gm_factors(
         z_min: Lower lens-bin redshift edge.
         z_max: Upper lens-bin redshift edge.
         z_center: Effective or central lens redshift.
-        sigma_crit_prefactor: Unit-conversion prefactor used by the
-            critical-surface-density ingredient.
         pi: Optional line-of-sight separation grid in ``Mpc / h``.
         gm_window: Optional galaxy-matter lensing window evaluated on ``pi``.
-        h: Dimensionless Hubble parameter. If not supplied, read from
-            ``cosmo["h"]``.
 
     Returns:
         The ``gm x gm`` and ``gm x gg`` line-of-sight factors in ``Mpc / h``.
@@ -487,8 +445,6 @@ def delta_pi_gm_factors(
             nz_lens=nz_lens,
             z_source=z_source,
             nz_source=nz_source,
-            h=h,
-            sigma_crit_prefactor=sigma_crit_prefactor,
         )
     elif pi is None or gm_window is None:
         raise ValueError(
@@ -503,7 +459,6 @@ def delta_pi_gm_factors(
         z_min=z_min,
         z_max=z_max,
         z_center=z_center,
-        h=h,
     )
 
     delta_pi_gm = delta_pi_gm_from_window(

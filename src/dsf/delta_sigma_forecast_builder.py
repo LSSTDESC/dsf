@@ -88,22 +88,12 @@ class DeltaSigmaForecastBuilder:
         lens_overrides: Mapping[str, Any] | None = None,
         source_overrides: Mapping[str, Any] | None = None,
         observable: str = "delta_sigma",
-        sigma_crit_prefactor: float | None = None,
         galaxy_bias: ScalarOrPerBin | None = None,
-        galaxy_bias_prefactor: float = 1.0,
-        galaxy_bias_round_decimals: int | None = 4,
         k: FloatArray | None = None,
-        h: float | None = None,
-        omega_m: float | None = None,
-        rho_crit: float | None = None,
         nonlinear: bool = True,
-        pi: FloatArray | None = None,
-        gm_window: FloatArray | None = None,
-        hankel_kwargs: Mapping[str, Any] | None = None,
-        covariance_orders: Mapping[str, int] | None = None,
+        projection: Mapping[str, Any] | None = None,
+        hankel: Mapping[str, Any] | None = None,
         covariance_kind: str = "gm",
-        taper: bool = True,
-        taper_kwargs: dict[str, Any] | None = None,
         trim_edge_points: int = 0,
         verbose: bool = True,
     ) -> None:
@@ -149,33 +139,20 @@ class DeltaSigmaForecastBuilder:
                 source sample.
             observable: Forecast observable to evaluate. Currently only
                 ``"delta_sigma"`` is supported.
-            sigma_crit_prefactor: Optional unit-conversion factor applied to the
-                effective critical surface density used in the covariance.
-                If omitted, the covariance builder uses its internal default.
             galaxy_bias: Galaxy bias value or per-lens-bin values.
-            galaxy_bias_prefactor: Normalization for the default galaxy-bias
-                model.
-            galaxy_bias_round_decimals: Optional rounding applied to the default
-                galaxy-bias values.
             k: Wavenumber grid in ``h / Mpc`` used by the covariance.
-            h: Dimensionless Hubble parameter used by covariance ingredients
-                when needed explicitly.
-            omega_m: Matter density fraction used by covariance ingredients
-                when needed explicitly.
-            rho_crit: Critical-density normalization used by covariance
-                ingredients when needed explicitly.
             nonlinear: Whether covariance matter spectra should use nonlinear
                 power.
-            pi: Optional line-of-sight grid in ``Mpc / h``.
-            gm_window: Optional galaxy-matter line-of-sight window.
-            hankel_kwargs: Optional settings for covariance Hankel projections.
-            covariance_orders: Bessel orders used by covariance projections.
+            projection: Optional line-of-sight projection settings containing
+                ``pi`` (grid in ``Mpc / h``) and ``gm_window`` (galaxy-matter
+                line-of-sight window).
+            hankel: Optional Hankel configuration containing backend settings,
+                covariance Bessel orders, and taper settings (``taper`` and
+                ``taper_kwargs``). Tapering is enabled by default.
             covariance_kind: Covariance product to use. Only ``"gm"`` is currently
                 supported by this builder because the forecast data vector is
                 Delta Sigma-only. The ``"gg"`` and ``"joint"`` covariance paths are
                 reserved for future builders with matching data vectors.
-            taper: Whether covariance spectra are tapered before projection.
-            taper_kwargs: Optional taper settings.
             trim_edge_points: Number of edge points removed from each lens-bin
                 redshift distribution before averaging Delta Sigma.
             verbose: Whether progress messages are printed while preparing the
@@ -236,21 +213,11 @@ class DeltaSigmaForecastBuilder:
         }
 
         self.covariance_kwargs: dict[str, Any] = {
-            "sigma_crit_prefactor": sigma_crit_prefactor,
             "galaxy_bias": galaxy_bias,
-            "galaxy_bias_prefactor": galaxy_bias_prefactor,
-            "galaxy_bias_round_decimals": galaxy_bias_round_decimals,
             "k": k,
-            "h": h,
-            "omega_m": omega_m,
-            "rho_crit": rho_crit,
             "nonlinear": nonlinear,
-            "pi": pi,
-            "gm_window": gm_window,
-            "hankel_kwargs": hankel_kwargs,
-            "covariance_orders": covariance_orders,
-            "taper": taper,
-            "taper_kwargs": taper_kwargs,
+            "projection": projection,
+            "hankel": hankel,
         }
 
         self._forecast: dict[str, Any] | None = None
@@ -295,11 +262,7 @@ class DeltaSigmaForecastBuilder:
 
         cov_builder = DeltaSigmaCovarianceBuilder(
             cosmo=self.cosmo,
-            lens_result=tomography["lens_result"],
-            source_result=tomography["source_result"],
-            lens_population_stats=tomography["lens_population_stats"],
-            source_population_stats=tomography["source_population_stats"],
-            bin_pairs=tomography["bin_pairs"],
+            tomography=tomography,
             rp_bin_edges=self.rp_bin_edges,
             area_deg2=self.area_deg2,
             sigma_e=self.sigma_e,

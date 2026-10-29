@@ -11,6 +11,7 @@ Msun = 1.989*10**30 # in kg
 Gnewt = 6.67408*10**(-11)
 c=2.99792458*10**(8)
 
+
 def get_dNdzL(params, lens_sample):
     """ Imports the lens redshift distribution from file, normalizes, interpolates, and outputs at the z vector that's passed."""
 	
@@ -90,7 +91,6 @@ def get_dNdzL(params, lens_sample):
 	
     else:
         raise(ValueError, lens_sample+" is not a supported lens sample tag at this time.")
-		
 	
 	
 def get_dNdzS(src_sample):
@@ -161,7 +161,6 @@ def get_dNdzS(src_sample):
         norm = scipy.integrate.simpson(dNdz_getnorm, z_highres)
 	
         return  (z_highres, dNdz_getnorm / norm)
-
 
     elif (src_sample == 'SDSS'):
         z_min = 0.
@@ -324,7 +323,8 @@ def shape_noise(params, src, lens):
     else:
         raise(ValueError, "Shape noise is not yet implemented for source sample ", src, " and lens sample ", lens, ".")
         return 
-	
+
+
 def shot_noise(lens):
 	""" Calculate the shot noise associated with the lens sample.
 	lens: lens sample. """
@@ -347,7 +347,8 @@ def shot_noise(lens):
 	else:
 		raise(ValueError, "Shot noise is not yet implemented for lens sample ", lens, ".")
 		return
-		
+
+
 def volume(params, src, lens):
     """ Volume of the lens survey.
     params : dictionary of fiducial parameters
@@ -452,6 +453,7 @@ def weights(params, src, z_, z_l_):
 
     return weights	
 
+
 def weights_times_SigC(params, src, z_, z_l_):
 
     """ Returns the inverse variance weights as a function of redshift. """
@@ -469,7 +471,8 @@ def weights_times_SigC(params, src, z_, z_l_):
     weights_SigC = get_SigmaC_inv(params, z_, z_l_)/(sig_e**2 + e_rms**2)
 
     return weights_SigC
-    
+
+
 def get_SigmaC_inv(params, z_s_, z_l_):
 	""" Returns the theoretical value of 1/Sigma_c, (Sigma_c = the critcial surface mass density).
 	z_s_ and z_l_ can be 1d arrays, so the returned value will in general be a 2d array. 
@@ -501,7 +504,7 @@ def get_SigmaC_inv(params, z_s_, z_l_):
                     
 	return Sigma_c_inv
 	
-	
+
 def get_SigmaC_inv_com(params, com_s, com_l, z_l_):
     """ Returns the theoretical value of 1/Sigma_c, (Sigma_c = the critcial surface mass density).
     z_s_ and z_l_ can be 1d arrays, so the returned value will in general be a 2d array. 

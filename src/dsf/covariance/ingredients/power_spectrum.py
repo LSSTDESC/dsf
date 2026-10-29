@@ -30,17 +30,17 @@ def lens_averaged_matter_power(
     nz_lens: FloatArray,
     *,
     h: float | None = None,
-    nonlinear: bool = True,
 ) -> FloatArray:
     """Return the matter power spectrum averaged over a lens redshift distribution.
 
     Args:
-        cosmo: CCL cosmology object.
+        cosmo: CCL cosmology object. The matter power spectrum prescription
+            is determined by its ``matter_power_spectrum`` configuration.
         k: Wavenumber grid in ``h / Mpc``.
         z_lens: Lens redshift grid.
         nz_lens: Normalized lens redshift distribution evaluated on ``z_lens``.
-        h: Dimensionless Hubble parameter. If not supplied, read from ``cosmo["h"]``.
-        nonlinear: Whether to use the nonlinear matter power spectrum.
+        h: Dimensionless Hubble parameter. If not supplied, read from
+            ``cosmo["h"]``.
 
     Returns:
         Lens-redshift-averaged matter power spectrum in ``(Mpc / h)^3``.
@@ -54,11 +54,9 @@ def lens_averaged_matter_power(
         name="nz_lens",
     )
 
-    power_function = ccl.nonlin_matter_power if nonlinear else ccl.linear_matter_power
-
     pk_of_z = np.asarray(
         [
-            power_function(
+            ccl.nonlin_matter_power(
                 cosmo,
                 k_arr * h,
                 redshift_to_scale_factor(z_value),

@@ -82,69 +82,45 @@ class DeltaSigmaCovarianceBuilder:
         self,
         *,
         cosmo: ccl.Cosmology,
-        lens_result: Any,
-        source_result: Any,
-        lens_population_stats: Mapping[str, Any],
-        source_population_stats: Mapping[str, Any],
-        bin_pairs: BinPairs,
+        tomography: Mapping[str, Any],
         rp_bin_edges: ArrayLike,
         area_deg2: float,
         sigma_e: ScalarOrPerBin,
-        sigma_crit_prefactor: float | None = None,
         galaxy_bias: ScalarOrPerBin | None = None,
-        galaxy_bias_prefactor: float = 1.0,
-        galaxy_bias_round_decimals: int | None = 4,
         k: FloatArray | None = None,
-        h: float | None = None,
-        omega_m: float | None = None,
-        rho_crit: float | None = None,
-        nonlinear: bool = True,
-        pi: FloatArray | None = None,
-        gm_window: FloatArray | None = None,
-        hankel: HankelTransform | None = None,
-        hankel_kwargs: Mapping[str, Any] | None = None,
-        covariance_orders: Mapping[str, int] | None = None,
-        taper: bool = True,
-        taper_kwargs: dict[str, Any] | None = None,
+        projection: Mapping[str, Any] | None = None,
+        hankel: Mapping[str, Any] | None = None,
     ) -> None:
         """Initialize the covariance builder.
 
         Args:
-            cosmo: CCL cosmology used for distances, matter power spectra,
+            cosmo: CCL cosmology controlling distances, matter power spectra,
                 growth-dependent quantities, and density normalizations.
-            lens_result: Binny tomography result for the lens sample.
-            source_result: Binny tomography result for the source sample.
-            lens_population_stats: Lens sample population summary.
-            source_population_stats: Source sample population summary.
-            bin_pairs: Selected ``(lens_bin, source_bin)`` pairs using original
-                tomographic bin indices.
+                The matter power spectrum prescription is specified through
+                the cosmology's ``matter_power_spectrum`` setting.
+            tomography: Tomography inputs returned by
+                :meth:`dsf.tomography.tomo_builder.TomographyBuilder.prepare_bins`,
+                including lens and source results, population statistics,
+                and selected bin pairs.
             rp_bin_edges: Projected-radius bin edges in ``Mpc / h``.
             area_deg2: Survey area in square degrees.
             sigma_e: Source ellipticity dispersion.
-            sigma_crit_prefactor: Optional unit-conversion prefactor.
             galaxy_bias: Galaxy bias for the lens sample.
-            galaxy_bias_prefactor: Normalization used by the default linear
-                galaxy-bias model.
-            galaxy_bias_round_decimals: Optional decimal rounding applied to the
-                default linear galaxy-bias values.
             k: Wavenumber grid in ``h / Mpc``.
-            h: Dimensionless Hubble parameter.
-            omega_m: Matter density fraction.
-            rho_crit: Projected critical-density normalization.
-            nonlinear: Whether to use nonlinear matter power.
-            pi: Optional line-of-sight grid in ``Mpc / h``.
-            gm_window: Optional galaxy-matter line-of-sight window.
-            hankel: Optional pre-built Hankel transform object.
-            hankel_kwargs: Optional settings for the Hankel transform.
-            covariance_orders: Optional Bessel orders.
-            taper: Whether covariance spectra should be tapered.
-            taper_kwargs: Optional taper settings.
+            projection: Optional line-of-sight projection settings containing
+                ``pi`` (grid in ``Mpc / h``) and ``gm_window`` (galaxy-matter
+                line-of-sight window).
+            hankel: Optional Hankel configuration containing backend settings and
+                an ``orders`` mapping for the ``gm``, ``gg``, and ``cross`` covariance
+                blocks. Defaults to Bessel order 2 for all blocks.
         """
         self.cosmo = cosmo
-        self.lens_result = lens_result
-        self.source_result = source_result
+        self.lens_result = tomography["lens_result"]
+        self.source_result = tomography["source_result"]
+
         self.bin_pairs: list[tuple[int, int]] = [
-            (int(lens_bin), int(source_bin)) for lens_bin, source_bin in bin_pairs
+            (int(lens_bin), int(source_bin))
+            for lens_bin, source_bin in tomography["bin_pairs"]
         ]
 
         self.lens_meta = self.lens_result.tomo_meta
@@ -177,26 +153,22 @@ class DeltaSigmaCovarianceBuilder:
         self.z_lens = np.asarray(self.lens_result.z, dtype=float)
         self.z_source = np.asarray(self.source_result.z, dtype=float)
 
-        self.lens_population_stats = dict(lens_population_stats)
-        self.source_population_stats = dict(source_population_stats)
+        self.lens_population_stats = dict(tomography["lens_population_stats"])
+        self.source_population_stats = dict(tomography["source_population_stats"])
 
         self.rp_bin_edges = np.asarray(rp_bin_edges, dtype=float)
         self.area_deg2 = float(area_deg2)
 
         self.sigma_e = sigma_e
-        self.sigma_crit_prefactor = (
-            sigma_crit_prefactor_msun_h_pc2()
-            if sigma_crit_prefactor is None
-            else float(sigma_crit_prefactor)
+        self.h = resolve_h(cosmo, None)
+        self.omega_m = resolve_omega_m(cosmo, None)
+
+        self.rho_crit = rho_critical_projected_msun_pc2_per_mpc(
+            cosmo,
+            h=self.h,
         )
 
-        self.h = resolve_h(cosmo, h)
-        self.omega_m = resolve_omega_m(cosmo, omega_m)
-        self.rho_crit = (
-            rho_critical_projected_msun_pc2_per_mpc(self.cosmo, h=self.h)
-            if rho_crit is None
-            else float(rho_crit)
-        )
+        self.sigma_crit_prefactor = sigma_crit_prefactor_msun_h_pc2()
 
         self.galaxy_bias = (
             galaxy_bias
@@ -204,8 +176,6 @@ class DeltaSigmaCovarianceBuilder:
             else linear_galaxy_bias(
                 self.cosmo,
                 self.lens_centers,
-                bias_prefactor=galaxy_bias_prefactor,
-                round_decimals=galaxy_bias_round_decimals,
             )
         )
 
@@ -219,16 +189,20 @@ class DeltaSigmaCovarianceBuilder:
         else:
             self.k = np.asarray(k, dtype=np.float64)
 
-        self.nonlinear = bool(nonlinear)
+        projection_config = {} if projection is None else dict(projection)
+        pi = projection_config.get("pi")
+        gm_window = projection_config.get("gm_window")
+
         self.pi = None if pi is None else np.asarray(pi, dtype=float)
         self.gm_window = None if gm_window is None else np.asarray(gm_window, dtype=float)
 
-        self.taper = bool(taper)
-        self.taper_kwargs = taper_kwargs
+        hankel_config = {} if hankel is None else dict(hankel)
+
+        self.taper = bool(hankel_config.pop("taper", True))
+        self.taper_kwargs = hankel_config.pop("taper_kwargs", None)
 
         orders = {"gm": 2, "gg": 2, "cross": 2}
-        if covariance_orders is not None:
-            orders.update(covariance_orders)
+        orders.update(hankel_config.pop("orders", {}))
 
         self.order_gm = int(orders["gm"])
         self.order_gg = int(orders["gg"])
@@ -237,7 +211,7 @@ class DeltaSigmaCovarianceBuilder:
         self._lens_ingredient_cache: dict[int, dict[str, Any]] = {}
         self._source_ingredient_cache: dict[int, dict[str, Any]] = {}
 
-        self.hankel = hankel if hankel is not None else self.hankel_transform(hankel_kwargs)
+        self.hankel = self.hankel_transform(hankel_config)
 
     def covariance_for_pair(
         self,
@@ -644,7 +618,6 @@ class DeltaSigmaCovarianceBuilder:
             self.z_lens,
             nz_lens,
             h=self.h,
-            nonlinear=self.nonlinear,
         )
 
         volume = survey_volume_from_edges(
@@ -797,7 +770,7 @@ class DeltaSigmaCovarianceBuilder:
         """Return the Hankel transform used for radial covariance projections.
 
         Args:
-            hankel_kwargs: Optional settings for the Hankel transform.
+            hankel_kwargs: Optional Hankel backend and numerical settings.
 
         Returns:
             Hankel transform object configured for the covariance Bessel orders.
@@ -810,10 +783,7 @@ class DeltaSigmaCovarianceBuilder:
         kwargs.setdefault("k_min", float(self.k[0]))
         kwargs.setdefault("k_max", float(self.k[-1]))
         kwargs.setdefault("radial_weight_method", "voronoi")
-        kwargs.setdefault(
-            "orders",
-            tuple(sorted({self.order_gm, self.order_gg, self.order_cross})),
-        )
+        kwargs["orders"] = tuple(sorted({self.order_gm, self.order_gg, self.order_cross}))
         if kwargs["backend"] == "matrix_direct":
             kwargs.setdefault("n_r", 3000)
             kwargs.setdefault("n_k", 3000)

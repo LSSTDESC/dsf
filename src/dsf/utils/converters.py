@@ -192,20 +192,18 @@ def rho_critical_projected_msun_pc2_per_mpc(
 def comoving_distance_h(
     cosmo: ccl.Cosmology,
     z: FloatArray,
-    *,
-    h: float,
 ) -> float | FloatArray:
     """Return the comoving radial distance in Mpc/h.
 
     Args:
         cosmo: Cosmology used to evaluate the distance.
         z: Redshift value or array of redshift values.
-        h: Dimensionless Hubble parameter.
 
     Returns:
         Comoving radial distance in Mpc/h.
     """
     z_arr = np.asarray(z, dtype=float)
+    h = float(cosmo["h"])
 
     if z_arr.ndim == 0:
         a = float(redshift_to_scale_factor(float(z_arr)))

@@ -11,7 +11,6 @@ import numpy as np
 import pyccl as ccl
 
 from dsf.utils.converters import redshift_to_scale_factor, resolve_h
-from dsf.utils.integrators import weighted_trapezoid_average
 from dsf.utils.types import FloatArray
 from dsf.utils.validators import (
     validate_positive_strictly_increasing_1d_array,
@@ -54,24 +53,29 @@ def lens_averaged_matter_power(
         name="nz_lens",
     )
 
-    pk_of_z = np.asarray(
-        [
-            ccl.nonlin_matter_power(
-                cosmo,
-                k_arr * h,
-                redshift_to_scale_factor(z_value),
-            )
-            * h**3
-            for z_value in z_arr
-        ]
-    )
+    dz = np.diff(z_arr)
 
-    pk_avg = weighted_trapezoid_average(
-        z_arr,
-        pk_of_z,
-        nz_arr,
-        axis=0,
-        normalize_weights=False,
-    )
+    integration_weights = np.empty_like(z_arr)
+    integration_weights[0] = dz[0] / 2.0
+    integration_weights[-1] = dz[-1] / 2.0
+    integration_weights[1:-1] = (dz[:-1] + dz[1:]) / 2.0
 
-    return np.asarray(pk_avg, dtype=float)
+    integration_weights *= nz_arr
+
+    active = integration_weights != 0.0
+
+    pk_avg = np.zeros_like(k_arr, dtype=float)
+    k_physical = k_arr * h
+
+    for z_value, weight in zip(
+        z_arr[active],
+        integration_weights[active],
+        strict=True,
+    ):
+        pk_avg += weight * ccl.nonlin_matter_power(
+            cosmo,
+            k_physical,
+            redshift_to_scale_factor(z_value),
+        )
+
+    return np.asarray(pk_avg * h**3, dtype=float)

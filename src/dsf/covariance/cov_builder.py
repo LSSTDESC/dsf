@@ -33,7 +33,6 @@ from dsf.covariance.ingredients.geometry import (
     delta_pi_gg_from_edges,
     delta_pi_gm_factors,
     effective_comoving_distance,
-    lens_number_density_3d_from_angular_density,
     survey_volume_from_edges,
 )
 from dsf.covariance.ingredients.noise import projected_shape_noise, shot_noise
@@ -46,10 +45,9 @@ from dsf.utils.converters import (
     resolve_h,
     resolve_omega_m,
     rho_critical_projected_msun_pc2_per_mpc,
-    sigma_crit_prefactor_msun_h_pc2,
 )
 from dsf.utils.types import ArrayLike, BinPairs, FloatArray, ScalarOrPerBin
-from dsf.utils.validators import validate_bin_pair
+from dsf.utils.validators import validate_bin_pair, validate_positive_scalar
 
 __all__ = [
     "DeltaSigmaCovarianceBuilder",
@@ -162,13 +160,7 @@ class DeltaSigmaCovarianceBuilder:
         self.sigma_e = sigma_e
         self.h = resolve_h(cosmo, None)
         self.omega_m = resolve_omega_m(cosmo, None)
-
-        self.rho_crit = rho_critical_projected_msun_pc2_per_mpc(
-            cosmo,
-            h=self.h,
-        )
-
-        self.sigma_crit_prefactor = sigma_crit_prefactor_msun_h_pc2()
+        self.rho_crit = rho_critical_projected_msun_pc2_per_mpc(cosmo)
 
         self.galaxy_bias = (
             galaxy_bias
@@ -593,6 +585,13 @@ class DeltaSigmaCovarianceBuilder:
 
         galaxy_bias = self.bin_value(self.galaxy_bias, lens_bin_index)
 
+        volume = survey_volume_from_edges(
+            self.cosmo,
+            z_min=z_min,
+            z_max=z_max,
+            area_deg2=self.area_deg2,
+        )
+
         lens_density = self.lens_result.spec.get("sample_properties", {}).get(
             "number_density",
             {},
@@ -602,30 +601,17 @@ class DeltaSigmaCovarianceBuilder:
             n_lens_arcmin2 = None
             n_lens_3d = float(lens_density["n_gal_comoving_h3_mpc3"])
         else:
-            n_lens_arcmin2 = float(self.lens_population_stats["density_per_bin"][lens_bin_index])
-            n_lens_3d = lens_number_density_3d_from_angular_density(
-                self.cosmo,
-                n_lens_arcmin2=n_lens_arcmin2,
-                z_min=z_min,
-                z_max=z_max,
-                area_deg2=self.area_deg2,
-                h=self.h,
+            n_lens_arcmin2 = float(
+                self.lens_population_stats["density_per_bin"][lens_bin_index]
             )
+            validate_positive_scalar(n_lens_arcmin2, "n_lens_arcmin2")
+            n_lens_3d = n_lens_arcmin2 * self.area_deg2 * 3600.0 / volume
 
         pk = lens_averaged_matter_power(
             self.cosmo,
             self.k,
             self.z_lens,
             nz_lens,
-            h=self.h,
-        )
-
-        volume = survey_volume_from_edges(
-            self.cosmo,
-            z_min=z_min,
-            z_max=z_max,
-            area_deg2=self.area_deg2,
-            h=self.h,
         )
 
         lens_shot_noise = shot_noise(n_lens_3d)
@@ -634,14 +620,12 @@ class DeltaSigmaCovarianceBuilder:
             self.cosmo,
             self.z_lens,
             nz_lens,
-            h=self.h,
         )
 
         delta_pi_gg = delta_pi_gg_from_edges(
             self.cosmo,
             z_min=z_min,
             z_max=z_max,
-            h=self.h,
         )
 
         ingredients = {
@@ -727,8 +711,6 @@ class DeltaSigmaCovarianceBuilder:
             z_min=lens["z_min"],
             z_max=lens["z_max"],
             z_center=lens["z_center"],
-            h=self.h,
-            sigma_crit_prefactor=self.sigma_crit_prefactor,
             pi=self.pi,
             gm_window=self.gm_window,
         )
@@ -739,8 +721,6 @@ class DeltaSigmaCovarianceBuilder:
             nz_lens=lens["nz_lens"],
             z_source=self.z_source,
             nz_source=source["nz_source"],
-            h=self.h,
-            sigma_crit_prefactor=self.sigma_crit_prefactor,
         )
 
         return {

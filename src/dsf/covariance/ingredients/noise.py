@@ -97,6 +97,5 @@ def projected_shape_noise(
         raise ValueError("chi_eff must be positive.")
 
     n_eff_sr = n_eff_arcmin2 * arcmin2_per_steradian()
-    n_eff_projected = n_eff_sr / chi_eff**2
 
-    return sigma_e**2 / n_eff_projected
+    return sigma_e ** 2 * chi_eff ** 2 / n_eff_sr

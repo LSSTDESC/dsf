@@ -117,7 +117,7 @@ def test_comoving_distance_h_returns_scalar_for_scalar_redshift():
     """Tests that scalar redshifts return scalar comoving distances."""
     cosmo = ccl.CosmologyVanillaLCDM()
 
-    actual = comoving_distance_h(cosmo, 0.5, h=0.7)
+    actual = comoving_distance_h(cosmo, 0.5)
 
     assert isinstance(actual, float)
     assert actual > 0.0
@@ -128,7 +128,7 @@ def test_comoving_distance_h_preserves_array_shape():
     cosmo = ccl.CosmologyVanillaLCDM()
     redshift = np.array([[0.1, 0.2], [0.3, 0.4]])
 
-    actual = comoving_distance_h(cosmo, redshift, h=0.7)
+    actual = comoving_distance_h(cosmo, redshift)
 
     assert actual.shape == redshift.shape
     assert np.all(actual > 0.0)

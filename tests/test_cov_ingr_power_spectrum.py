@@ -33,7 +33,6 @@ def test_lens_averaged_matter_power_uses_weighted_redshift_average(
         k,
         z_lens,
         nz_lens,
-        nonlinear=True,
     )
 
     h = cosmo["h"]
@@ -72,7 +71,6 @@ def test_lens_averaged_matter_power_uses_supplied_h(monkeypatch):
         z_lens,
         nz_lens,
         h=supplied_h,
-        nonlinear=True,
     )
 
     for called_k in called_k_values:
@@ -109,7 +107,6 @@ def test_lens_averaged_matter_power_converts_power_to_mpc_over_h_units(
         k,
         z_lens,
         nz_lens,
-        nonlinear=True,
     )
 
     expected = np.full_like(k, 2.0 * cosmo["h"] ** 3)
@@ -117,10 +114,10 @@ def test_lens_averaged_matter_power_converts_power_to_mpc_over_h_units(
     np.testing.assert_allclose(result, expected)
 
 
-def test_lens_averaged_matter_power_uses_nonlinear_power_by_default(
+def test_lens_averaged_matter_power_uses_configured_ccl_power(
     monkeypatch,
 ):
-    """Test that nonlinear matter power is used by default."""
+    """Tests that the configured CCL matter power spectrum is evaluated."""
     cosmo = {"h": 0.7}
     k = np.array([0.1, 1.0])
     z_lens = np.array([0.0, 1.0])
@@ -149,46 +146,6 @@ def test_lens_averaged_matter_power_uses_nonlinear_power_by_default(
 
     assert calls["nonlinear"] == z_lens.size
     assert calls["linear"] == 0
-
-
-def test_lens_averaged_matter_power_uses_linear_power_when_requested(
-    monkeypatch,
-):
-    """Test that linear matter power is used when nonlinear is false."""
-    cosmo = {"h": 0.7}
-    k = np.array([0.1, 1.0])
-    z_lens = np.array([0.0, 1.0])
-    nz_lens = np.array([1.0, 1.0])
-
-    calls = {"linear": 0, "nonlinear": 0}
-
-    def fake_nonlin_matter_power(cosmo, k_mpc, scale_factor):
-        calls["nonlinear"] += 1
-        return np.ones_like(k_mpc)
-
-    def fake_linear_matter_power(cosmo, k_mpc, scale_factor):
-        calls["linear"] += 1
-        return np.ones_like(k_mpc)
-
-    monkeypatch.setattr(
-        f"{POWER_SPECTRUM_MODULE}.ccl.nonlin_matter_power",
-        fake_nonlin_matter_power,
-    )
-    monkeypatch.setattr(
-        f"{POWER_SPECTRUM_MODULE}.ccl.linear_matter_power",
-        fake_linear_matter_power,
-    )
-
-    lens_averaged_matter_power(
-        cosmo,
-        k,
-        z_lens,
-        nz_lens,
-        nonlinear=False,
-    )
-
-    assert calls["linear"] == z_lens.size
-    assert calls["nonlinear"] == 0
 
 
 def test_lens_averaged_matter_power_returns_one_value_per_k_mode(monkeypatch):
@@ -258,7 +215,6 @@ def test_lens_averaged_matter_power_does_not_renormalize_lens_weights(
         k,
         z_lens,
         nz_lens,
-        nonlinear=True,
     )
 
     expected = np.full_like(k, 2.0)

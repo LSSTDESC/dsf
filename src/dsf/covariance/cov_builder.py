@@ -88,15 +88,16 @@ class DeltaSigmaCovarianceBuilder:
         sigma_e: ScalarOrPerBin,
         galaxy_bias: ScalarOrPerBin | None = None,
         k: FloatArray | None = None,
-        nonlinear: bool = True,
         projection: Mapping[str, Any] | None = None,
         hankel: Mapping[str, Any] | None = None,
     ) -> None:
         """Initialize the covariance builder.
 
         Args:
-            cosmo: CCL cosmology used for distances, matter power spectra,
+            cosmo: CCL cosmology controlling distances, matter power spectra,
                 growth-dependent quantities, and density normalizations.
+                The matter power spectrum prescription is specified through
+                the cosmology's ``matter_power_spectrum`` setting.
             tomography: Tomography inputs returned by
                 :meth:`dsf.tomography.tomo_builder.TomographyBuilder.prepare_bins`,
                 including lens and source results, population statistics,
@@ -106,7 +107,6 @@ class DeltaSigmaCovarianceBuilder:
             sigma_e: Source ellipticity dispersion.
             galaxy_bias: Galaxy bias for the lens sample.
             k: Wavenumber grid in ``h / Mpc``.
-            nonlinear: Whether to use nonlinear matter power.
             projection: Optional line-of-sight projection settings containing
                 ``pi`` (grid in ``Mpc / h``) and ``gm_window`` (galaxy-matter
                 line-of-sight window).
@@ -188,8 +188,6 @@ class DeltaSigmaCovarianceBuilder:
             )
         else:
             self.k = np.asarray(k, dtype=np.float64)
-
-        self.nonlinear = bool(nonlinear)
 
         projection_config = {} if projection is None else dict(projection)
         pi = projection_config.get("pi")
@@ -620,7 +618,6 @@ class DeltaSigmaCovarianceBuilder:
             self.z_lens,
             nz_lens,
             h=self.h,
-            nonlinear=self.nonlinear,
         )
 
         volume = survey_volume_from_edges(

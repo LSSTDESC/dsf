@@ -1,16 +1,14 @@
-import matplotlib.pyplot as plt
+from pathlib import Path
 import numpy as np
 
 from dsf.covariance.cov_builder import DeltaSigmaCovarianceBuilder
-from dsf.modelling import make_ccl_cosmology
 from dsf.tomography.tomo_builder import TomographyBuilder
 import pyccl as ccl
-import pytest
-
 # The fractional difference allowed between the legacy and dsf implementation.
-diff_tol = 10**(-2) 
+diff_tol = 10**(-2)
 
-# Helper function:
+DATA_DIR = Path(__file__).resolve().parent
+
 
 def is_symmetric(a, tol = 10**(-14)):
     return np.all(np.abs(a - a.T) <= tol)
@@ -42,7 +40,7 @@ tomography = TomographyBuilder(
 tomo_inputs = tomography.prepare_bins()
 
 # Load the bin edges from the legacy code (Mpc/h)
-rp_bin_edges = np.loadtxt('./rp_bin_edges.dat')
+rp_bin_edges = np.loadtxt(DATA_DIR / "rp_bin_edges.dat")
 
 # Make a CCL cosmology object with the parameters at which we have run the legacy code.
 h=0.69
@@ -61,7 +59,6 @@ covariance_builder = DeltaSigmaCovarianceBuilder(
     sigma_e=0.26,
     galaxy_bias=params['b'],
     k=np.geomspace(8e-5, 30.0, 5000),
-    nonlinear=True,
     # projection={"pi": pi_grid},
     hankel={
         "r_min": 0.6,
@@ -130,8 +127,8 @@ def test_pos_semi_def():
 shot_noise_dsf = dsf_cov_dict['ingredients']['shot_noise'] # (h / Mpc)^3
 shape_noise_dsf = dsf_cov_dict['ingredients']['shape_noise'] # (h / Mpc)^2
 
-shot_noise_leg = np.loadtxt('./shot_noise_LSSTY1Bin5_DESILRG_legacy.dat')
-shape_noise_leg = np.loadtxt('./shape_noise_LSSTY1Bin5_DESILRG_legacy.dat')
+shot_noise_leg = np.loadtxt(DATA_DIR / "shot_noise_LSSTY1Bin5_DESILRG_legacy.dat")
+shape_noise_leg = np.loadtxt(DATA_DIR / "shape_noise_LSSTY1Bin5_DESILRG_legacy.dat")
 
 def test_shot_shape_noise():
    assert np.abs((shot_noise_leg - shot_noise_dsf)/shot_noise_leg)<diff_tol
@@ -144,15 +141,14 @@ def test_shot_shape_noise():
 # in the legacy code vs DSF, so we need to correct for that.
 
 vol_dsf = dsf_cov_dict['ingredients']['volume'] # (Mpc/h)^3
-vol_leg = np.loadtxt('./vol_LSSTY1Bin5_DESILRG_legacy.dat') # (Mpc/h)^3
+vol_leg = np.loadtxt(DATA_DIR / "vol_LSSTY1Bin5_DESILRG_legacy.dat")
 
-leg_vol_to_dsf =  vol_leg / vol_dsf # we will multiply legacy covariance by this
+leg_vol_to_dsf = vol_leg / vol_dsf
 
-# Load legacy code covariances and correct for volume factor
-cov_gm_gm_leg = leg_vol_to_dsf * np.loadtxt('./cov_gmgm_LSSTY1Bin5_DESILRG_legacy.dat')
-cov_gg_gg_leg = leg_vol_to_dsf * np.loadtxt('./cov_gggg_LSSTY1Bin5_DESILRG_legacy.dat')
-cov_gm_gg_leg = leg_vol_to_dsf * np.loadtxt('./cov_gmgg_LSSTY1Bin5_DESILRG_legacy.dat')
-cov_joint_leg = leg_vol_to_dsf * np.loadtxt('./cov_joint_LSSTY1Bin5_DESILRG_legacy.dat')
+cov_gm_gm_leg = leg_vol_to_dsf * np.loadtxt(DATA_DIR / "cov_gmgm_LSSTY1Bin5_DESILRG_legacy.dat")
+cov_gg_gg_leg = leg_vol_to_dsf * np.loadtxt(DATA_DIR / "cov_gggg_LSSTY1Bin5_DESILRG_legacy.dat")
+cov_gm_gg_leg = leg_vol_to_dsf * np.loadtxt(DATA_DIR / "cov_gmgg_LSSTY1Bin5_DESILRG_legacy.dat")
+cov_joint_leg = leg_vol_to_dsf * np.loadtxt(DATA_DIR / "cov_joint_LSSTY1Bin5_DESILRG_legacy.dat")
 
 # Get diagonal errors of the legacy code:
 errors_gm_gm_leg = np.sqrt(np.diag(cov_gm_gm_leg))

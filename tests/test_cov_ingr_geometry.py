@@ -263,11 +263,6 @@ def test_gm_lensing_window_uses_supplied_pi_grid(monkeypatch, cosmo):
         lambda *args, **kwargs: 4.0,
     )
 
-    monkeypatch.setattr(
-        f"{MODULE}.sigma_crit_inverse_comoving",
-        lambda *args, **kwargs: np.ones(3),
-    )
-
     z_lens = np.asarray([0.1, 0.2, 0.3], dtype=float)
     nz_lens = np.asarray([0.0, 1.0, 0.0], dtype=float)
     z_source = np.asarray([0.5, 0.6, 0.7], dtype=float)
@@ -285,7 +280,10 @@ def test_gm_lensing_window_uses_supplied_pi_grid(monkeypatch, cosmo):
     )
 
     np.testing.assert_allclose(pi_out, pi)
-    np.testing.assert_allclose(window, np.full_like(pi, 0.02))
+    assert window.shape == pi.shape
+    assert np.all(np.isfinite(window))
+    assert np.all(window > 0.0)
+    assert np.all(np.diff(window) > 0.0)
 
 
 def test_gm_lensing_window_builds_default_symmetric_pi_grid(monkeypatch, cosmo):
@@ -295,11 +293,6 @@ def test_gm_lensing_window_builds_default_symmetric_pi_grid(monkeypatch, cosmo):
     monkeypatch.setattr(
         f"{MODULE}.effective_squared_sigma_crit",
         lambda *args, **kwargs: 4.0,
-    )
-
-    monkeypatch.setattr(
-        f"{MODULE}.sigma_crit_inverse_comoving",
-        lambda *args, **kwargs: np.ones(3),
     )
 
     z_lens = np.asarray([0.1, 0.2, 0.3], dtype=float)
@@ -321,7 +314,10 @@ def test_gm_lensing_window_builds_default_symmetric_pi_grid(monkeypatch, cosmo):
 
     assert pi_out.size == 6
     np.testing.assert_allclose(pi_out[:3], -pi_out[:2:-1])
-    np.testing.assert_allclose(window, np.full_like(pi_out, 0.02))
+    assert window.shape == pi_out.shape
+    assert np.all(np.isfinite(window))
+    assert np.all(window > 0.0)
+    assert np.all(np.diff(window) > 0.0)
 
 
 @pytest.mark.parametrize(

@@ -16,6 +16,7 @@ import pyccl as ccl
 from dsf.utils.converters import (
     comoving_distance_h,
     deg2_to_arcmin2,
+    sigma_crit_prefactor_msun_h_pc2,
 )
 from dsf.utils.integrators import trapezoid_integral
 from dsf.utils.types import FloatArray
@@ -27,10 +28,7 @@ from dsf.utils.validators import (
     validate_redshift_edges,
 )
 
-from .sigma_crit import (
-    effective_squared_sigma_crit,
-    sigma_crit_inverse_comoving,
-)
+from .sigma_crit import effective_squared_sigma_crit
 
 __all__ = [
     "delta_pi_from_window",
@@ -339,6 +337,7 @@ def gm_lensing_window(
             raise ValueError("pi must contain at least two points.")
 
     chi_lens = comoving_distance_h(cosmo, z_lens_arr)
+    chi_source = comoving_distance_h(cosmo, z_source_arr)
 
     max_target_chi = float(np.max(chi_lens) + np.max(np.abs(pi_arr)))
     if z_interp_max is None:
@@ -381,22 +380,37 @@ def gm_lensing_window(
             z_interp,
         )
 
+        chi_displaced = comoving_distance_h(cosmo, displaced_z[valid])
+
+        chi_l = chi_displaced[:, None]
+        chi_s = chi_source[None, :]
+
+        efficiency = np.zeros(
+            (chi_displaced.size, z_source_arr.size),
+            dtype=float,
+        )
+
+        np.divide(
+            chi_s - chi_l,
+            chi_s,
+            out=efficiency,
+            where=chi_s > chi_l,
+        )
+
+        sigma_crit_inv = (
+            chi_l
+            * efficiency
+            * (1.0 + displaced_z[valid, None])
+            / sigma_crit_prefactor_msun_h_pc2()
+        )
+
         source_averaged_sigma_crit_inv = np.zeros_like(z_lens_arr)
 
-        for lens_index, z_displaced in enumerate(displaced_z):
-            if not valid[lens_index]:
-                continue
-
-            sigma_crit_inv = sigma_crit_inverse_comoving(
-                cosmo,
-                z_lens=float(z_displaced),
-                z_source=z_source_arr,
-            )
-
-            source_averaged_sigma_crit_inv[lens_index] = trapezoid_integral(
-                sigma_crit_inv * nz_source_arr,
-                z_source_arr,
-            )
+        source_averaged_sigma_crit_inv[valid] = np.trapezoid(
+            sigma_crit_inv * nz_source_arr[None, :],
+            x=z_source_arr,
+            axis=1,
+        )
 
         lens_averaged_sigma_crit_inv = trapezoid_integral(
             source_averaged_sigma_crit_inv * nz_lens_arr,

@@ -95,9 +95,7 @@ class DeltaSigmaCovarianceBuilder:
         nonlinear: bool = True,
         pi: FloatArray | None = None,
         gm_window: FloatArray | None = None,
-        hankel: HankelTransform | None = None,
-        hankel_kwargs: Mapping[str, Any] | None = None,
-        covariance_orders: Mapping[str, int] | None = None,
+        hankel: Mapping[str, Any] | None = None,
         taper: bool = True,
         taper_kwargs: dict[str, Any] | None = None,
     ) -> None:
@@ -120,9 +118,9 @@ class DeltaSigmaCovarianceBuilder:
             nonlinear: Whether to use nonlinear matter power.
             pi: Optional line-of-sight grid in ``Mpc / h``.
             gm_window: Optional galaxy-matter line-of-sight window.
-            hankel: Optional pre-built Hankel transform object.
-            hankel_kwargs: Optional settings for the Hankel transform.
-            covariance_orders: Optional Bessel orders.
+            hankel: Optional Hankel configuration containing backend settings and
+                an ``orders`` mapping for the ``gm``, ``gg``, and ``cross`` covariance
+                blocks. Defaults to Bessel order 2 for all blocks.
             taper: Whether covariance spectra should be tapered.
             taper_kwargs: Optional taper settings.
         """
@@ -206,9 +204,10 @@ class DeltaSigmaCovarianceBuilder:
         self.taper = bool(taper)
         self.taper_kwargs = taper_kwargs
 
+        hankel_config = {} if hankel is None else dict(hankel)
+
         orders = {"gm": 2, "gg": 2, "cross": 2}
-        if covariance_orders is not None:
-            orders.update(covariance_orders)
+        orders.update(hankel_config.pop("orders", {}))
 
         self.order_gm = int(orders["gm"])
         self.order_gg = int(orders["gg"])
@@ -217,7 +216,7 @@ class DeltaSigmaCovarianceBuilder:
         self._lens_ingredient_cache: dict[int, dict[str, Any]] = {}
         self._source_ingredient_cache: dict[int, dict[str, Any]] = {}
 
-        self.hankel = hankel if hankel is not None else self.hankel_transform(hankel_kwargs)
+        self.hankel = self.hankel_transform(hankel_config)
 
     def covariance_for_pair(
         self,
@@ -777,7 +776,7 @@ class DeltaSigmaCovarianceBuilder:
         """Return the Hankel transform used for radial covariance projections.
 
         Args:
-            hankel_kwargs: Optional settings for the Hankel transform.
+            hankel_kwargs: Optional Hankel backend and numerical settings.
 
         Returns:
             Hankel transform object configured for the covariance Bessel orders.
@@ -790,10 +789,7 @@ class DeltaSigmaCovarianceBuilder:
         kwargs.setdefault("k_min", float(self.k[0]))
         kwargs.setdefault("k_max", float(self.k[-1]))
         kwargs.setdefault("radial_weight_method", "voronoi")
-        kwargs.setdefault(
-            "orders",
-            tuple(sorted({self.order_gm, self.order_gg, self.order_cross})),
-        )
+        kwargs["orders"] = tuple(sorted({self.order_gm, self.order_gg, self.order_cross}))
         if kwargs["backend"] == "matrix_direct":
             kwargs.setdefault("n_r", 3000)
             kwargs.setdefault("n_k", 3000)

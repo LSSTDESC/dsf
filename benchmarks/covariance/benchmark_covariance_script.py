@@ -70,12 +70,12 @@ covariance_builder = DeltaSigmaCovarianceBuilder(
     k=np.geomspace(8e-5, 30.0, 5000),
     nonlinear=True,
     #pi = pi_grid,
-    hankel_kwargs={
+    hankel={
         "r_min": 0.6,
         "r_max": 110,
         "k_min": 10**(-4),
         "k_max": 30.0,
-        "orders": (2,), 
+        "orders": {"gm": 2, "gg": 2, "cross": 2},
         "n_zeros": 490000, # Starting here after some trial and error.
         "n_zeros_step": 1000,
         "prune_r": 0,

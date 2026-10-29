@@ -423,12 +423,15 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         self,
         spectra: list[FloatArray],
         order: float | int,
+        chunk_size: int | None = None,
     ) -> tuple[FloatArray, FloatArray]:
         """Project one or more spectra into radial-space statistics.
 
         Args:
             spectra: Spectra evaluated on the internal wavenumber grid.
             order: Bessel order to use.
+            chunk_size: Number of wavenumbers processed per chunk for
+                covariance projection. If None, use direct multiplication.
 
         Returns:
             Radial grid and projected radial statistic, of shape (n_r,) for
@@ -453,7 +456,27 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         if ndim == 1:
             transformed = np.dot(j_matrix, weighted) * norm
         elif ndim == 2:
-            transformed = np.dot(j_matrix, (j_matrix * weighted).T) * norm
+            if chunk_size is None:
+                transformed = np.dot(j_matrix, (j_matrix * weighted).T) * norm
+            else:
+                if not is_positive_integer(chunk_size):
+                    raise ValueError("chunk_size must be a positive integer.")
+
+                n_r, n_k = j_matrix.shape
+                transformed = np.zeros((n_r, n_r), dtype=float)
+
+                for start in range(0, n_k, chunk_size):
+                    stop = min(start + chunk_size, n_k)
+
+                    j_chunk = j_matrix[:, start:stop]
+                    w_chunk = weighted[start:stop]
+
+                    transformed += np.dot(
+                        j_chunk * w_chunk,
+                        j_chunk.T,
+                    )
+
+                transformed *= norm
         else:
             raise ValueError(f"Only 1 or 2 spectra are supported. Got {ndim}.")
 

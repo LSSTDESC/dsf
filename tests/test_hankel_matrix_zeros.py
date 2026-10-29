@@ -514,3 +514,48 @@ def test_bin_radial_matrix_rejects_r_outside_grid():
             np.ones([3, 3]),
             np.array([5.0, 15.0]),
         )
+
+
+@pytest.mark.parametrize("chunk_size", [1, 2, 3, 7, 4096])
+def test_project_spectra_to_radial_chunked_matches_direct(chunk_size):
+    """Test that chunked covariance projection matches direct multiplication."""
+    transform = make_fake_transform()
+
+    rng = np.random.default_rng(42)
+    n_k = 103
+
+    transform.k = {0: np.linspace(1.0, 10.0, n_k)}
+    transform.j = {0: rng.normal(size=(4, n_k))}
+    transform.j_next_at_zeros = {0: np.ones(n_k)}
+    transform.inverse_j_next_squared = {0: np.ones(n_k)}
+    transform.r = {0: np.arange(1.0, 5.0)}
+
+    spectrum_1 = rng.uniform(0.5, 2.0, n_k)
+    spectrum_2 = rng.uniform(0.5, 2.0, n_k)
+
+    _, expected = transform._project_spectra_to_radial(
+        [spectrum_1, spectrum_2],
+        order=0,
+    )
+
+    _, result = transform._project_spectra_to_radial(
+        [spectrum_1, spectrum_2],
+        order=0,
+        chunk_size=chunk_size,
+    )
+
+    np.testing.assert_allclose(result, expected, rtol=1e-12, atol=1e-12)
+
+
+@pytest.mark.parametrize("chunk_size", [0, -1, 1.5])
+def test_project_spectra_to_radial_rejects_invalid_chunk_size(chunk_size):
+    """Test that chunked covariance projection requires a positive integer."""
+    transform = make_fake_transform()
+    spectra = [np.ones_like(transform.k[0])] * 2
+
+    with pytest.raises(ValueError, match="chunk_size must be a positive integer"):
+        transform._project_spectra_to_radial(
+            spectra,
+            order=0,
+            chunk_size=chunk_size,
+        )

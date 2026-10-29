@@ -44,6 +44,29 @@ __all__ = [
 ]
 
 
+def _trapezoid_weights(
+    z: FloatArray,
+    nz: FloatArray,
+) -> np.ndarray:
+    """Return trapezoidal integration weights including the redshift distribution.
+
+    Args:
+        z: Redshift grid.
+        nz: Redshift distribution evaluated on the grid.
+
+    Returns:
+        Integration weights for computing weighted integrals using a dot product.
+    """
+    dz = np.diff(z)
+    weights = np.empty_like(z)
+
+    weights[0] = 0.5 * dz[0]
+    weights[-1] = 0.5 * dz[-1]
+    weights[1:-1] = 0.5 * (dz[:-1] + dz[1:])
+
+    return weights * nz
+
+
 def effective_comoving_distance(
     cosmo: ccl.Cosmology,
     z: FloatArray,
@@ -364,6 +387,9 @@ def gm_lensing_window(
         )
     )
 
+    source_weights = _trapezoid_weights(z_source_arr, nz_source_arr)
+    lens_weights = _trapezoid_weights(z_lens_arr, nz_lens_arr)
+
     window = np.zeros_like(pi_arr, dtype=float)
     sigma_crit_prefactor = sigma_crit_prefactor_msun_h_pc2()
 
@@ -374,8 +400,7 @@ def gm_lensing_window(
         if not np.any(valid):
             continue
 
-        displaced_z = np.zeros_like(displaced_chi)
-        displaced_z[valid] = np.interp(
+        displaced_z = np.interp(
             displaced_chi[valid],
             chi_interp,
             z_interp,
@@ -401,21 +426,18 @@ def gm_lensing_window(
         sigma_crit_inv = (
             chi_l
             * efficiency
-            * (1.0 + displaced_z[valid, None])
+            * (1.0 + displaced_z[:, None])
             / sigma_crit_prefactor
         )
 
         source_averaged_sigma_crit_inv = np.zeros_like(z_lens_arr)
 
-        source_averaged_sigma_crit_inv[valid] = np.trapezoid(
-            sigma_crit_inv * nz_source_arr[None, :],
-            x=z_source_arr,
-            axis=1,
+        source_averaged_sigma_crit_inv[valid] = (
+                sigma_crit_inv @ source_weights
         )
 
-        lens_averaged_sigma_crit_inv = trapezoid_integral(
-            source_averaged_sigma_crit_inv * nz_lens_arr,
-            z_lens_arr,
+        lens_averaged_sigma_crit_inv = (
+                source_averaged_sigma_crit_inv @ lens_weights
         )
 
         window[pi_index] = lens_averaged_sigma_crit_inv * sigma_crit_average

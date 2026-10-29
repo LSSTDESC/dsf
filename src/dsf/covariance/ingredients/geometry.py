@@ -365,6 +365,7 @@ def gm_lensing_window(
     )
 
     window = np.zeros_like(pi_arr, dtype=float)
+    sigma_crit_prefactor = sigma_crit_prefactor_msun_h_pc2()
 
     for pi_index, pi_value in enumerate(pi_arr):
         displaced_chi = chi_lens + pi_value
@@ -380,7 +381,7 @@ def gm_lensing_window(
             z_interp,
         )
 
-        chi_displaced = comoving_distance_h(cosmo, displaced_z[valid])
+        chi_displaced = displaced_chi[valid]
 
         chi_l = chi_displaced[:, None]
         chi_s = chi_source[None, :]
@@ -401,7 +402,7 @@ def gm_lensing_window(
             chi_l
             * efficiency
             * (1.0 + displaced_z[valid, None])
-            / sigma_crit_prefactor_msun_h_pc2()
+            / sigma_crit_prefactor
         )
 
         source_averaged_sigma_crit_inv = np.zeros_like(z_lens_arr)

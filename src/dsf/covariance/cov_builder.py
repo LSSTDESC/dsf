@@ -89,8 +89,7 @@ class DeltaSigmaCovarianceBuilder:
         galaxy_bias: ScalarOrPerBin | None = None,
         k: FloatArray | None = None,
         nonlinear: bool = True,
-        pi: FloatArray | None = None,
-        gm_window: FloatArray | None = None,
+        projection: Mapping[str, Any] | None = None,
         hankel: Mapping[str, Any] | None = None,
         taper: bool = True,
         taper_kwargs: dict[str, Any] | None = None,
@@ -110,8 +109,9 @@ class DeltaSigmaCovarianceBuilder:
             galaxy_bias: Galaxy bias for the lens sample.
             k: Wavenumber grid in ``h / Mpc``.
             nonlinear: Whether to use nonlinear matter power.
-            pi: Optional line-of-sight grid in ``Mpc / h``.
-            gm_window: Optional galaxy-matter line-of-sight window.
+            projection: Optional line-of-sight projection settings containing
+                ``pi`` (grid in ``Mpc / h``) and ``gm_window`` (galaxy-matter
+                line-of-sight window).
             hankel: Optional Hankel configuration containing backend settings and
                 an ``orders`` mapping for the ``gm``, ``gg``, and ``cross`` covariance
                 blocks. Defaults to Bessel order 2 for all blocks.
@@ -194,6 +194,11 @@ class DeltaSigmaCovarianceBuilder:
             self.k = np.asarray(k, dtype=np.float64)
 
         self.nonlinear = bool(nonlinear)
+
+        projection_config = {} if projection is None else dict(projection)
+        pi = projection_config.get("pi")
+        gm_window = projection_config.get("gm_window")
+
         self.pi = None if pi is None else np.asarray(pi, dtype=float)
         self.gm_window = None if gm_window is None else np.asarray(gm_window, dtype=float)
 

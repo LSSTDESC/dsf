@@ -91,8 +91,7 @@ class DeltaSigmaForecastBuilder:
         galaxy_bias: ScalarOrPerBin | None = None,
         k: FloatArray | None = None,
         nonlinear: bool = True,
-        pi: FloatArray | None = None,
-        gm_window: FloatArray | None = None,
+        projection: Mapping[str, Any] | None = None,
         hankel: Mapping[str, Any] | None = None,
         covariance_kind: str = "gm",
         taper: bool = True,
@@ -146,8 +145,9 @@ class DeltaSigmaForecastBuilder:
             k: Wavenumber grid in ``h / Mpc`` used by the covariance.
             nonlinear: Whether covariance matter spectra should use nonlinear
                 power.
-            pi: Optional line-of-sight grid in ``Mpc / h``.
-            gm_window: Optional galaxy-matter line-of-sight window.
+            projection: Optional line-of-sight projection settings containing
+                ``pi`` (grid in ``Mpc / h``) and ``gm_window`` (galaxy-matter
+                line-of-sight window).
             hankel: Optional Hankel configuration containing backend settings
                 and covariance Bessel orders.
             covariance_kind: Covariance product to use. Only ``"gm"`` is currently
@@ -219,8 +219,7 @@ class DeltaSigmaForecastBuilder:
             "galaxy_bias": galaxy_bias,
             "k": k,
             "nonlinear": nonlinear,
-            "pi": pi,
-            "gm_window": gm_window,
+            "projection": projection,
             "hankel": hankel,
             "taper": taper,
             "taper_kwargs": taper_kwargs,

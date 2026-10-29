@@ -62,7 +62,7 @@ covariance_builder = DeltaSigmaCovarianceBuilder(
     galaxy_bias=params['b'],
     k=np.geomspace(8e-5, 30.0, 5000),
     nonlinear=True,
-    #pi = pi_grid,
+    # projection={"pi": pi_grid},
     hankel={
         "r_min": 0.6,
         "r_max": 110,

@@ -1,5 +1,5 @@
-Delta Sigma data vector
-=======================
+Data vector
+===========
 
 This example shows how to compute a minimal :math:`\Delta\Sigma(R)` data
 vector with DSF.

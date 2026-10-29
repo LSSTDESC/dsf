@@ -1,5 +1,5 @@
-Delta Sigma covariance
-======================
+Analytical covariance
+=====================
 
 This example shows how to compute a minimal DSF covariance matrix for the
 current :math:`\Delta\Sigma(R)` forecast data vector.
@@ -77,8 +77,8 @@ Minimal gm covariance example
            "prune_r": 4,
            "verbose": False,
            "max_iterations": 20,
+           "taper": False,
        },
-       taper=False,
    )
 
    pairs, cov_gm = covariance_builder.gm_block_diagonal()
@@ -128,9 +128,10 @@ For this example, only the first selected lens-source pair is retained.
 The covariance builder uses the selected pairs stored in
 ``tomography["bin_pairs"]``.
 
-The ``hankel`` dictionary configures the numerical Hankel transform and
+The ``hankel`` dictionary configures the numerical Hankel transform,
 the Bessel orders used for the ``gm``, ``gg``, and ``cross`` covariance
-blocks. The default Bessel order is 2 for all three blocks.
+blocks, and the optional tapering settings.
+The default Bessel order is 2 for all three blocks.
 
 The call
 
@@ -149,6 +150,9 @@ The returned covariance has shape
 
 where :math:`N_{\rm pair}` is the number of selected lens-source bin pairs and
 :math:`N_R` is the number of projected-radius bins.
+
+The block-diagonal approximation neglects correlations between different
+lens-source bin pairs.
 
 Diagonal errors can be extracted with
 

@@ -94,8 +94,6 @@ class DeltaSigmaForecastBuilder:
         projection: Mapping[str, Any] | None = None,
         hankel: Mapping[str, Any] | None = None,
         covariance_kind: str = "gm",
-        taper: bool = True,
-        taper_kwargs: dict[str, Any] | None = None,
         trim_edge_points: int = 0,
         verbose: bool = True,
     ) -> None:
@@ -148,14 +146,13 @@ class DeltaSigmaForecastBuilder:
             projection: Optional line-of-sight projection settings containing
                 ``pi`` (grid in ``Mpc / h``) and ``gm_window`` (galaxy-matter
                 line-of-sight window).
-            hankel: Optional Hankel configuration containing backend settings
-                and covariance Bessel orders.
+            hankel: Optional Hankel configuration containing backend settings,
+                covariance Bessel orders, and taper settings (``taper`` and
+                ``taper_kwargs``). Tapering is enabled by default.
             covariance_kind: Covariance product to use. Only ``"gm"`` is currently
                 supported by this builder because the forecast data vector is
                 Delta Sigma-only. The ``"gg"`` and ``"joint"`` covariance paths are
                 reserved for future builders with matching data vectors.
-            taper: Whether covariance spectra are tapered before projection.
-            taper_kwargs: Optional taper settings.
             trim_edge_points: Number of edge points removed from each lens-bin
                 redshift distribution before averaging Delta Sigma.
             verbose: Whether progress messages are printed while preparing the
@@ -221,8 +218,6 @@ class DeltaSigmaForecastBuilder:
             "nonlinear": nonlinear,
             "projection": projection,
             "hankel": hankel,
-            "taper": taper,
-            "taper_kwargs": taper_kwargs,
         }
 
         self._forecast: dict[str, Any] | None = None

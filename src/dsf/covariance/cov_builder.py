@@ -91,8 +91,6 @@ class DeltaSigmaCovarianceBuilder:
         nonlinear: bool = True,
         projection: Mapping[str, Any] | None = None,
         hankel: Mapping[str, Any] | None = None,
-        taper: bool = True,
-        taper_kwargs: dict[str, Any] | None = None,
     ) -> None:
         """Initialize the covariance builder.
 
@@ -115,8 +113,6 @@ class DeltaSigmaCovarianceBuilder:
             hankel: Optional Hankel configuration containing backend settings and
                 an ``orders`` mapping for the ``gm``, ``gg``, and ``cross`` covariance
                 blocks. Defaults to Bessel order 2 for all blocks.
-            taper: Whether covariance spectra should be tapered.
-            taper_kwargs: Optional taper settings.
         """
         self.cosmo = cosmo
         self.lens_result = tomography["lens_result"]
@@ -202,10 +198,10 @@ class DeltaSigmaCovarianceBuilder:
         self.pi = None if pi is None else np.asarray(pi, dtype=float)
         self.gm_window = None if gm_window is None else np.asarray(gm_window, dtype=float)
 
-        self.taper = bool(taper)
-        self.taper_kwargs = taper_kwargs
-
         hankel_config = {} if hankel is None else dict(hankel)
+
+        self.taper = bool(hankel_config.pop("taper", True))
+        self.taper_kwargs = hankel_config.pop("taper_kwargs", None)
 
         orders = {"gm": 2, "gg": 2, "cross": 2}
         orders.update(hankel_config.pop("orders", {}))

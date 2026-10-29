@@ -1,6 +1,5 @@
 import numpy as np
 import cov_hankel as ch
-import pyccl as ccl
 import utils as u
 import specs as sp
 

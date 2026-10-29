@@ -20,6 +20,7 @@ Gnewt = 6.67408*10**(-11)
 c=2.99792458*10**(8)
 rho_crit = 3. * 10**10 * mperMpc / (8. * np.pi * Gnewt * Msun) / 10**12  # Msol h^2 / Mpc / pc^2, to yield Upsilon_gg in Msol h / pc^
 
+
 def get_DeltaSigma_covs(params, rp_bin_edges, rp_bin_c, lens, src, endfilename):
     """ Get the total covariance matrix for joint probes.
     params : dictionary of cosmological parameters. 
@@ -66,6 +67,7 @@ def get_DeltaSigma_covs(params, rp_bin_edges, rp_bin_c, lens, src, endfilename):
     
     return (ht_gmgm, ht_gggg, ht_gmgg)
 
+
 def get_DeltaSigma_covs_unbinned(params, rp_bin_edges, rp_bin_c, lens, src, endfilename):
     """ Get the total covariance matrix for joint probes.
     This version returns without averagin in rp bins.
@@ -109,7 +111,8 @@ def get_DeltaSigma_covs_unbinned(params, rp_bin_edges, rp_bin_c, lens, src, endf
     (r, ht_gmgg) = get_cov_DeltSig_gmgg_unbinned(params, HT, k, pk, DPi2_gmgg, ShotNoise, vol, rp_bin_edges)
     
     return (r, ht_gmgm, ht_gggg, ht_gmgg)
-    
+
+
 def get_cov_DeltSig_gm(params, HT, k, pk, DPi2_l, ShapeNoise, ShotNoise, vol, rp_bin_edges, lens, src):
     """ Get the covarariance of Delta Sigma gm at projected radius rp. 
     params : dictionary of cosmological parameters
@@ -143,6 +146,7 @@ def get_cov_DeltSig_gm(params, HT, k, pk, DPi2_l, ShapeNoise, ShotNoise, vol, rp
     cov = (cov_ggkk_bin + cov_gkgk_bin) / vol # Units Msol^2 h^2 / pc^4
 
     return (r_bin, cov)
+
 
 def get_cov_DeltSig_gm_unbinned(params, HT, k, pk, DPi2_l, ShapeNoise, ShotNoise, vol, rp_bin_edges, lens, src):
     """ Get the covarariance of Delta Sigma gm at projected radius rp. 
@@ -179,7 +183,8 @@ def get_cov_DeltSig_gm_unbinned(params, HT, k, pk, DPi2_l, ShapeNoise, ShotNoise
     cov = (cov_ggkk + cov_gkgk) / vol
 
     return (r, cov)
-    
+
+
 def get_cov_DeltSig_gg(params, HT, k, pk, DPi2, ShotNoise, vol, rp_bin_edges):
     """ Get the covarariance of Delta Sigma gg at projected radius rp. 
     params : dictionary of cosmological parameters
@@ -211,6 +216,7 @@ def get_cov_DeltSig_gg(params, HT, k, pk, DPi2, ShotNoise, vol, rp_bin_edges):
 
     return (r_bin, cov)
 
+
 def get_cov_DeltSig_gg_unbinned(params, HT, k, pk, DPi2, ShotNoise, vol, rp_bin_edges):
     """ Get the covarariance of Delta Sigma gg at projected radius rp.
     This version does not average in rp bins.
@@ -234,7 +240,8 @@ def get_cov_DeltSig_gg_unbinned(params, HT, k, pk, DPi2, ShotNoise, vol, rp_bin_
     cov = cov_gggg / vol
 
     return (r, cov)
-    
+
+
 def get_cov_DeltSig_gmgg(params, HT, k, pk, DPi2, ShotNoise, vol, rp_bin_edges):
     """ Get the covarariance of Delta Sigma gm with Delta Sigma gg at 
     projected radius rp. 
@@ -269,6 +276,7 @@ def get_cov_DeltSig_gmgg(params, HT, k, pk, DPi2, ShotNoise, vol, rp_bin_edges):
 
     return (r_bin, cov)
 
+
 def get_cov_DeltSig_gmgg_unbinned(params, HT, k, pk, DPi2, ShotNoise, vol, rp_bin_edges):
     """ Get the covarariance of Delta Sigma gm with Delta Sigma gg at 
     projected radius rp. 
@@ -295,7 +303,8 @@ def get_cov_DeltSig_gmgg_unbinned(params, HT, k, pk, DPi2, ShotNoise, vol, rp_bi
     cov = cov_gmgg / vol
 
     return (r, cov)
-    
+
+
 def W_ofPi_lensing(params, lens, src):
     """ Computes W(Pi) as in Singh et al. 2016 for Delta Sigma_gm (GGL
     params : dictionary of cosmological parameters
@@ -351,7 +360,8 @@ def W_ofPi_lensing(params, lens, src):
     W_ofPi = np.asarray(zl_int) * SigCavg # Dimensionless
 	
     return (Pi, W_ofPi)
-	
+
+
 def DeltaPi_gm(params, lens, src):
 	""" Computes Delta Pi_1 and Delta Pi 2 as defined in Singh et al. 2016. 
 	params: parameters dictionary.
@@ -365,7 +375,8 @@ def DeltaPi_gm(params, lens, src):
 	DeltaPi2 = scipy.integrate.simpson(W**2, Pi) # and this one too
 	
 	return (DeltaPi1, DeltaPi2)
-	
+
+
 def DeltaPi_gg(params, lens):
     """ Computes Delta Pi_1 and Delta Pi 2 as defined in Singh et al. 2016. 
     for the gg covariance. 
@@ -393,7 +404,8 @@ def DeltaPi_gg(params, lens):
         raise(ValueError, "That lens sample is not supported.")
 	
     return (DeltaPi1, DeltaPi2)
-	
+
+
 def DeltaPi_gmgg(params, lens, src):
     """ Computes Delta Pi_2 for Delta Sigma gm x Delta Sigma gg
     params : dictionary of cosmological parameters
@@ -447,4 +459,3 @@ def DeltaPi_gmgg(params, lens, src):
     DeltaPi2 = scipy.integrate.simpson(W_integ, Pi_integ)
 	
     return DeltaPi2
-	

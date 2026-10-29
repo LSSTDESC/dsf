@@ -4,7 +4,6 @@ import pyccl as ccl
 
 
 np.set_printoptions(linewidth=240)
-	
 
 
 def average_in_bins(F_, R_, Rp_):
@@ -24,7 +23,8 @@ def average_in_bins(F_, R_, Rp_):
     F_binned= [2. * scipy.integrate.simpson(F_f_[indlow[i]:indhigh[i]]* (R_f_[indlow[i]:indhigh[i]])**2, np.log(R_f_[indlow[i]:indhigh[i]])) / (R_f_[indhigh[i]]**2 - R_f_[indlow[i]]**2) for i in range(0, len(Rp_) - 1)]
 		
     return F_binned
-    
+
+
 def average_in_bins_2D(F_, R_, Rp_):
     """ This function takes a 2D function F_ of projected radius evaluated at projected radial points R_ in both dimensions and outputs the averaged values in bins with edges Rp_
     F_: 2D function of R_, R_' (both given by R_)
@@ -61,6 +61,7 @@ def average_in_bins_2D(F_, R_, Rp_):
 		
     return F_binned
 
+
 def rp_bins_mid(rp_edges):
 	""" Gets the middle of each projected radius bin."""
 
@@ -70,7 +71,8 @@ def rp_bins_mid(rp_edges):
 		bin_centers[ri]    =       10**((logedges[ri+1] - logedges[ri])/2. +logedges[ri])
 
 	return bin_centers
-	
+
+
 def rp_bin_edges_log(rp_mid):
     """ Gets the appropriate middles of log-spaced bins given a set of bin edges."""
 
@@ -87,7 +89,8 @@ def rp_bin_edges_log(rp_mid):
     edges = 10**log_edges
 
     return edges
-    
+
+
 def z_ofcom_func(params):
 	""" Returns an interpolating function which can give z as a function of comoving distance. """
 
@@ -100,7 +103,8 @@ def z_ofcom_func(params):
 	z_of_com = scipy.interpolate.interp1d(com_vec, z_vec)
 
 	return	z_of_com
-	
+
+
 def corr_mat(cov, endfilename):
 	""" Takes the covariance matrix and gets the correlation matrix. """
 	
@@ -116,7 +120,8 @@ def corr_mat(cov, endfilename):
 	np.savetxt('/home/danielle/Documents/CMU/Research/EG_comparison/txtfiles/joint_corrmat_'+endfilename+'.txt', corr_arr, fmt='%1.2f')
 	
 	return corr_arr
-	
+
+
 def linear_scale_cuts(dvec_nl, dvec_lin, cov, rpvec):
 	""" Gets the scales (and vector indices) which are excluded if we
 	are only keeping linear scales. We define linear scales such that 
@@ -173,7 +178,8 @@ def linear_scale_cuts(dvec_nl, dvec_lin, cov, rpvec):
 	print('ex_inds=', ex_inds)
 	
 	return ex_inds
-	
+
+
 def linear_scale_cuts_v2(dvec_nl, dvec_lin, cov, rpvec, hartlap=1):
     """ Gets the scales (and vector indices) which are excluded if we
     are only keeping linear scales. We define linear scales such that 
@@ -244,8 +250,9 @@ def linear_scale_cuts_v2(dvec_nl, dvec_lin, cov, rpvec, hartlap=1):
 	
     return ex_inds
 
+
 def linear_scale_cuts_hartlap(dvec_nl, dvec_lin, cov, rpvec, covsamps):
-    """ Gets the scales (and vector indices) which are excluded if we
+    """Gets the scales (and vector indices) which are excluded if we
     are only keeping linear scales. We define linear scales such that 
     chi^2_{nl - lin) <=1.
 	
@@ -319,6 +326,7 @@ def linear_scale_cuts_hartlap(dvec_nl, dvec_lin, cov, rpvec, covsamps):
 	
     return ex_inds
 
+
 # Define a log likelihood 
 def logL(model, data, invcov):
     """ model is the constant parameter of the model
@@ -329,4 +337,3 @@ def logL(model, data, invcov):
     loglike = -0.5*(np.dot(model - data, np.dot(invcov, model - data)))
 
     return loglike
-	

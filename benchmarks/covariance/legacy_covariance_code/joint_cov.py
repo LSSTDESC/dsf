@@ -22,6 +22,7 @@ rho_crit = 3. * 10**10 * mperMpc / (8. * np.pi * Gnewt * Msun) / 10**12  # Msol 
 
 np.set_printoptions(linewidth=240)
 
+
 def get_joint_covariance(params, lens, src, rp_bin_edges, rp_bin_c, rp0, endfilename):
     """ Computes the joint covariance matrix of Upsilon_{gm} Upsilon_{gg} and beta.
     params : dictionary of parameters at which to evaluate E_G
@@ -107,7 +108,8 @@ def get_joint_covariance(params, lens, src, rp_bin_edges, rp_bin_c, rp0, endfile
     #np.savetxt('../txtfiles/Danielle_cov_JP_debug_vs_sims_updatebeta_andparams.dat', joint_cov)
 	
     return joint_cov
-    
+
+
 def cov_Upsilon(covDS, rp_ed, rp0):
     """ Takes the covariance matrices of a Delta Sigma quantity in bins
     in r_p and outputs the equivalent covariance matrix for Upsilon.
@@ -145,6 +147,7 @@ def cov_Upsilon(covDS, rp_ed, rp0):
         cov_Ups_arr[ri, :] = cov_Ups_list[ri]
 	
     return cov_Ups_arr
+
 
 def cov_Upsilon_rp0exact(covDS, rp_ed, rp0, r):
     """ Takes the covariance matrices of a Delta Sigma quantity in bins
@@ -240,7 +243,8 @@ def cov_Upsilon_rp0exact(covDS, rp_ed, rp0, r):
     cov_Ups_arr = term1 + term2 + term3 + term4
 	
     return cov_Ups_arr
-	    
+
+
 def get_beta_var(lens):
 	""" Returns the variance on beta."""
 	
@@ -248,7 +252,8 @@ def get_beta_var(lens):
 	beta_var = (np.loadtxt('/home/danielle/Research/EG_comparison/txtfiles/beta_err_'+lens+'.txt'))**2
 	
 	return beta_var
-	
+
+
 def SigCsq_avg(params, lens, src):
     """ Get Sigma C squared, averaged.
     params: dictionary of parameters.
@@ -273,7 +278,8 @@ def SigCsq_avg(params, lens, src):
     #np.savetxt('/home/danielle/Research/EG_comparison/txtfiles/Sig_sq_avg_'+lens+'_'+src+'.txt', [Sig_sq_avg])
 
     return Sig_sq_avg
-	   
+
+
 def shapenoiseonly_cov(params, rp_bin_edges, lens, src):
     """ Returns a diagonal covariance matrix in bins of projected radius 
     for a measurement dominated by shape noise. For debugging only.
@@ -377,7 +383,8 @@ def shapenoiseonly_cov(params, rp_bin_edges, lens, src):
         raise(ValueError, "That lens / src combination is not yet implemented.")
 	
     return cov
-    
+
+
 def shotnoiseonly_cov(params, rp_bin_edges, lens, src, Pimax):
     """ Returns a diagonal covariance matrix in bins of projected radius
     for a measurement of Delta Sigma_gg which is dominated by shot noise.
@@ -407,7 +414,8 @@ def shotnoiseonly_cov(params, rp_bin_edges, lens, src, Pimax):
         raise(ValueError, "That lens / src combination is not yet implemented.")
     
     return cov_arr
-	
+
+
 def get_areas(params, bins, z_eff):
     """Gets the area of each projected radial bin, in square arcminutes. z_eff = effective lens redshift. """
     
@@ -421,7 +429,8 @@ def get_areas(params, bins, z_eff):
     areas_sqAM = areas_mpch * (466560000. / np.pi) / (4 * np.pi * chi_eff**2)
 
     return areas_sqAM
-    
+
+
 def plot_covs(params, rp_bin_edges, rp_bin_c, lens, src, Pimax, endfilename):
     """ Plot the imported covariance matrices for inspection.
     For DeltSig_gm and DeltSig_gg plot against shape- and shot-noise
@@ -467,7 +476,8 @@ def plot_covs(params, rp_bin_edges, rp_bin_c, lens, src, Pimax, endfilename):
     plt.close()
 
     return
-    
+
+
 def get_Cells(params, ell, lens, src):
     """ Gets the Cell quantities required for the covariance in Delta Sigma """
     
@@ -493,8 +503,6 @@ def get_Cells(params, ell, lens, src):
     np.savetxt('/home/danielle/Research/EG_comparison/txtfiles/Clkk_'+lens+'_'+src+'.txt', Clkk_save)
     
     return (Clgg, Clgk, Clkk)	
-    
-    
 
 
 ############ CHECK BETA / UPSILON COVARIANCE ###########
@@ -556,6 +564,7 @@ def cov_beta_Ups(params, lens, src, rp_bin_edges, rp0, Pimax, hder, endfilename)
 	
 	return	(cov_beta_gm, cov_beta_gg)
 
+
 def diff_P_b(params, k, mu, lens):
     """ Calculate the derivative of the redshift space power spectrum
     wrt galaxy bias at each k and mu
@@ -582,7 +591,8 @@ def diff_P_b(params, k, mu, lens):
     dPdb = [2. * (params['b'] + mu[mi]**2*f) * Pklin  for mi in range(len(mu))]
 	
     return dPdb
-    
+
+
 def diff_P_f(params, k, mu, lens):
     """ Calculate the derivative of the redshift space power spectrum
     wrt linear growth rate f at each k and mu
@@ -609,9 +619,10 @@ def diff_P_f(params, k, mu, lens):
     dPdf = [2. * (params['b'] + mu[mi]**2*f) * mu[mi]**2 * Pklin  for mi in range(len(mu))]
 	
     return dPdf
-	
+
+
 def diff_P_beta(params, k, mu, lens):
-	""" Calculate the derivative of the redshift space power spectrum
+	"""Calculate the derivative of the redshift space power spectrum
 	wrt beta at each k and mu
 	params: dictionary of cosmological parameters
 	k: list or array of wavenumbers
@@ -640,7 +651,6 @@ def diff_P_beta(params, k, mu, lens):
 	
 	return dPdbeta
 
-	
 	
 def Pobs_covinv(params, k, mu, lens):
     """ Get the inverse covariance of the redshift space observed power 
@@ -680,5 +690,3 @@ def Pobs_covinv(params, k, mu, lens):
     invcov = [[1./ cov[mi][ki] for ki in range(len(k))] for mi in range(len(mu))]
 			
     return invcov
-	
-	

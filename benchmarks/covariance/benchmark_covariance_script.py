@@ -73,10 +73,10 @@ covariance_builder = DeltaSigmaCovarianceBuilder(
         "n_zeros_step": 1000,
         "prune_r": 0,
         "verbose": True,
-        "max_iterations": 1000, 
+        "max_iterations": 1000,
         "radial_weight_method": "gradient",
+        "taper": True,
     },
-    taper=True,
 )
 
 dsf_cov_dict = covariance_builder.covariance_for_pair(lens_bin_index=0, 

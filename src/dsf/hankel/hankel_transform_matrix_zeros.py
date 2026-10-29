@@ -110,6 +110,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         self.r: dict[float | int, FloatArray] = {}
         self.j: dict[float | int, FloatArray] = {}
         self.j_next_at_zeros: dict[float | int, FloatArray] = {}
+        self.inverse_j_next_squared: dict[float | int, FloatArray] = {}
         self.zeros: dict[float | int, FloatArray] = {}
         self.normalization: dict[float | int, float] = {}
 
@@ -215,6 +216,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         self.r[order] = r_selected
         self.j[order] = j_matrix
         self.j_next_at_zeros[order] = j_next
+        self.inverse_j_next_squared[order] = 1.0 / j_next ** 2
         self.zeros[order] = zeros
         self.normalization[order] = float(norm)
 
@@ -443,7 +445,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
                 raise ValueError("Each spectrum must be evaluated on the internal k grid.")
             product *= spectrum
 
-        weighted = product / self.j_next_at_zeros[order] ** 2
+        weighted = product * self.inverse_j_next_squared[order]
         j_matrix = self.j[order]
         norm = self.normalization[order]
         ndim = len(spectra)

@@ -26,6 +26,9 @@ def make_fake_transform():
         )
     }
     transform.j_next_at_zeros = {0: np.array([1.0, 2.0, 4.0])}
+    transform.inverse_j_next_squared = {
+        0: 1.0 / transform.j_next_at_zeros[0] ** 2
+    }
     transform.zeros = {0: np.array([1.0, 2.0, 4.0])}
     transform.orders = (0,)
     transform.normalization = {0: 0.5}

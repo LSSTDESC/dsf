@@ -1,9 +1,12 @@
+import time
 from pathlib import Path
+
 import numpy as np
+import pyccl as ccl
 
 from dsf.covariance.cov_builder import DeltaSigmaCovarianceBuilder
 from dsf.tomography.tomo_builder import TomographyBuilder
-import pyccl as ccl
+
 # The fractional difference allowed between the legacy and dsf implementation.
 diff_tol = 10**(-2)
 
@@ -13,8 +16,15 @@ DATA_DIR = Path(__file__).resolve().parent
 def is_symmetric(a, tol = 10**(-14)):
     return np.all(np.abs(a - a.T) <= tol)
 
-def is_pos_semi_def(x):
-    return np.all(np.linalg.eigvals(x) >= 0)
+def is_pos_semi_def(x, tol=1e-12):
+    """Test that a symmetric matrix is positive semidefinite."""
+    eigenvalues = np.linalg.eigvalsh(x)
+    scale = np.max(np.abs(eigenvalues))
+
+    if scale == 0.0:
+        return True
+
+    return np.min(eigenvalues) >= -tol * scale
 
 
 z = np.linspace(0.0, 5.0, 1000)
@@ -46,9 +56,15 @@ rp_bin_edges = np.loadtxt(DATA_DIR / "rp_bin_edges.dat")
 h=0.69
 OmB = 0.022/h**2
 params = {'OmB':OmB, 'h':h, 'n_s':0.965, 'A_s':2.115 * 10**(-9),'b':2.333, 'OmM': 0.292} 
-cosmo = ccl.Cosmology(Omega_c = params['OmM'] - params['OmB'], Omega_b = params['OmB'], h = params['h'], 
-                      A_s=params['A_s'], n_s = params['n_s'], transfer_function="boltzmann_camb",
-                      matter_power_spectrum="halofit")
+cosmo = ccl.Cosmology(
+    Omega_c=params["OmM"] - params["OmB"],
+    Omega_b=params["OmB"],
+    h=params["h"],
+    A_s=params["A_s"],
+    n_s=params["n_s"],
+    transfer_function="boltzmann_camb",
+    matter_power_spectrum="halofit",
+)
 
 # Specifics here are set to match what was provided for the legacy code.
 covariance_builder = DeltaSigmaCovarianceBuilder(
@@ -76,8 +92,16 @@ covariance_builder = DeltaSigmaCovarianceBuilder(
     },
 )
 
-dsf_cov_dict = covariance_builder.covariance_for_pair(lens_bin_index=0, 
-                                                      source_bin_index=4)
+start = time.perf_counter()
+
+dsf_cov_dict = covariance_builder.covariance_for_pair(
+    lens_bin_index=0,
+    source_bin_index=4,
+)
+
+elapsed = time.perf_counter() - start
+
+print(f"DSF covariance computation: {elapsed:.3f} s")
 
 
 # Get the dsf covariance
@@ -109,18 +133,17 @@ def test_finite():
 # is a basic numerical check.
 
 def test_symmetric():
-   assert is_symmetric(cov_gm_gm_dsf, tol=10**(-12))
-   assert is_symmetric(cov_gg_gg_dsf, tol=10**(-12))
-   assert is_symmetric(cov_gm_gg_dsf, tol=10**(-12))
-   assert is_symmetric(cov_joint_dsf, tol=10**(-12))
+    """Test that auto-covariance and joint covariance matrices are symmetric."""
+    assert is_symmetric(cov_gm_gm_dsf, tol=1e-12)
+    assert is_symmetric(cov_gg_gg_dsf, tol=1e-12)
+    assert is_symmetric(cov_joint_dsf, tol=1e-12)
 
 # Make sure the covariances are positive semi-definite.
 
 def test_pos_semi_def():
-   assert is_pos_semi_def(cov_gm_gm_dsf)
-   assert is_pos_semi_def(cov_gg_gg_dsf)
-   assert is_pos_semi_def(cov_gm_gg_dsf)
-   assert is_pos_semi_def(cov_joint_dsf)
+    assert is_pos_semi_def(cov_gm_gm_dsf)
+    assert is_pos_semi_def(cov_gg_gg_dsf)
+    assert is_pos_semi_def(cov_joint_dsf)
 
 ### Now compare some ingredients:
 
@@ -169,8 +192,31 @@ fracdiff_gggg_error = np.abs((errors_gg_gg_dsf - errors_gg_gg_leg) / errors_gg_g
 fracdiff_gmgg_error = np.abs((errors_gm_gg_dsf - errors_gm_gg_leg) / errors_gm_gg_leg)
 fracdiff_joint_error = np.abs((errors_joint_dsf - errors_joint_leg) / errors_joint_leg)
 
+print("\nMaximum fractional differences in diagonal errors:")
+print(f"gm-gm: {np.max(fracdiff_gmgm_error):.3e}")
+print(f"gg-gg: {np.max(fracdiff_gggg_error):.3e}")
+print(f"gm-gg: {np.max(fracdiff_gmgg_error):.3e}")
+print(f"joint: {np.max(fracdiff_joint_error):.3e}")
+
 def test_diag_errors_agree():
    assert np.all(fracdiff_gmgm_error<diff_tol)
    assert np.all(fracdiff_gggg_error<diff_tol)
    assert np.all(fracdiff_gmgg_error<diff_tol)
    assert np.all(fracdiff_joint_error<diff_tol)
+
+
+if __name__ == "__main__":
+    tests = [
+        test_finite,
+        test_symmetric,
+        test_pos_semi_def,
+        test_shot_shape_noise,
+        test_array_shapes,
+        test_diag_errors_agree,
+    ]
+
+    for test in tests:
+        test()
+        print(f"PASS: {test.__name__}")
+
+    print("\nAll covariance benchmark checks passed.")

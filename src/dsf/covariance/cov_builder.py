@@ -82,11 +82,7 @@ class DeltaSigmaCovarianceBuilder:
         self,
         *,
         cosmo: ccl.Cosmology,
-        lens_result: Any,
-        source_result: Any,
-        lens_population_stats: Mapping[str, Any],
-        source_population_stats: Mapping[str, Any],
-        bin_pairs: BinPairs,
+        tomography: Mapping[str, Any],
         rp_bin_edges: ArrayLike,
         area_deg2: float,
         sigma_e: ScalarOrPerBin,
@@ -104,12 +100,10 @@ class DeltaSigmaCovarianceBuilder:
         Args:
             cosmo: CCL cosmology used for distances, matter power spectra,
                 growth-dependent quantities, and density normalizations.
-            lens_result: Binny tomography result for the lens sample.
-            source_result: Binny tomography result for the source sample.
-            lens_population_stats: Lens sample population summary.
-            source_population_stats: Source sample population summary.
-            bin_pairs: Selected ``(lens_bin, source_bin)`` pairs using original
-                tomographic bin indices.
+            tomography: Tomography inputs returned by
+                :meth:`dsf.tomography.tomo_builder.TomographyBuilder.prepare_bins`,
+                including lens and source results, population statistics,
+                and selected bin pairs.
             rp_bin_edges: Projected-radius bin edges in ``Mpc / h``.
             area_deg2: Survey area in square degrees.
             sigma_e: Source ellipticity dispersion.
@@ -125,10 +119,12 @@ class DeltaSigmaCovarianceBuilder:
             taper_kwargs: Optional taper settings.
         """
         self.cosmo = cosmo
-        self.lens_result = lens_result
-        self.source_result = source_result
+        self.lens_result = tomography["lens_result"]
+        self.source_result = tomography["source_result"]
+
         self.bin_pairs: list[tuple[int, int]] = [
-            (int(lens_bin), int(source_bin)) for lens_bin, source_bin in bin_pairs
+            (int(lens_bin), int(source_bin))
+            for lens_bin, source_bin in tomography["bin_pairs"]
         ]
 
         self.lens_meta = self.lens_result.tomo_meta
@@ -161,8 +157,8 @@ class DeltaSigmaCovarianceBuilder:
         self.z_lens = np.asarray(self.lens_result.z, dtype=float)
         self.z_source = np.asarray(self.source_result.z, dtype=float)
 
-        self.lens_population_stats = dict(lens_population_stats)
-        self.source_population_stats = dict(source_population_stats)
+        self.lens_population_stats = dict(tomography["lens_population_stats"])
+        self.source_population_stats = dict(tomography["source_population_stats"])
 
         self.rp_bin_edges = np.asarray(rp_bin_edges, dtype=float)
         self.area_deg2 = float(area_deg2)

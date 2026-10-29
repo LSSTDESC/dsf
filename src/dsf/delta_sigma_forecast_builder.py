@@ -93,8 +93,7 @@ class DeltaSigmaForecastBuilder:
         nonlinear: bool = True,
         pi: FloatArray | None = None,
         gm_window: FloatArray | None = None,
-        hankel_kwargs: Mapping[str, Any] | None = None,
-        covariance_orders: Mapping[str, int] | None = None,
+        hankel: Mapping[str, Any] | None = None,
         covariance_kind: str = "gm",
         taper: bool = True,
         taper_kwargs: dict[str, Any] | None = None,
@@ -149,8 +148,8 @@ class DeltaSigmaForecastBuilder:
                 power.
             pi: Optional line-of-sight grid in ``Mpc / h``.
             gm_window: Optional galaxy-matter line-of-sight window.
-            hankel_kwargs: Optional settings for covariance Hankel projections.
-            covariance_orders: Bessel orders used by covariance projections.
+            hankel: Optional Hankel configuration containing backend settings
+                and covariance Bessel orders.
             covariance_kind: Covariance product to use. Only ``"gm"`` is currently
                 supported by this builder because the forecast data vector is
                 Delta Sigma-only. The ``"gg"`` and ``"joint"`` covariance paths are
@@ -222,8 +221,7 @@ class DeltaSigmaForecastBuilder:
             "nonlinear": nonlinear,
             "pi": pi,
             "gm_window": gm_window,
-            "hankel_kwargs": hankel_kwargs,
-            "covariance_orders": covariance_orders,
+            "hankel": hankel,
             "taper": taper,
             "taper_kwargs": taper_kwargs,
         }
@@ -270,11 +268,7 @@ class DeltaSigmaForecastBuilder:
 
         cov_builder = DeltaSigmaCovarianceBuilder(
             cosmo=self.cosmo,
-            lens_result=tomography["lens_result"],
-            source_result=tomography["source_result"],
-            lens_population_stats=tomography["lens_population_stats"],
-            source_population_stats=tomography["source_population_stats"],
-            bin_pairs=tomography["bin_pairs"],
+            tomography=tomography,
             rp_bin_edges=self.rp_bin_edges,
             area_deg2=self.area_deg2,
             sigma_e=self.sigma_e,

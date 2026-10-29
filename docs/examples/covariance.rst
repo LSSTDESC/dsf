@@ -9,10 +9,9 @@ because the forecast data vector is :math:`\Delta\Sigma`-only. In other words,
 the covariance used by the current forecast workflow is the ``gm x gm`` block.
 
 The documentation examples are runnable, so this example intentionally uses a
-small redshift grid, a small number of bins, one lens-source pair, a short
-radius grid, and a lightweight Hankel setup. For a real analysis, these
-settings should be made more accurate, and covariance evaluation will naturally
-take longer.
+small number of bins, one lens-source pair, a short radius grid, and a
+lightweight Hankel setup. For a real analysis, these settings should be made
+more accurate, and covariance evaluation will naturally take longer.
 
 Minimal gm covariance example
 -----------------------------
@@ -28,13 +27,10 @@ Minimal gm covariance example
    from dsf.modelling import make_ccl_cosmology
    from dsf.tomography.tomo_builder import TomographyBuilder
 
-
    cosmo = make_ccl_cosmology(
        transfer_function="eisenstein_hu",
        matter_power_spectrum="halofit",
    )
-
-   z = np.linspace(0.05, 1.8, 80)
 
    tomography = TomographyBuilder(
        lens_survey="lsst",
@@ -56,28 +52,26 @@ Minimal gm covariance example
 
    tomo_inputs = tomography.prepare_bins()
 
-   bin_pairs = tomo_inputs["bin_pairs"][:1]
+   # Keep one lens-source pair for this lightweight example.
+   tomo_inputs["bin_pairs"] = tomo_inputs["bin_pairs"][:1]
+
    rp_bin_edges = np.geomspace(2.0, 20.0, 4)
 
    covariance_builder = DeltaSigmaCovarianceBuilder(
        cosmo=cosmo,
-       lens_result=tomo_inputs["lens_result"],
-       source_result=tomo_inputs["source_result"],
-       lens_population_stats=tomo_inputs["lens_population_stats"],
-       source_population_stats=tomo_inputs["source_population_stats"],
-       bin_pairs=bin_pairs,
+       tomography=tomo_inputs,
        rp_bin_edges=rp_bin_edges,
        area_deg2=5000.0,
        sigma_e=0.26,
        galaxy_bias=1.5,
        k=np.geomspace(1.0e-2, 6.0, 48),
-       hankel_kwargs={
+       hankel={
            "backend": "matrix_zeros",
            "r_min": 1.5,
            "r_max": 25.0,
            "k_min": 2.0e-2,
            "k_max": 5.0,
-           "orders": (2,),
+           "orders": {"gm": 2, "gg": 2, "cross": 2},
            "n_zeros": 250,
            "n_zeros_step": 100,
            "prune_r": 4,
@@ -121,6 +115,22 @@ Minimal gm covariance example
 
 Notes
 -----
+
+The tomography inputs are prepared using
+:meth:`dsf.tomography.tomo_builder.TomographyBuilder.prepare_bins`
+and passed directly to the covariance builder through the ``tomography``
+argument.
+
+These inputs contain the lens and source redshift distributions, population
+statistics, bin metadata, and selected lens-source bin pairs.
+
+For this example, only the first selected lens-source pair is retained.
+The covariance builder uses the selected pairs stored in
+``tomography["bin_pairs"]``.
+
+The ``hankel`` dictionary configures the numerical Hankel transform and
+the Bessel orders used for the ``gm``, ``gg``, and ``cross`` covariance
+blocks. The default Bessel order is 2 for all three blocks.
 
 The call
 

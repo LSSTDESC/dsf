@@ -41,9 +41,6 @@ tomography = TomographyBuilder(
 
 tomo_inputs = tomography.prepare_bins()
 
-# This set up gives the highest-z source bin with the single lens bin
-bin_pairs = tomo_inputs["bin_pairs"]
-
 # Load the bin edges from the legacy code (Mpc/h)
 rp_bin_edges = np.loadtxt('./rp_bin_edges.dat')
 
@@ -58,11 +55,7 @@ cosmo = ccl.Cosmology(Omega_c = params['OmM'] - params['OmB'], Omega_b = params[
 # Specifics here are set to match what was provided for the legacy code.
 covariance_builder = DeltaSigmaCovarianceBuilder(
     cosmo=cosmo,
-    lens_result=tomo_inputs["lens_result"],
-    source_result=tomo_inputs["source_result"],
-    lens_population_stats=tomo_inputs["lens_population_stats"],
-    source_population_stats=tomo_inputs["source_population_stats"],
-    bin_pairs=bin_pairs,
+    tomography=tomo_inputs,
     rp_bin_edges=rp_bin_edges,
     area_deg2=5000.0,
     sigma_e=0.26,

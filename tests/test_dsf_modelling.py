@@ -201,7 +201,7 @@ def test_pk2d_nla_constructs_expected_negative_gi_power(monkeypatch):
     np.testing.assert_allclose(pk2d.pk_arr, expected)
     assert pk2d.is_logp is False
 
-    assert result.cosmo is cosmo
+    assert result["pk_deltasigma"].cosmo is cosmo
     assert density_calls[0][0] is cosmo
 
 
@@ -277,7 +277,7 @@ def test_pk2d_nla_rejects_non_finite_matter_power(monkeypatch):
 
 def test_pk2d_hod_with_nla_returns_hod_only_when_amplitude_is_zero(monkeypatch):
     """Tests that pk2d_hod_with_nla returns only HOD power when A_IA is zero."""
-    pk_hod = SimpleNamespace(name="hod")
+    pk_hod = {name: SimpleNamespace(name="hod") for name in ("pk_deltasigma", "pk_gm", "pk_gg")}
 
     def fake_pk2d_hod(cosmo, *, k_array, a_array, **hod_kwargs):
         """Return a tagged HOD power object."""
@@ -314,7 +314,7 @@ def test_pk2d_hod_with_nla_uses_supplied_galaxy_bias(monkeypatch):
     def fake_pk2d_hod(cosmo, *, k_array, a_array, **hod_kwargs):
         """Return a tagged HOD power object."""
         calls["hod_kwargs"] = dict(hod_kwargs)
-        return pk_hod
+        return {"pk_deltasigma": pk_hod, "pk_gm": pk_hod, "pk_gg": pk_hod}
 
     def fake_pk2d_nla(cosmo, *, k_array, a_array, A_IA, C1rhocrit, b_g):
         """Return a tagged NLA power object."""
@@ -323,7 +323,7 @@ def test_pk2d_hod_with_nla_uses_supplied_galaxy_bias(monkeypatch):
             "C1rhocrit": C1rhocrit,
             "b_g": b_g,
         }
-        return pk_ia
+        return {"pk_deltasigma": pk_ia, "pk_gi": pk_ia}
 
     def fail_hod_galaxy_bias(*args, **kwargs):
         """Fail if automatic HOD bias is unexpectedly used."""
@@ -343,9 +343,9 @@ def test_pk2d_hod_with_nla_uses_supplied_galaxy_bias(monkeypatch):
         log10Mmin_0=12.5,
     )
 
-    assert result.combined is True
-    assert result.left is pk_hod
-    assert result.right is pk_ia
+    assert result["pk_deltasigma"].combined is True
+    assert result["pk_deltasigma"].left is pk_hod
+    assert result["pk_deltasigma"].right is pk_ia
     assert calls["hod_kwargs"] == {"log10Mmin_0": 12.5}
     assert calls["nla"] == {
         "A_IA": 1.2,
@@ -372,7 +372,7 @@ def test_pk2d_hod_with_nla_computes_galaxy_bias_when_missing(monkeypatch):
 
     def fake_pk2d_hod(cosmo, *, k_array, a_array, **hod_kwargs):
         """Return a tagged HOD power object."""
-        return pk_hod
+        return {"pk_deltasigma": pk_hod, "pk_gm": pk_hod, "pk_gg": pk_hod}
 
     def fake_hod_galaxy_bias(cosmo, *, a, **hod_kwargs):
         """Return a deterministic HOD galaxy bias."""
@@ -382,7 +382,7 @@ def test_pk2d_hod_with_nla_computes_galaxy_bias_when_missing(monkeypatch):
     def fake_pk2d_nla(cosmo, *, k_array, a_array, A_IA, C1rhocrit, b_g):
         """Return a tagged NLA power object."""
         calls["nla_b_g"] = b_g
-        return pk_ia
+        return {"pk_deltasigma": pk_ia, "pk_gi": pk_ia}
 
     monkeypatch.setattr(modelling, "pk2d_hod", fake_pk2d_hod)
     monkeypatch.setattr(modelling, "hod_galaxy_bias", fake_hod_galaxy_bias)
@@ -397,7 +397,7 @@ def test_pk2d_hod_with_nla_computes_galaxy_bias_when_missing(monkeypatch):
         log10Mmin_0=12.5,
     )
 
-    assert result.combined is True
+    assert result["pk_deltasigma"].combined is True
     assert calls["bias"] == {
         "a": 0.67,
         "hod_kwargs": {"log10Mmin_0": 12.5},
@@ -409,7 +409,9 @@ def test_pk2d_hod_baryonified_with_nla_returns_baryonified_only_when_amplitude_i
     monkeypatch,
 ):
     """Tests that pk2d_hod_baryonified_with_nla returns baryonified power for zero IA."""
-    pk_hod = SimpleNamespace(name="baryonified")
+    pk_hod = {
+        name: SimpleNamespace(name="baryonified") for name in ("pk_deltasigma", "pk_gm", "pk_gg")
+    }
 
     def fake_pk2d_hod_baryonified(cosmo, *, k_array, a_array, f_c, **hod_kwargs):
         """Return a tagged baryonified HOD power object."""
@@ -451,7 +453,7 @@ def test_pk2d_hod_baryonified_with_nla_passes_fc_and_adds_nla(monkeypatch):
     def fake_pk2d_hod_baryonified(cosmo, *, k_array, a_array, f_c, **hod_kwargs):
         """Return a tagged baryonified HOD power object."""
         calls["baryonified"] = {"f_c": f_c, "hod_kwargs": dict(hod_kwargs)}
-        return pk_hod
+        return {"pk_deltasigma": pk_hod, "pk_gm": pk_hod, "pk_gg": pk_hod}
 
     def fake_pk2d_nla(cosmo, *, k_array, a_array, A_IA, C1rhocrit, b_g):
         """Return a tagged NLA power object."""
@@ -460,7 +462,7 @@ def test_pk2d_hod_baryonified_with_nla_passes_fc_and_adds_nla(monkeypatch):
             "C1rhocrit": C1rhocrit,
             "b_g": b_g,
         }
-        return pk_ia
+        return {"pk_deltasigma": pk_ia, "pk_gi": pk_ia}
 
     monkeypatch.setattr(
         modelling,
@@ -480,7 +482,7 @@ def test_pk2d_hod_baryonified_with_nla_passes_fc_and_adds_nla(monkeypatch):
         log10M1_0=13.5,
     )
 
-    assert result.combined is True
+    assert result["pk_deltasigma"].combined is True
     assert calls["baryonified"] == {
         "f_c": 1.4,
         "hod_kwargs": {"log10M1_0": 13.5},

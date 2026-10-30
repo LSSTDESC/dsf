@@ -10,8 +10,8 @@ from dsf.delta_sigma_forecast_builder import DeltaSigmaForecastBuilder
 
 
 def dummy_pk2d_func(*args, **kwargs):
-    """Return a dummy object in place of a Pk2D profile."""
-    return object()
+    """Return dummy objects for each Pk2D spectrum."""
+    return {name: object() for name in ("pk_deltasigma", "pk_gm", "pk_gg")}
 
 
 def make_tomography():
@@ -399,7 +399,8 @@ def test_model_rejects_non_mapping_pk2d_kwargs(patched_dependencies):
             "pk2d_kwargs": 3.0,
         }
 
-    builder = make_builder(theta_mapper=theta_mapper)
+    builder = make_builder()
+    builder.theta_mapper = theta_mapper
 
     with pytest.raises(TypeError, match="pk2d_kwargs"):
         builder.model(builder.theta0, context={"tomography": make_tomography()})

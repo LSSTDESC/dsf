@@ -84,6 +84,8 @@ class DeltaSigmaCovarianceBuilder:
         rp_bin_edges: ArrayLike,
         area_deg2: float,
         sigma_e: ScalarOrPerBin,
+        pk_gg: ccl.Pk2D | None = None,
+        pk_gm: ccl.Pk2D | None = None,
         galaxy_bias: ScalarOrPerBin | None = None,
         k: FloatArray | None = None,
         projection: Mapping[str, Any] | None = None,
@@ -103,7 +105,12 @@ class DeltaSigmaCovarianceBuilder:
             rp_bin_edges: Projected-radius bin edges in ``Mpc / h``.
             area_deg2: Survey area in square degrees.
             sigma_e: Source ellipticity dispersion.
-            galaxy_bias: Galaxy bias for the lens sample.
+            pk_gg: Pre-computed galaxy-galaxy power spectrum
+                (defaults to nonlinear matter power if not supplied).
+            pk_gm: Pre-computed galaxy-matter power spectrum
+                (defaults to nonlinear matter power if not supplied).
+            galaxy_bias: Galaxy bias for the lens sample. Can only be passed
+                if ``pk_gg`` and ``pk_gm`` are None.
             k: Wavenumber grid in ``h / Mpc``.
             projection: Optional line-of-sight projection settings containing
                 ``pi`` (grid in ``Mpc / h``) and ``gm_window`` (galaxy-matter
@@ -112,13 +119,19 @@ class DeltaSigmaCovarianceBuilder:
                 an ``orders`` mapping for the ``gm``, ``gg``, and ``cross`` covariance
                 blocks. Defaults to Bessel order 2 for all blocks.
         """
+        if pk_gg is None and pk_gm is None:
+            self.use_galaxy_bias = True
+        elif pk_gg is not None and pk_gm is not None and galaxy_bias is None:
+            self.use_galaxy_bias = False
+        elif galaxy_bias is not None:
+            raise ValueError("pk_gg, pk_gm, and galaxy_bias cannot all be provided together.")
+
         self.cosmo = cosmo
         self.lens_result = tomography["lens_result"]
         self.source_result = tomography["source_result"]
 
         self.bin_pairs: list[tuple[int, int]] = [
-            (int(lens_bin), int(source_bin))
-            for lens_bin, source_bin in tomography["bin_pairs"]
+            (int(lens_bin), int(source_bin)) for lens_bin, source_bin in tomography["bin_pairs"]
         ]
 
         self.lens_meta = self.lens_result.tomo_meta
@@ -162,14 +175,22 @@ class DeltaSigmaCovarianceBuilder:
         self.omega_m = resolve_omega_m(cosmo, None)
         self.rho_crit = rho_critical_projected_msun_pc2_per_mpc(cosmo)
 
-        self.galaxy_bias = (
-            galaxy_bias
-            if galaxy_bias is not None
-            else linear_galaxy_bias(
-                self.cosmo,
-                self.lens_centers,
+        if self.use_galaxy_bias:
+            self.galaxy_bias = (
+                galaxy_bias
+                if galaxy_bias is not None
+                else linear_galaxy_bias(
+                    self.cosmo,
+                    self.lens_centers,
+                )
             )
-        )
+        elif self.use_galaxy_bias is False:
+            self.galaxy_bias = 1.0
+
+        matter_power = ccl.nonlin_matter_power
+        self.pk_gg = matter_power if pk_gg is None else pk_gg
+        self.pk_gm = matter_power if pk_gm is None else pk_gm
+        self.pk_mm = matter_power
 
         if k is None:
             self.k: FloatArray = np.logspace(
@@ -283,7 +304,9 @@ class DeltaSigmaCovarianceBuilder:
         r_gm, cov_gm_gm = delta_sigma_gm_covariance(
             self.hankel,
             self.k,
-            ingredients["pk"],
+            ingredients["pk_gg"],
+            ingredients["pk_gm"],
+            ingredients["pk_mm"],
             galaxy_bias=ingredients["galaxy_bias"],
             omega_m=self.omega_m,
             rho_crit=self.rho_crit,
@@ -331,7 +354,7 @@ class DeltaSigmaCovarianceBuilder:
         r_gg, cov_gg_gg = delta_sigma_gg_covariance(
             self.hankel,
             self.k,
-            ingredients["pk"],
+            ingredients["pk_gg"],
             galaxy_bias=ingredients["galaxy_bias"],
             rho_crit=self.rho_crit,
             delta_pi_gg=ingredients["delta_pi_gg"],
@@ -376,7 +399,8 @@ class DeltaSigmaCovarianceBuilder:
         r_cross, cov_gm_gg = delta_sigma_gm_gg_cross_covariance(
             self.hankel,
             self.k,
-            ingredients["pk"],
+            ingredients["pk_gg"],
+            ingredients["pk_gm"],
             galaxy_bias=ingredients["galaxy_bias"],
             omega_m=self.omega_m,
             rho_crit=self.rho_crit,
@@ -601,14 +625,27 @@ class DeltaSigmaCovarianceBuilder:
             n_lens_arcmin2 = None
             n_lens_3d = float(lens_density["n_gal_comoving_h3_mpc3"])
         else:
-            n_lens_arcmin2 = float(
-                self.lens_population_stats["density_per_bin"][lens_bin_index]
-            )
+            n_lens_arcmin2 = float(self.lens_population_stats["density_per_bin"][lens_bin_index])
             validate_positive_scalar(n_lens_arcmin2, "n_lens_arcmin2")
             n_lens_3d = n_lens_arcmin2 * self.area_deg2 * 3600.0 / volume
 
-        pk = lens_averaged_matter_power(
+        pk_gg = lens_averaged_matter_power(
             self.cosmo,
+            self.pk_gg,
+            self.k,
+            self.z_lens,
+            nz_lens,
+        )
+        pk_gm = lens_averaged_matter_power(
+            self.cosmo,
+            self.pk_gm,
+            self.k,
+            self.z_lens,
+            nz_lens,
+        )
+        pk_mm = lens_averaged_matter_power(
+            self.cosmo,
+            self.pk_mm,
             self.k,
             self.z_lens,
             nz_lens,
@@ -629,7 +666,9 @@ class DeltaSigmaCovarianceBuilder:
         )
 
         ingredients = {
-            "pk": pk,
+            "pk_gg": pk_gg,
+            "pk_gm": pk_gm,
+            "pk_mm": pk_mm,
             "volume": volume,
             "galaxy_bias": galaxy_bias,
             "n_lens_arcmin2": n_lens_arcmin2,
@@ -724,7 +763,9 @@ class DeltaSigmaCovarianceBuilder:
         )
 
         return {
-            "pk": lens["pk"],
+            "pk_gg": lens["pk_gg"],
+            "pk_gm": lens["pk_gm"],
+            "pk_mm": lens["pk_mm"],
             "volume": lens["volume"],
             "galaxy_bias": lens["galaxy_bias"],
             "sigma_e": source["sigma_e"],

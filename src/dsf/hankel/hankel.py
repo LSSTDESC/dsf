@@ -229,7 +229,8 @@ class HankelTransform:
             **kwargs: Extra arguments passed to callable spectra.
 
         Returns:
-            Radial grid (units of radians) and projected covariance matrix.
+            Radial grid, in inverse units of ``k_pk``,
+            and projected covariance matrix.
         """
         return self.backend.projected_covariance(
             k_pk=k_pk,

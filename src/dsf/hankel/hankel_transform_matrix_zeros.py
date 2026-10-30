@@ -43,9 +43,8 @@ class HankelTransformMatrixZeros(HankelTransformBase):
 
     The class builds Bessel-function grids for the requested orders and uses
     them to evaluate projected radial quantities. A single input spectrum gives
-    a projected correlation-like statistic, two spectra give a projected
-    covariance matrix, and three spectra give a projected third-order radial
-    tensor.
+    a projected correlation-like statistic, while two spectra give a projected
+    covariance matrix.
 
     The input r and k ranges must have reciprocal units such that
     :math:`r \\times k` is dimensionless.

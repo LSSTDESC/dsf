@@ -24,6 +24,7 @@ __all__ = [
 
 def lens_averaged_matter_power(
     cosmo: ccl.Cosmology,
+    pk: ccl.Pk2D,
     k: FloatArray,
     z_lens: FloatArray,
     nz_lens: FloatArray,
@@ -35,6 +36,7 @@ def lens_averaged_matter_power(
     Args:
         cosmo: CCL cosmology object. The matter power spectrum prescription
             is determined by its ``matter_power_spectrum`` configuration.
+        pk: CCL 2D power spectrum object.
         k: Wavenumber grid in ``h / Mpc``.
         z_lens: Lens redshift grid.
         nz_lens: Normalized lens redshift distribution evaluated on ``z_lens``.
@@ -72,7 +74,7 @@ def lens_averaged_matter_power(
         integration_weights[active],
         strict=True,
     ):
-        pk_avg += weight * ccl.nonlin_matter_power(
+        pk_avg += weight * pk(
             cosmo,
             k_physical,
             redshift_to_scale_factor(z_value),

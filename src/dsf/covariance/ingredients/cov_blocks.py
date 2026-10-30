@@ -82,7 +82,9 @@ def _covariance_on_requested_radius_grid(
 def delta_sigma_gm_covariance(
     hankel: HankelTransform,
     k: ArrayLike,
-    pk: ArrayLike,
+    pk_gg: ArrayLike,
+    pk_gm: ArrayLike,
+    pk_mm: ArrayLike,
     *,
     galaxy_bias: float,
     omega_m: float,
@@ -111,7 +113,9 @@ def delta_sigma_gm_covariance(
         hankel: Hankel transform object used to project Fourier-space covariance
             terms into projected-radius space.
         k: Wavenumber grid in ``h / Mpc``.
-        pk: Lens-averaged matter power spectrum evaluated on ``k``.
+        pk_gg: Lens-averaged galaxy-galaxy power spectrum evaluated on ``k``.
+        pk_gm: Lens-averaged galaxy-matter power spectrum evaluated on ``k``.
+        pk_mm: Lens-averaged matter-matter power spectrum evaluated on ``k``.
         galaxy_bias: Linear galaxy bias of the lens sample.
         omega_m: Present-day matter density parameter.
         rho_crit: Critical density factor used to convert matter fluctuations into
@@ -139,9 +143,13 @@ def delta_sigma_gm_covariance(
         Projected radii and the ``gm x gm`` Delta Sigma covariance matrix.
     """
     k = np.asarray(k, dtype=float)
-    pk = np.asarray(pk, dtype=float)
+    pk_gg = np.asarray(pk_gg, dtype=float)
+    pk_gm = np.asarray(pk_gm, dtype=float)
+    pk_mm = np.asarray(pk_mm, dtype=float)
 
-    validate_power_spectrum_inputs(k, pk)
+    validate_power_spectrum_inputs(k, pk_gg)
+    validate_power_spectrum_inputs(k, pk_gm)
+    validate_power_spectrum_inputs(k, pk_mm)
     validate_positive_scalar(galaxy_bias, "galaxy_bias")
     validate_positive_scalar(omega_m, "omega_m")
     validate_positive_scalar(rho_crit, "rho_crit")
@@ -149,9 +157,7 @@ def delta_sigma_gm_covariance(
         delta_pi_gm_squared_window,
         "delta_pi_gm_squared_window",
     )
-    validate_positive_scalar(
-        sigma_crit_squared_average, "sigma_crit_squared_average"
-    )
+    validate_positive_scalar(sigma_crit_squared_average, "sigma_crit_squared_average")
     validate_positive_scalar(shape_noise, "shape_noise")
     validate_positive_scalar(shot_noise, "shot_noise")
     validate_positive_scalar(volume, "volume")
@@ -159,9 +165,9 @@ def delta_sigma_gm_covariance(
     taper_kwargs = _build_taper_kwargs(k, taper_kwargs)
     gkgk_taper_kwargs = _build_taper_kwargs(k, gkgk_taper_kwargs)
 
-    p_g = pk * galaxy_bias**2
-    p_kappa = pk * (rho_crit * omega_m) ** 2 * delta_pi_gm_squared_window
-    p_gk = pk * galaxy_bias * rho_crit * omega_m
+    p_g = pk_gg * galaxy_bias**2
+    p_kappa = pk_mm * (rho_crit * omega_m) ** 2 * delta_pi_gm_squared_window
+    p_gk = pk_gm * galaxy_bias * rho_crit * omega_m
 
     shape_delta_sigma_noise = shape_noise * sigma_crit_squared_average
 
@@ -191,15 +197,13 @@ def delta_sigma_gm_covariance(
 
     cov = (cov_ggkk + cov_gkgk * delta_pi_gm_squared_window) / volume
 
-    return _covariance_on_requested_radius_grid(
-        hankel, r_ggkk, cov, rp_bin_edges
-    )
+    return _covariance_on_requested_radius_grid(hankel, r_ggkk, cov, rp_bin_edges)
 
 
 def delta_sigma_gg_covariance(
     hankel: HankelTransform,
     k: ArrayLike,
-    pk: ArrayLike,
+    pk_gg: ArrayLike,
     *,
     galaxy_bias: float,
     rho_crit: float,
@@ -222,7 +226,7 @@ def delta_sigma_gg_covariance(
         hankel: Hankel transform object used to project Fourier-space covariance
             terms into projected-radius space.
         k: Wavenumber grid in ``h / Mpc``.
-        pk: Lens-averaged matter power spectrum evaluated on ``k``.
+        pk_gg: Lens-averaged galaxy-galaxy power spectrum evaluated on ``k``.
         galaxy_bias: Linear galaxy bias of the lens sample.
         rho_crit: Critical density factor used to express the projected clustering
             covariance in Delta Sigma-like units.
@@ -244,9 +248,9 @@ def delta_sigma_gg_covariance(
         Projected radii and the ``gg x gg`` Delta Sigma covariance matrix.
     """
     k = np.asarray(k, dtype=float)
-    pk = np.asarray(pk, dtype=float)
+    pk_gg = np.asarray(pk_gg, dtype=float)
 
-    validate_power_spectrum_inputs(k, pk)
+    validate_power_spectrum_inputs(k, pk_gg)
     validate_positive_scalar(galaxy_bias, "galaxy_bias")
     validate_positive_scalar(rho_crit, "rho_crit")
     validate_positive_scalar(delta_pi_gg, "delta_pi_gg")
@@ -255,7 +259,7 @@ def delta_sigma_gg_covariance(
 
     taper_kwargs = _build_taper_kwargs(k, taper_kwargs)
 
-    p_g = pk * galaxy_bias**2
+    p_g = pk_gg * galaxy_bias**2
 
     r, cov = hankel.backend.projected_covariance(
         k_pk=k,
@@ -274,7 +278,8 @@ def delta_sigma_gg_covariance(
 def delta_sigma_gm_gg_cross_covariance(
     hankel: HankelTransform,
     k: ArrayLike,
-    pk: ArrayLike,
+    pk_gg: ArrayLike,
+    pk_gm: ArrayLike,
     *,
     galaxy_bias: float,
     omega_m: float,
@@ -299,7 +304,8 @@ def delta_sigma_gm_gg_cross_covariance(
         hankel: Hankel transform object used to project Fourier-space covariance
             terms into projected-radius space.
         k: Wavenumber grid in ``h / Mpc``.
-        pk: Lens-averaged matter power spectrum evaluated on ``k``.
+        pk_gg: Lens-averaged galaxy-galaxy power spectrum evaluated on ``k``.
+        pk_gm: Lens-averaged galaxy-matter power spectrum evaluated on ``k``.
         galaxy_bias: Linear galaxy bias of the lens sample.
         omega_m: Present-day matter density parameter.
         rho_crit: Critical density factor used to convert matter fluctuations into
@@ -322,9 +328,11 @@ def delta_sigma_gm_gg_cross_covariance(
         Projected radii and the ``gm x gg`` Delta Sigma cross-covariance matrix.
     """
     k = np.asarray(k, dtype=float)
-    pk = np.asarray(pk, dtype=float)
+    pk_gg = np.asarray(pk_gg, dtype=float)
+    pk_gm = np.asarray(pk_gm, dtype=float)
 
-    validate_power_spectrum_inputs(k, pk)
+    validate_power_spectrum_inputs(k, pk_gg)
+    validate_power_spectrum_inputs(k, pk_gm)
     validate_positive_scalar(galaxy_bias, "galaxy_bias")
     validate_positive_scalar(omega_m, "omega_m")
     validate_positive_scalar(rho_crit, "rho_crit")
@@ -334,8 +342,8 @@ def delta_sigma_gm_gg_cross_covariance(
 
     taper_kwargs = _build_taper_kwargs(k, taper_kwargs)
 
-    p_g = pk * galaxy_bias**2
-    p_gk = pk * galaxy_bias * rho_crit * omega_m
+    p_g = pk_gg * galaxy_bias**2
+    p_gk = pk_gm * galaxy_bias * rho_crit * omega_m
 
     r, cov = hankel.backend.projected_covariance(
         k_pk=k,

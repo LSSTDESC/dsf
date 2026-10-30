@@ -36,6 +36,7 @@ __all__ = [
     "HALO_BIAS",
     "MATTER_PROFILE",
     "HM_CALCULATOR",
+    "HOD_2PT",
     "baryonified_duffy_concentration",
     "hod_galaxy_bias",
     "make_ccl_cosmology",
@@ -111,6 +112,8 @@ HM_CALCULATOR = ccl.halos.HMCalculator(
     mass_def=MASS_DEF,
 )
 
+HOD_2PT = ccl.halos.Profile2ptHOD()
+
 
 def _validate_pk2d_grids(
     k_array: NDArray[np.float64],
@@ -175,7 +178,8 @@ def pk2d_hod(
         **hod_kwargs: Keyword arguments passed to ``ccl.halos.HaloProfileHOD``.
 
     Returns:
-        Density-weighted galaxy-matter ``Pk2D`` object.
+        Dictionary of density-weighted galaxy-matter ``Pk2D`` object,
+        galaxy-matter ``Pk2D`` object, and galaxy-galaxy ``Pk2D`` object.
     """
     k_arr, a_arr = _validate_pk2d_grids(k_array, a_array)
 
@@ -195,10 +199,26 @@ def pk2d_hod(
         p_of_k_a=cosmo.get_nonlin_power(),
     )
 
+    pk_gg = ccl.halos.halomod_Pk2D(
+        cosmo,
+        HM_CALCULATOR,
+        galaxy_profile,
+        prof_2pt=HOD_2PT,
+        lk_arr=np.log(k_arr),
+        a_arr=a_arr,
+        p_of_k_a=cosmo.get_nonlin_power(),
+    )
+
     def pk_gm_power(cosmo, k, a):
         return pk_gm(k, a, cosmo=cosmo)
 
-    return density_weighted_power_spectrum(cosmo, pk_gm_power)
+    pk_gm_density_weighted = density_weighted_power_spectrum(cosmo, pk_gm_power)
+
+    return {
+        "pk_deltasigma": pk_gm_density_weighted,
+        "pk_gm": pk_gm,
+        "pk_gg": pk_gg,
+    }
 
 
 def pk2d_hod_baryonified(
@@ -219,7 +239,8 @@ def pk2d_hod_baryonified(
         **hod_kwargs: Keyword arguments passed to ``ccl.halos.HaloProfileHOD``.
 
     Returns:
-        Density-weighted baryonified HOD galaxy-matter ``Pk2D`` object.
+        Dictionary of density-weighted baryonified HOD galaxy-matter ``Pk2D`` object,
+        galaxy-matter ``Pk2D`` object, and galaxy-galaxy ``Pk2D`` object.
     """
     k_arr, a_arr = _validate_pk2d_grids(k_array, a_array)
     concentration = baryonified_duffy_concentration(f_c)
@@ -246,10 +267,26 @@ def pk2d_hod_baryonified(
         p_of_k_a=cosmo.get_nonlin_power(),
     )
 
+    pk_gg = ccl.halos.halomod_Pk2D(
+        cosmo,
+        HM_CALCULATOR,
+        galaxy_profile,
+        prof_2pt=HOD_2PT,
+        lk_arr=np.log(k_arr),
+        a_arr=a_arr,
+        p_of_k_a=cosmo.get_nonlin_power(),
+    )
+
     def pk_gm_power(cosmo, k, a):
         return pk_gm(k, a, cosmo=cosmo)
 
-    return density_weighted_power_spectrum(cosmo, pk_gm_power)
+    pk_gm_density_weighted = density_weighted_power_spectrum(cosmo, pk_gm_power)
+
+    return {
+        "pk_deltasigma": pk_gm_density_weighted,
+        "pk_gm": pk_gm,
+        "pk_gg": pk_gg,
+    }
 
 
 def hod_galaxy_bias(
@@ -321,7 +358,8 @@ def pk2d_nla(
         b_g: Galaxy bias multiplying the galaxy-intrinsic term.
 
     Returns:
-        Density-weighted NLA galaxy-intrinsic ``Pk2D`` object.
+        Dictionary of density-weighted NLA galaxy-intrinsic ``Pk2D`` object
+        and galaxy-intrinsic ``Pk2D`` object.
     """
     k_arr, a_arr = _validate_pk2d_grids(k_array, a_array)
 
@@ -359,7 +397,12 @@ def pk2d_nla(
     def pk_gi_power(cosmo, k, a):
         return pk2d(k, a, cosmo=cosmo)
 
-    return density_weighted_power_spectrum(cosmo, pk_gi_power)
+    pk_gi_density_weighted = density_weighted_power_spectrum(cosmo, pk_gi_power)
+
+    return {
+        "pk_deltasigma": pk_gi_density_weighted,
+        "pk_gi": pk2d,
+    }
 
 
 def pk2d_hod_with_nla(
@@ -388,8 +431,9 @@ def pk2d_hod_with_nla(
         **hod_kwargs: Keyword arguments passed to ``ccl.halos.HaloProfileHOD``.
 
     Returns:
-        Density-weighted HOD galaxy-matter ``Pk2D`` object, optionally including
-        the NLA galaxy-intrinsic contribution.
+        Dictionary of density-weighted HOD galaxy-matter ``Pk2D`` object,
+        galaxy-matter ``Pk2D`` object, and galaxy-galaxy ``Pk2D`` object,
+        optionally including the NLA galaxy-intrinsic contribution.
     """
     validate_finite_scalar(A_IA, "A_IA")
 
@@ -419,7 +463,15 @@ def pk2d_hod_with_nla(
         b_g=float(b_g),
     )
 
-    return pk_hod + pk_ia
+    pk_gm_density_weighted = pk_hod["pk_deltasigma"] + pk_ia["pk_deltasigma"]
+    pk_gm = pk_hod["pk_gm"] + pk_ia["pk_gi"]
+    pk_gg = pk_hod["pk_gg"]
+
+    return {
+        "pk_deltasigma": pk_gm_density_weighted,
+        "pk_gm": pk_gm,
+        "pk_gg": pk_gg,
+    }
 
 
 def pk2d_hod_baryonified_with_nla(
@@ -450,7 +502,8 @@ def pk2d_hod_baryonified_with_nla(
         **hod_kwargs: Keyword arguments passed to ``ccl.halos.HaloProfileHOD``.
 
     Returns:
-        Density-weighted baryonified HOD galaxy-matter ``Pk2D`` object,
+        Dictionary of density-weighted baryonified HOD galaxy-matter ``Pk2D``
+        object, galaxy-matter ``Pk2D`` object, and galaxy-galaxy ``Pk2D`` object,
         optionally including the NLA galaxy-intrinsic contribution.
     """
     validate_finite_scalar(A_IA, "A_IA")
@@ -482,4 +535,12 @@ def pk2d_hod_baryonified_with_nla(
         b_g=float(b_g),
     )
 
-    return pk_hod + pk_ia
+    pk_gm_density_weighted = pk_hod["pk_deltasigma"] + pk_ia["pk_deltasigma"]
+    pk_gm = pk_hod["pk_gm"] + pk_ia["pk_gi"]
+    pk_gg = pk_hod["pk_gg"]
+
+    return {
+        "pk_deltasigma": pk_gm_density_weighted,
+        "pk_gm": pk_gm,
+        "pk_gg": pk_gg,
+    }

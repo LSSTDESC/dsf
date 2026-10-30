@@ -43,9 +43,8 @@ class HankelTransformMatrixZeros(HankelTransformBase):
 
     The class builds Bessel-function grids for the requested orders and uses
     them to evaluate projected radial quantities. A single input spectrum gives
-    a projected correlation-like statistic, two spectra give a projected
-    covariance matrix, and three spectra give a projected third-order radial
-    tensor.
+    a projected correlation-like statistic, while two spectra give a projected
+    covariance matrix.
 
     The input r and k ranges must have reciprocal units such that
     :math:`r \\times k` is dimensionless.
@@ -110,6 +109,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         self.r: dict[float | int, FloatArray] = {}
         self.j: dict[float | int, FloatArray] = {}
         self.j_next_at_zeros: dict[float | int, FloatArray] = {}
+        self.inverse_j_next_squared: dict[float | int, FloatArray] = {}
         self.zeros: dict[float | int, FloatArray] = {}
         self.normalization: dict[float | int, float] = {}
 
@@ -215,6 +215,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         self.r[order] = r_selected
         self.j[order] = j_matrix
         self.j_next_at_zeros[order] = j_next
+        self.inverse_j_next_squared[order] = 1.0 / j_next ** 2
         self.zeros[order] = zeros
         self.normalization[order] = float(norm)
 
@@ -421,12 +422,15 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         self,
         spectra: list[FloatArray],
         order: float | int,
+        chunk_size: int | None = None,
     ) -> tuple[FloatArray, FloatArray]:
         """Project one or more spectra into radial-space statistics.
 
         Args:
             spectra: Spectra evaluated on the internal wavenumber grid.
             order: Bessel order to use.
+            chunk_size: Number of wavenumbers processed per chunk for
+                covariance projection. If None, use direct multiplication.
 
         Returns:
             Radial grid and projected radial statistic, of shape (n_r,) for
@@ -443,7 +447,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
                 raise ValueError("Each spectrum must be evaluated on the internal k grid.")
             product *= spectrum
 
-        weighted = product / self.j_next_at_zeros[order] ** 2
+        weighted = product * self.inverse_j_next_squared[order]
         j_matrix = self.j[order]
         norm = self.normalization[order]
         ndim = len(spectra)
@@ -451,7 +455,27 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         if ndim == 1:
             transformed = np.dot(j_matrix, weighted) * norm
         elif ndim == 2:
-            transformed = np.dot(j_matrix, (j_matrix * weighted).T) * norm
+            if chunk_size is None:
+                transformed = np.dot(j_matrix, (j_matrix * weighted).T) * norm
+            else:
+                if not is_positive_integer(chunk_size):
+                    raise ValueError("chunk_size must be a positive integer.")
+
+                n_r, n_k = j_matrix.shape
+                transformed = np.zeros((n_r, n_r), dtype=float)
+
+                for start in range(0, n_k, chunk_size):
+                    stop = min(start + chunk_size, n_k)
+
+                    j_chunk = j_matrix[:, start:stop]
+                    w_chunk = weighted[start:stop]
+
+                    transformed += np.dot(
+                        j_chunk * w_chunk,
+                        j_chunk.T,
+                    )
+
+                transformed *= norm
         else:
             raise ValueError(f"Only 1 or 2 spectra are supported. Got {ndim}.")
 

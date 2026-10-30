@@ -304,16 +304,14 @@ def compute_bin_radial_matrix(
     for radial_axis, bin_axis in zip(radial_axes, bin_axes, strict=False):
         einsum_args.extend([weighted_membership, [bin_axis, radial_axis]])
     einsum_args.append(bin_axes)
-    binned_sum = np.einsum(*einsum_args)
 
+    binned_sum = np.einsum(*einsum_args)
     norm = _outer_product(bin_weight_sums, ndim)
-    binned = np.zeros_like(binned_sum)
 
     if np.any(norm == 0.0):
         raise ValueError("At least one radial bin has zero radial support.")
 
     binned = binned_sum / norm
-
     return centers, binned
 
 

@@ -1,9 +1,13 @@
 """Unit tests for ``dsf.covariance.cov_builder``."""
 
+from types import SimpleNamespace
+
 import numpy as np
+import pyccl as ccl
 import pytest
 
 from dsf.covariance.cov_builder import DeltaSigmaCovarianceBuilder
+from dsf.covariance.ingredients.power_spectrum import lens_averaged_matter_power
 
 
 def test_selected_pairs_returns_stored_pairs_as_integer_tuples():
@@ -304,3 +308,113 @@ def test_pair_ingredients_accepts_selected_pair(monkeypatch):
 
     with pytest.raises(RuntimeError, match="lens ingredients reached"):
         builder.pair_ingredients(0, 4)
+
+
+@pytest.fixture
+def covariance_builder_inputs(monkeypatch):
+    """Minimal constructor inputs that avoid computing a Hankel transform."""
+    monkeypatch.setattr(
+        DeltaSigmaCovarianceBuilder,
+        "hankel_transform",
+        lambda self, config: None,
+    )
+    metadata = {
+        "bins": {
+            "bin_edges": [0.1, 0.3],
+            "indices": [0],
+            "truez_summary": {0: {"z_mean": 0.2}},
+        },
+    }
+    result = SimpleNamespace(tomo_meta=metadata, z=np.array([0.1, 0.3]))
+    return {
+        "cosmo": ccl.CosmologyVanillaLCDM(),
+        "tomography": {
+            "lens_result": result,
+            "source_result": result,
+            "bin_pairs": [(0, 0)],
+            "lens_population_stats": {},
+            "source_population_stats": {},
+        },
+        "rp_bin_edges": [1.0, 2.0],
+        "area_deg2": 100.0,
+        "sigma_e": 0.26,
+    }
+
+
+@pytest.mark.parametrize("supply_galaxy_spectra", [False, True])
+def test_builder_selects_spectra_and_bias(
+    monkeypatch,
+    covariance_builder_inputs,
+    supply_galaxy_spectra,
+):
+    """Default and supplied spectra retain the correct galaxy-bias convention."""
+    cosmo = covariance_builder_inputs["cosmo"]
+
+    def matter_power(input_cosmo, k, a):
+        assert input_cosmo is cosmo
+        return np.ones_like(k) * a
+
+    monkeypatch.setattr(ccl, "nonlin_matter_power", matter_power)
+    pk_gg, pk_gm = object(), object()
+    spectra = {"pk_gg": pk_gg, "pk_gm": pk_gm} if supply_galaxy_spectra else {}
+    bias = {} if supply_galaxy_spectra else {"galaxy_bias": 2.3}
+    builder = DeltaSigmaCovarianceBuilder(**covariance_builder_inputs, **spectra, **bias)
+
+    assert builder.use_galaxy_bias is (not supply_galaxy_spectra)
+    assert builder.galaxy_bias == (1.0 if supply_galaxy_spectra else 2.3)
+    assert builder.pk_gg is (pk_gg if supply_galaxy_spectra else matter_power)
+    assert builder.pk_gm is (pk_gm if supply_galaxy_spectra else matter_power)
+    assert builder.pk_mm is matter_power
+
+    # Exercise the averaging call to catch accidental use of a bound CCL method.
+    z = np.array([0.1, 0.3])
+    for pk in (
+        [builder.pk_mm] if supply_galaxy_spectra else [builder.pk_gg, builder.pk_gm, builder.pk_mm]
+    ):
+        averaged = lens_averaged_matter_power(cosmo, pk, [0.1, 1.0], z, [5.0, 5.0])
+        expected = np.mean(1.0 / (1.0 + z)) * cosmo["h"] ** 3
+        np.testing.assert_allclose(averaged, [expected, expected])
+
+
+def test_builder_rejects_supplied_spectra_with_galaxy_bias(covariance_builder_inputs):
+    """Explicit galaxy spectra cannot also have a separate bias applied."""
+    with pytest.raises(ValueError, match="cannot all be provided together"):
+        DeltaSigmaCovarianceBuilder(
+            **covariance_builder_inputs,
+            pk_gg=object(),
+            pk_gm=object(),
+            galaxy_bias=2.3,
+        )
+
+
+def test_default_lens_spectra_match_nonlinear_matter_power(covariance_builder_inputs):
+    """Default lens ingredients equal directly averaged nonlinear matter power."""
+    # BBKS avoids a Boltzmann solver; the fixture bypasses Hankel construction.
+    cosmo = ccl.CosmologyVanillaLCDM(transfer_function="bbks")
+    inputs = dict(covariance_builder_inputs, cosmo=cosmo)
+    lens_result = inputs["tomography"]["lens_result"]
+    lens_result.bins = {0: np.array([5.0, 5.0])}
+    lens_result.spec = {
+        "sample_properties": {
+            "number_density": {
+                "n_gal_comoving_h3_mpc3": 1e-4,
+            }
+        }
+    }
+    k = np.array([0.05, 0.2, 1.0])
+    builder = DeltaSigmaCovarianceBuilder(**inputs, galaxy_bias=1.0, k=k)
+
+    ingredients = builder.lens_ingredients(0)
+
+    z = lens_result.z
+    h = cosmo["h"]
+    power_at_redshifts = np.array(
+        [ccl.nonlin_matter_power(cosmo, k * h, 1.0 / (1.0 + redshift)) * h**3 for redshift in z]
+    )
+    expected = np.trapezoid(
+        power_at_redshifts * lens_result.bins[0][:, None],
+        z,
+        axis=0,
+    )
+    for spectrum in ("pk_gg", "pk_gm", "pk_mm"):
+        np.testing.assert_allclose(ingredients[spectrum], expected, rtol=1e-12)

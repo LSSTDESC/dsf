@@ -44,7 +44,7 @@ Minimal example
            cosmo,
            k_array=k_array,
            a_array=a_array,
-       )
+       )["pk_deltasigma"]
 
 
    calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)
@@ -167,20 +167,20 @@ ingredients without changing the data-vector call.
            cosmo,
            k_array=k_array,
            a_array=a_array,
-       ),
+       )["pk_deltasigma"],
        "HOD + NLA": lambda cosmo: pk2d_hod_with_nla(
            cosmo,
            k_array=k_array,
            a_array=a_array,
            A_IA=1.0,
            a_bias=a_lens,
-       ),
+       )["pk_deltasigma"],
        "baryonified HOD": lambda cosmo: pk2d_hod_baryonified(
            cosmo,
            k_array=k_array,
            a_array=a_array,
            f_c=0.8,
-       ),
+       )["pk_deltasigma"],
        "baryonified HOD + NLA": lambda cosmo: pk2d_hod_baryonified_with_nla(
            cosmo,
            k_array=k_array,
@@ -188,7 +188,7 @@ ingredients without changing the data-vector call.
            f_c=0.8,
            A_IA=1.0,
            a_bias=a_lens,
-       ),
+       )["pk_deltasigma"],
    }
 
    colors = cmr.take_cmap_colors(
@@ -291,7 +291,7 @@ means it can be added after the baseline data vector has been evaluated.
            cosmo,
            k_array=k_array,
            a_array=a_array,
-       )
+       )["pk_deltasigma"]
 
 
    calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)
@@ -405,7 +405,7 @@ while keeping the same projected-radius grid and lens redshift.
            cosmo,
            k_array=k_array,
            a_array=a_array,
-       )
+       )["pk_deltasigma"]
 
 
    baseline_calculator = DeltaSigmaCalculator(pk2d_func=pk2d_baseline)
@@ -451,7 +451,7 @@ while keeping the same projected-radius grid and lens redshift.
                a_array=a_array,
                A_IA=A_IA,
                a_bias=a_lens,
-           )
+           )["pk_deltasigma"]
 
        calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)
 
@@ -538,7 +538,7 @@ baseline Duffy relation, while values above unity increase concentrations.
            cosmo,
            k_array=k_array,
            a_array=a_array,
-       )
+       )["pk_deltasigma"]
 
 
    baseline_calculator = DeltaSigmaCalculator(
@@ -585,7 +585,7 @@ baseline Duffy relation, while values above unity increase concentrations.
                k_array=k_array,
                a_array=a_array,
                f_c=f_c,
-           )
+           )["pk_deltasigma"]
 
        calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)
 
@@ -695,7 +695,7 @@ below shows both conventions with a secondary x-axis.
            cosmo,
            k_array=k_array,
            a_array=a_array,
-       )
+       )["pk_deltasigma"]
 
 
    calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)

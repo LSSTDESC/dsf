@@ -1,5 +1,6 @@
 """Benchmark numerical accuracy and performance of lens-averaged power spectra."""
 
+from functools import partial
 from time import perf_counter
 
 import numpy as np
@@ -52,7 +53,7 @@ def benchmark(function, cosmo, k, z_lens, nz_lens):
     for _ in range(N_REPEATS):
         start = perf_counter()
 
-        result = function(cosmo, k, z_lens, nz_lens)
+        result = function(cosmo=cosmo, k=k, z_lens=z_lens, nz_lens=nz_lens)
 
         times.append(perf_counter() - start)
 
@@ -123,7 +124,7 @@ def main():
         )
 
         optimized, optimized_time = benchmark(
-            lens_averaged_matter_power,
+            partial(lens_averaged_matter_power, pk=ccl.nonlin_matter_power),
             cosmo,
             k,
             z_lens,

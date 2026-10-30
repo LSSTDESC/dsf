@@ -1,6 +1,7 @@
 """Unit tests for ``dsf.covariance.ingredients.power_spectrum``."""
 
 import numpy as np
+import pyccl as ccl
 import pytest
 
 from dsf.covariance.ingredients.power_spectrum import (
@@ -10,9 +11,7 @@ from dsf.covariance.ingredients.power_spectrum import (
 POWER_SPECTRUM_MODULE = "dsf.covariance.ingredients.power_spectrum"
 
 
-def test_lens_averaged_matter_power_uses_weighted_redshift_average(
-    monkeypatch,
-):
+def test_lens_averaged_matter_power_uses_weighted_redshift_average():
     """Test that the lens-averaged power spectrum is weighted over lens redshift."""
     cosmo = {"h": 0.7}
     k = np.array([0.1, 1.0, 10.0])
@@ -23,13 +22,9 @@ def test_lens_averaged_matter_power_uses_weighted_redshift_average(
         z = 1.0 / scale_factor - 1.0
         return (1.0 + z) * k_mpc**2
 
-    monkeypatch.setattr(
-        f"{POWER_SPECTRUM_MODULE}.ccl.nonlin_matter_power",
-        fake_nonlin_matter_power,
-    )
-
     result = lens_averaged_matter_power(
         cosmo,
+        fake_nonlin_matter_power,
         k,
         z_lens,
         nz_lens,
@@ -46,7 +41,7 @@ def test_lens_averaged_matter_power_uses_weighted_redshift_average(
     np.testing.assert_allclose(result, expected)
 
 
-def test_lens_averaged_matter_power_uses_supplied_h(monkeypatch):
+def test_lens_averaged_matter_power_uses_supplied_h():
     """Test that a supplied h value overrides the value stored on the cosmology."""
     cosmo = {"h": 0.5}
     k = np.array([0.1, 1.0, 10.0])
@@ -60,13 +55,9 @@ def test_lens_averaged_matter_power_uses_supplied_h(monkeypatch):
         called_k_values.append(np.array(k_mpc, copy=True))
         return np.ones_like(k_mpc)
 
-    monkeypatch.setattr(
-        f"{POWER_SPECTRUM_MODULE}.ccl.nonlin_matter_power",
-        fake_nonlin_matter_power,
-    )
-
     result = lens_averaged_matter_power(
         cosmo,
+        fake_nonlin_matter_power,
         k,
         z_lens,
         nz_lens,
@@ -85,9 +76,7 @@ def test_lens_averaged_matter_power_uses_supplied_h(monkeypatch):
     np.testing.assert_allclose(result, expected)
 
 
-def test_lens_averaged_matter_power_converts_power_to_mpc_over_h_units(
-    monkeypatch,
-):
+def test_lens_averaged_matter_power_converts_power_to_mpc_over_h_units():
     """Test that CCL power values are multiplied by h cubed."""
     cosmo = {"h": 0.7}
     k = np.array([0.1, 1.0, 10.0])
@@ -97,13 +86,9 @@ def test_lens_averaged_matter_power_converts_power_to_mpc_over_h_units(
     def fake_nonlin_matter_power(cosmo, k_mpc, scale_factor):
         return np.full_like(k_mpc, 2.0)
 
-    monkeypatch.setattr(
-        f"{POWER_SPECTRUM_MODULE}.ccl.nonlin_matter_power",
-        fake_nonlin_matter_power,
-    )
-
     result = lens_averaged_matter_power(
         cosmo,
+        fake_nonlin_matter_power,
         k,
         z_lens,
         nz_lens,
@@ -142,7 +127,7 @@ def test_lens_averaged_matter_power_uses_configured_ccl_power(
         fake_linear_matter_power,
     )
 
-    lens_averaged_matter_power(cosmo, k, z_lens, nz_lens)
+    lens_averaged_matter_power(cosmo, ccl.nonlin_matter_power, k, z_lens, nz_lens)
 
     assert calls["nonlinear"] == z_lens.size
     assert calls["linear"] == 0
@@ -163,7 +148,7 @@ def test_lens_averaged_matter_power_returns_one_value_per_k_mode(monkeypatch):
         fake_nonlin_matter_power,
     )
 
-    result = lens_averaged_matter_power(cosmo, k, z_lens, nz_lens)
+    result = lens_averaged_matter_power(cosmo, ccl.nonlin_matter_power, k, z_lens, nz_lens)
 
     assert result.shape == k.shape
 
@@ -186,7 +171,7 @@ def test_lens_averaged_matter_power_passes_correct_scale_factors(monkeypatch):
         fake_nonlin_matter_power,
     )
 
-    lens_averaged_matter_power(cosmo, k, z_lens, nz_lens)
+    lens_averaged_matter_power(cosmo, ccl.nonlin_matter_power, k, z_lens, nz_lens)
 
     expected = 1.0 / (1.0 + z_lens)
 
@@ -212,6 +197,7 @@ def test_lens_averaged_matter_power_does_not_renormalize_lens_weights(
 
     result = lens_averaged_matter_power(
         cosmo,
+        ccl.nonlin_matter_power,
         k,
         z_lens,
         nz_lens,
@@ -239,7 +225,7 @@ def test_lens_averaged_matter_power_rejects_invalid_k_grid(k):
     nz_lens = np.array([1.0, 1.0])
 
     with pytest.raises(ValueError):
-        lens_averaged_matter_power(cosmo, k, z_lens, nz_lens)
+        lens_averaged_matter_power(cosmo, ccl.nonlin_matter_power, k, z_lens, nz_lens)
 
 
 @pytest.mark.parametrize(
@@ -261,4 +247,4 @@ def test_lens_averaged_matter_power_rejects_invalid_lens_distribution(
     k = np.array([0.1, 1.0])
 
     with pytest.raises(ValueError):
-        lens_averaged_matter_power(cosmo, k, z_lens, nz_lens)
+        lens_averaged_matter_power(cosmo, ccl.nonlin_matter_power, k, z_lens, nz_lens)

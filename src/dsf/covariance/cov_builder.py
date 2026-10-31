@@ -37,7 +37,7 @@ from dsf.covariance.ingredients.geometry import (
 )
 from dsf.covariance.ingredients.noise import projected_shape_noise, shot_noise
 from dsf.covariance.ingredients.power_spectrum import (
-    lens_averaged_matter_power,
+    lens_averaged_power_spectrum,
 )
 from dsf.covariance.ingredients.sigma_crit import effective_squared_sigma_crit
 from dsf.hankel.hankel import HankelTransform
@@ -84,6 +84,8 @@ class DeltaSigmaCovarianceBuilder:
         rp_bin_edges: ArrayLike,
         area_deg2: float,
         sigma_e: ScalarOrPerBin,
+        pk_gg: ccl.Pk2D | None = None,
+        pk_gm: ccl.Pk2D | None = None,
         galaxy_bias: ScalarOrPerBin | None = None,
         k: FloatArray | None = None,
         projection: Mapping[str, Any] | None = None,
@@ -103,7 +105,12 @@ class DeltaSigmaCovarianceBuilder:
             rp_bin_edges: Projected-radius bin edges in ``Mpc / h``.
             area_deg2: Survey area in square degrees.
             sigma_e: Source ellipticity dispersion.
-            galaxy_bias: Galaxy bias for the lens sample.
+            pk_gg: Optional galaxy-galaxy power spectrum. If omitted, constructed
+                from nonlinear matter power and galaxy bias.
+            pk_gm: Optional galaxy-matter power spectrum. Must be provided
+                together with ``pk_gg``.
+            galaxy_bias: Galaxy bias for the lens sample. Can only be passed
+                if ``pk_gg`` and ``pk_gm`` are None.
             k: Wavenumber grid in ``h / Mpc``.
             projection: Optional line-of-sight projection settings containing
                 ``pi`` (grid in ``Mpc / h``) and ``gm_window`` (galaxy-matter
@@ -112,13 +119,18 @@ class DeltaSigmaCovarianceBuilder:
                 an ``orders`` mapping for the ``gm``, ``gg``, and ``cross`` covariance
                 blocks. Defaults to Bessel order 2 for all blocks.
         """
+        if (pk_gg is None) != (pk_gm is None):
+            raise ValueError("pk_gg and pk_gm must be provided together.")
+
+        if pk_gg is not None and galaxy_bias is not None:
+            raise ValueError("galaxy_bias cannot be combined with custom power spectra.")
+
         self.cosmo = cosmo
         self.lens_result = tomography["lens_result"]
         self.source_result = tomography["source_result"]
 
         self.bin_pairs: list[tuple[int, int]] = [
-            (int(lens_bin), int(source_bin))
-            for lens_bin, source_bin in tomography["bin_pairs"]
+            (int(lens_bin), int(source_bin)) for lens_bin, source_bin in tomography["bin_pairs"]
         ]
 
         self.lens_meta = self.lens_result.tomo_meta
@@ -162,14 +174,18 @@ class DeltaSigmaCovarianceBuilder:
         self.omega_m = resolve_omega_m(cosmo, None)
         self.rho_crit = rho_critical_projected_msun_pc2_per_mpc(cosmo)
 
-        self.galaxy_bias = (
-            galaxy_bias
-            if galaxy_bias is not None
-            else linear_galaxy_bias(
-                self.cosmo,
-                self.lens_centers,
+        if pk_gg is None:
+            self.galaxy_bias = (
+                galaxy_bias
+                if galaxy_bias is not None
+                else linear_galaxy_bias(self.cosmo, self.lens_centers)
             )
-        )
+        else:
+            self.galaxy_bias = None
+
+        self.pk_gg = pk_gg
+        self.pk_gm = pk_gm
+        self.pk_mm = cosmo.get_nonlin_power()
 
         if k is None:
             self.k: FloatArray = np.logspace(
@@ -283,8 +299,9 @@ class DeltaSigmaCovarianceBuilder:
         r_gm, cov_gm_gm = delta_sigma_gm_covariance(
             self.hankel,
             self.k,
-            ingredients["pk"],
-            galaxy_bias=ingredients["galaxy_bias"],
+            ingredients["pk_gg"],
+            ingredients["pk_gm"],
+            ingredients["pk_mm"],
             omega_m=self.omega_m,
             rho_crit=self.rho_crit,
             delta_pi_gm_squared_window=ingredients["delta_pi_gm_squared_window"],
@@ -331,8 +348,7 @@ class DeltaSigmaCovarianceBuilder:
         r_gg, cov_gg_gg = delta_sigma_gg_covariance(
             self.hankel,
             self.k,
-            ingredients["pk"],
-            galaxy_bias=ingredients["galaxy_bias"],
+            ingredients["pk_gg"],
             rho_crit=self.rho_crit,
             delta_pi_gg=ingredients["delta_pi_gg"],
             shot_noise=ingredients["shot_noise"],
@@ -376,8 +392,8 @@ class DeltaSigmaCovarianceBuilder:
         r_cross, cov_gm_gg = delta_sigma_gm_gg_cross_covariance(
             self.hankel,
             self.k,
-            ingredients["pk"],
-            galaxy_bias=ingredients["galaxy_bias"],
+            ingredients["pk_gg"],
+            ingredients["pk_gm"],
             omega_m=self.omega_m,
             rho_crit=self.rho_crit,
             delta_pi_gm_gg=ingredients["delta_pi_gm_gg"],
@@ -583,7 +599,11 @@ class DeltaSigmaCovarianceBuilder:
 
         nz_lens = np.asarray(self.lens_result.bins[lens_bin_index], dtype=float)
 
-        galaxy_bias = self.bin_value(self.galaxy_bias, lens_bin_index)
+        galaxy_bias = (
+            self.bin_value(self.galaxy_bias, lens_bin_index)
+            if self.galaxy_bias is not None
+            else None
+        )
 
         volume = survey_volume_from_edges(
             self.cosmo,
@@ -601,18 +621,31 @@ class DeltaSigmaCovarianceBuilder:
             n_lens_arcmin2 = None
             n_lens_3d = float(lens_density["n_gal_comoving_h3_mpc3"])
         else:
-            n_lens_arcmin2 = float(
-                self.lens_population_stats["density_per_bin"][lens_bin_index]
-            )
+            n_lens_arcmin2 = float(self.lens_population_stats["density_per_bin"][lens_bin_index])
             validate_positive_scalar(n_lens_arcmin2, "n_lens_arcmin2")
             n_lens_3d = n_lens_arcmin2 * self.area_deg2 * 3600.0 / volume
 
-        pk = lens_averaged_matter_power(
+        pk_mm = lens_averaged_power_spectrum(
             self.cosmo,
+            self.pk_mm,
             self.k,
             self.z_lens,
             nz_lens,
         )
+
+        if self.pk_gg is not None and self.pk_gm is not None:
+            pk_gg = lens_averaged_power_spectrum(
+                self.cosmo, self.pk_gg, self.k, self.z_lens, nz_lens
+            )
+            pk_gm = lens_averaged_power_spectrum(
+                self.cosmo, self.pk_gm, self.k, self.z_lens, nz_lens
+            )
+        else:
+            if galaxy_bias is None:
+                raise ValueError("Galaxy bias is required when custom power spectra are absent.")
+
+            pk_gg = galaxy_bias ** 2 * pk_mm
+            pk_gm = galaxy_bias * pk_mm
 
         lens_shot_noise = shot_noise(n_lens_3d)
 
@@ -629,7 +662,9 @@ class DeltaSigmaCovarianceBuilder:
         )
 
         ingredients = {
-            "pk": pk,
+            "pk_gg": pk_gg,
+            "pk_gm": pk_gm,
+            "pk_mm": pk_mm,
             "volume": volume,
             "galaxy_bias": galaxy_bias,
             "n_lens_arcmin2": n_lens_arcmin2,
@@ -687,9 +722,9 @@ class DeltaSigmaCovarianceBuilder:
             source_bin_index: Index of the source tomographic bin.
 
         Returns:
-            Dictionary containing the lens-averaged matter power spectrum,
-            survey volume, lens and source noise terms, galaxy bias, redshift
-            limits, and line-of-sight projection factors for the requested pair.
+            Dictionary containing lens-averaged power spectra, survey volume,
+            noise terms, galaxy bias (if applicable), redshift limits, and
+            line-of-sight projection factors for the requested pair.
         """
         validate_bin_pair(lens_bin_index, source_bin_index, self.bin_pairs)
 
@@ -724,7 +759,9 @@ class DeltaSigmaCovarianceBuilder:
         )
 
         return {
-            "pk": lens["pk"],
+            "pk_gg": lens["pk_gg"],
+            "pk_gm": lens["pk_gm"],
+            "pk_mm": lens["pk_mm"],
             "volume": lens["volume"],
             "galaxy_bias": lens["galaxy_bias"],
             "sigma_e": source["sigma_e"],

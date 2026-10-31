@@ -326,7 +326,7 @@ def covariance_builder_inputs(monkeypatch):
     }
     result = SimpleNamespace(tomo_meta=metadata, z=np.array([0.1, 0.3]))
     return {
-        "cosmo": ccl.CosmologyVanillaLCDM(),
+        "cosmo": ccl.CosmologyVanillaLCDM(transfer_function="bbks"),
         "tomography": {
             "lens_result": result,
             "source_result": result,

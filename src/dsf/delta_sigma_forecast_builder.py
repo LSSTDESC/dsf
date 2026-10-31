@@ -64,7 +64,7 @@ class DeltaSigmaForecastBuilder:
         self,
         *,
         cosmo: ccl.Cosmology,
-        pk2d_func: Callable[..., ccl.Pk2D],
+        pk2d_func: Callable[..., dict[str, ccl.Pk2D]],
         theta0: Sequence[float],
         r: ArrayLike,
         rp_bin_edges: ArrayLike,
@@ -88,7 +88,6 @@ class DeltaSigmaForecastBuilder:
         lens_overrides: Mapping[str, Any] | None = None,
         source_overrides: Mapping[str, Any] | None = None,
         observable: str = "delta_sigma",
-        galaxy_bias: ScalarOrPerBin | None = None,
         k: FloatArray | None = None,
         nonlinear: bool = True,
         projection: Mapping[str, Any] | None = None,
@@ -103,8 +102,11 @@ class DeltaSigmaForecastBuilder:
             cosmo: Fiducial CCL cosmology. This is used as the default
                 cosmology for the data vector and covariance unless a
                 ``theta_mapper`` supplies a parameter-dependent cosmology.
-            pk2d_func: Function that returns the ``Pk2D`` object used by the
-                Delta Sigma model.
+            pk2d_func: Function that returns a dictionary of the ``Pk2D``
+                objects used by the Delta Sigma and covariance models. Should
+                have keys ``pk_deltasigma``, ``pk_gm``, and ``pk_gg``, which
+                correspond to the Delta Sigma, galaxy-matter, and galaxy-galaxy
+                power spectra, respectively.
             theta0: Fiducial parameter vector used as the expansion point for
                 forecast calculations.
             r: Projected radii where the Delta Sigma data vector is evaluated.
@@ -139,7 +141,6 @@ class DeltaSigmaForecastBuilder:
                 source sample.
             observable: Forecast observable to evaluate. Currently only
                 ``"delta_sigma"`` is supported.
-            galaxy_bias: Galaxy bias value or per-lens-bin values.
             k: Wavenumber grid in ``h / Mpc`` used by the covariance.
             nonlinear: Whether covariance matter spectra should use nonlinear
                 power.
@@ -166,12 +167,26 @@ class DeltaSigmaForecastBuilder:
             )
 
         self.cosmo = cosmo
-        self.pk2d_func = pk2d_func
-        self.calculator = DeltaSigmaCalculator(pk2d_func)
+        self.pk2d_deltasigma = lambda **kwargs: pk2d_func(**kwargs)["pk_deltasigma"]
+        self.calculator = DeltaSigmaCalculator(self.pk2d_deltasigma)
 
         self.theta0 = np.asarray(theta0, dtype=float)
         self.parameter_names = validate_parameter_names(parameter_names, self.theta0)
         self.theta_mapper = theta_mapper
+
+        model_inputs = self._model_inputs(self.theta0, context={})
+        self.fiducial_cosmo = model_inputs["cosmo"]
+
+        raw_pk2d_kwargs = model_inputs.get("pk2d_kwargs", {})
+        if not isinstance(raw_pk2d_kwargs, Mapping):
+            raise TypeError("theta_mapper output 'pk2d_kwargs' must be a mapping.")
+
+        pk2d_spectra = pk2d_func(
+            cosmo=self.fiducial_cosmo,
+            **dict(raw_pk2d_kwargs),
+        )
+        self.pk2d_gm = pk2d_spectra["pk_gm"]
+        self.pk2d_gg = pk2d_spectra["pk_gg"]
 
         self.r = np.asarray(r, dtype=float)
         self.rp_bin_edges = np.asarray(rp_bin_edges, dtype=float)
@@ -213,7 +228,8 @@ class DeltaSigmaForecastBuilder:
         }
 
         self.covariance_kwargs: dict[str, Any] = {
-            "galaxy_bias": galaxy_bias,
+            "pk_gg": self.pk2d_gg,
+            "pk_gm": self.pk2d_gm,
             "k": k,
             "nonlinear": nonlinear,
             "projection": projection,
@@ -261,7 +277,7 @@ class DeltaSigmaForecastBuilder:
         self._log("[2/5] Initializing Delta Sigma covariance builder...")
 
         cov_builder = DeltaSigmaCovarianceBuilder(
-            cosmo=self.cosmo,
+            cosmo=self.fiducial_cosmo,
             tomography=tomography,
             rp_bin_edges=self.rp_bin_edges,
             area_deg2=self.area_deg2,
@@ -272,14 +288,11 @@ class DeltaSigmaForecastBuilder:
         self._log("[2/5] Done: covariance builder initialized.")
 
         data_pairs = [
-            (int(lens_bin), int(source_bin))
-            for lens_bin, source_bin in tomography["bin_pairs"]
+            (int(lens_bin), int(source_bin)) for lens_bin, source_bin in tomography["bin_pairs"]
         ]
 
         if covariance is None:
-            self._log(
-                f"[3/5] Computing {self.covariance_kind} block-diagonal covariance..."
-            )
+            self._log(f"[3/5] Computing {self.covariance_kind} block-diagonal covariance...")
 
             cov_pairs, cov = self._covariance(
                 cov_builder=cov_builder,
@@ -306,9 +319,7 @@ class DeltaSigmaForecastBuilder:
                 )
 
             if cov.shape[0] != cov.shape[1]:
-                raise ValueError(
-                    f"Supplied covariance must be square, but got shape {cov.shape}."
-                )
+                raise ValueError(f"Supplied covariance must be square, but got shape {cov.shape}.")
 
             if not np.all(np.isfinite(cov)):
                 raise ValueError("Supplied covariance contains non-finite values.")
@@ -332,9 +343,7 @@ class DeltaSigmaForecastBuilder:
         data_vector = self.model(self.theta0, context=context)
         data_vector, cov = validate_forecast_vector_and_covariance(data_vector, cov)
 
-        self._log(
-            f"[5/5] Done: fiducial data vector computed with length {len(data_vector)}."
-        )
+        self._log(f"[5/5] Done: fiducial data vector computed with length {len(data_vector)}.")
 
         forecast: dict[str, Any] = {
             "model": self.model,
@@ -691,7 +700,7 @@ class DeltaSigmaForecastBuilder:
             covariance setup.
         """
         return {
-            "cosmo": self.cosmo,
+            "cosmo": self.fiducial_cosmo,
             "calculator": self.calculator,
             "r": self.r,
             "rp_bin_edges": self.rp_bin_edges,

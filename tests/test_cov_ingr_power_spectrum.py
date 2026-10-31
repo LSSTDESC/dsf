@@ -46,13 +46,12 @@ def test_lens_averaged_matter_power_uses_weighted_redshift_average(
     np.testing.assert_allclose(result, expected)
 
 
-def test_lens_averaged_matter_power_uses_supplied_h(monkeypatch):
-    """Test that a supplied h value overrides the value stored on the cosmology."""
+def test_lens_averaged_matter_power_uses_cosmology_h(monkeypatch):
+    """Test that h is read directly from the cosmology."""
     cosmo = {"h": 0.5}
     k = np.array([0.1, 1.0, 10.0])
     z_lens = np.array([0.0, 1.0])
     nz_lens = np.array([1.0, 1.0])
-    supplied_h = 0.8
 
     called_k_values = []
 
@@ -70,14 +69,15 @@ def test_lens_averaged_matter_power_uses_supplied_h(monkeypatch):
         k,
         z_lens,
         nz_lens,
-        h=supplied_h,
     )
 
+    h = cosmo["h"]
+
     for called_k in called_k_values:
-        np.testing.assert_allclose(called_k, k * supplied_h)
+        np.testing.assert_allclose(called_k, k * h)
 
     expected = np.trapezoid(
-        np.ones((z_lens.size, k.size)) * supplied_h**3 * nz_lens[:, None],
+        np.ones((z_lens.size, k.size)) * h**3 * nz_lens[:, None],
         z_lens,
         axis=0,
     )

@@ -30,6 +30,16 @@ def radius_grid():
     return np.asarray([1.0, 2.0, 3.0], dtype=float)
 
 
+def covariance_power_spectra(covariance_function, pk):
+    """Returns the spectrum arguments required by each covariance block."""
+    spectrum_names = {
+        delta_sigma_gm_covariance: ("pk_gg", "pk_gm", "pk_mm"),
+        delta_sigma_gg_covariance: ("pk_gg",),
+        delta_sigma_gm_gg_cross_covariance: ("pk_gg", "pk_gm"),
+    }
+    return dict.fromkeys(spectrum_names[covariance_function], pk)
+
+
 @pytest.fixture
 def hankel(radius_grid):
     """Returns a mutable Hankel-like object for monkeypatching."""
@@ -201,7 +211,6 @@ def test_delta_sigma_gm_covariance_matches_expected_block(
     patch_projected_covariance(monkeypatch, hankel)
     k, pk = power_spectrum_inputs
 
-    galaxy_bias = 1.5
     omega_m = 0.3
     rho_crit = 2.0
     delta_pi_gm_squared_window = 4.0
@@ -214,7 +223,8 @@ def test_delta_sigma_gm_covariance_matches_expected_block(
         hankel,
         k,
         pk,
-        galaxy_bias=galaxy_bias,
+        pk,
+        pk,
         omega_m=omega_m,
         rho_crit=rho_crit,
         delta_pi_gm_squared_window=delta_pi_gm_squared_window,
@@ -226,18 +236,14 @@ def test_delta_sigma_gm_covariance_matches_expected_block(
         gkgk_taper=False,
     )
 
-    p_g = pk * galaxy_bias**2
+    p_g = pk
     p_kappa = pk * (rho_crit * omega_m) ** 2 * delta_pi_gm_squared_window
-    p_gk = pk * galaxy_bias * rho_crit * omega_m
+    p_gk = pk * rho_crit * omega_m
     shape_delta_sigma_noise = shape_noise * sigma_crit_squared_average
 
-    expected_ggkk = np.outer(
-        p_g + shot_noise, p_kappa + shape_delta_sigma_noise
-    )
+    expected_ggkk = np.outer(p_g + shot_noise, p_kappa + shape_delta_sigma_noise)
     expected_gkgk = np.outer(p_gk, p_gk)
-    expected_cov = (
-        expected_ggkk + expected_gkgk * delta_pi_gm_squared_window
-    ) / volume
+    expected_cov = (expected_ggkk + expected_gkgk * delta_pi_gm_squared_window) / volume
 
     np.testing.assert_allclose(r, [1.0, 2.0, 3.0])
     np.testing.assert_allclose(cov, expected_cov)
@@ -285,7 +291,8 @@ def test_delta_sigma_gm_covariance_rejects_mismatched_radial_grids(
             hankel,
             k,
             pk,
-            galaxy_bias=1.5,
+            pk,
+            pk,
             omega_m=0.3,
             rho_crit=2.0,
             delta_pi_gm_squared_window=4.0,
@@ -305,7 +312,6 @@ def test_delta_sigma_gg_covariance_matches_expected_block(
     patch_projected_covariance(monkeypatch, hankel)
     k, pk = power_spectrum_inputs
 
-    galaxy_bias = 1.5
     rho_crit = 2.0
     delta_pi_gg = 5.0
     shot_noise = 0.2
@@ -315,20 +321,15 @@ def test_delta_sigma_gg_covariance_matches_expected_block(
         hankel,
         k,
         pk,
-        galaxy_bias=galaxy_bias,
         rho_crit=rho_crit,
         delta_pi_gg=delta_pi_gg,
         shot_noise=shot_noise,
         volume=volume,
     )
 
-    p_g = pk * galaxy_bias**2
+    p_g = pk
     expected_cov = (
-        np.outer(p_g + shot_noise, p_g + shot_noise)
-        * 2.0
-        * delta_pi_gg
-        * rho_crit**2
-        / volume
+        np.outer(p_g + shot_noise, p_g + shot_noise) * 2.0 * delta_pi_gg * rho_crit**2 / volume
     )
 
     np.testing.assert_allclose(r, [1.0, 2.0, 3.0])
@@ -348,7 +349,6 @@ def test_delta_sigma_gm_gg_cross_covariance_matches_expected_block(
     patch_projected_covariance(monkeypatch, hankel)
     k, pk = power_spectrum_inputs
 
-    galaxy_bias = 1.5
     omega_m = 0.3
     rho_crit = 2.0
     delta_pi_gm_gg = 7.0
@@ -359,7 +359,7 @@ def test_delta_sigma_gm_gg_cross_covariance_matches_expected_block(
         hankel,
         k,
         pk,
-        galaxy_bias=galaxy_bias,
+        pk,
         omega_m=omega_m,
         rho_crit=rho_crit,
         delta_pi_gm_gg=delta_pi_gm_gg,
@@ -367,16 +367,10 @@ def test_delta_sigma_gm_gg_cross_covariance_matches_expected_block(
         volume=volume,
     )
 
-    p_g = pk * galaxy_bias**2
-    p_gk = pk * galaxy_bias * rho_crit * omega_m
+    p_g = pk
+    p_gk = pk * rho_crit * omega_m
 
-    expected_cov = (
-        np.outer(p_gk, p_g + shot_noise)
-        * 2.0
-        * delta_pi_gm_gg
-        * rho_crit
-        / volume
-    )
+    expected_cov = np.outer(p_gk, p_g + shot_noise) * 2.0 * delta_pi_gm_gg * rho_crit / volume
 
     np.testing.assert_allclose(r, [1.0, 2.0, 3.0])
     np.testing.assert_allclose(cov, expected_cov)
@@ -392,7 +386,6 @@ def test_delta_sigma_gm_gg_cross_covariance_matches_expected_block(
         (
             delta_sigma_gg_covariance,
             {
-                "galaxy_bias": 1.5,
                 "rho_crit": 2.0,
                 "delta_pi_gg": 5.0,
                 "shot_noise": 0.2,
@@ -402,7 +395,6 @@ def test_delta_sigma_gm_gg_cross_covariance_matches_expected_block(
         (
             delta_sigma_gm_gg_cross_covariance,
             {
-                "galaxy_bias": 1.5,
                 "omega_m": 0.3,
                 "rho_crit": 2.0,
                 "delta_pi_gm_gg": 7.0,
@@ -427,7 +419,7 @@ def test_covariance_functions_bin_to_requested_radius_edges(
     r, cov = covariance_function(
         hankel,
         k,
-        pk,
+        **covariance_power_spectra(covariance_function, pk),
         **kwargs,
         rp_bin_edges=[1.0, 2.0, 3.0],
     )
@@ -482,21 +474,6 @@ def test_joint_delta_sigma_covariance_assembles_blocks():
         (
             delta_sigma_gm_covariance,
             {
-                "galaxy_bias": 1.5,
-                "omega_m": 0.3,
-                "rho_crit": 2.0,
-                "delta_pi_gm_squared_window": 4.0,
-                "sigma_crit_squared_average": 6.0,
-                "shape_noise": 0.1,
-                "shot_noise": 0.2,
-                "volume": 10.0,
-            },
-            "galaxy_bias",
-        ),
-        (
-            delta_sigma_gm_covariance,
-            {
-                "galaxy_bias": 1.5,
                 "omega_m": 0.3,
                 "rho_crit": 2.0,
                 "delta_pi_gm_squared_window": 4.0,
@@ -510,7 +487,6 @@ def test_joint_delta_sigma_covariance_assembles_blocks():
         (
             delta_sigma_gm_covariance,
             {
-                "galaxy_bias": 1.5,
                 "omega_m": 0.3,
                 "rho_crit": 2.0,
                 "delta_pi_gm_squared_window": 4.0,
@@ -524,7 +500,6 @@ def test_joint_delta_sigma_covariance_assembles_blocks():
         (
             delta_sigma_gm_covariance,
             {
-                "galaxy_bias": 1.5,
                 "omega_m": 0.3,
                 "rho_crit": 2.0,
                 "delta_pi_gm_squared_window": 4.0,
@@ -538,7 +513,6 @@ def test_joint_delta_sigma_covariance_assembles_blocks():
         (
             delta_sigma_gm_covariance,
             {
-                "galaxy_bias": 1.5,
                 "omega_m": 0.3,
                 "rho_crit": 2.0,
                 "delta_pi_gm_squared_window": 4.0,
@@ -552,7 +526,6 @@ def test_joint_delta_sigma_covariance_assembles_blocks():
         (
             delta_sigma_gm_covariance,
             {
-                "galaxy_bias": 1.5,
                 "omega_m": 0.3,
                 "rho_crit": 2.0,
                 "delta_pi_gm_squared_window": 4.0,
@@ -566,7 +539,6 @@ def test_joint_delta_sigma_covariance_assembles_blocks():
         (
             delta_sigma_gm_covariance,
             {
-                "galaxy_bias": 1.5,
                 "omega_m": 0.3,
                 "rho_crit": 2.0,
                 "delta_pi_gm_squared_window": 4.0,
@@ -580,7 +552,6 @@ def test_joint_delta_sigma_covariance_assembles_blocks():
         (
             delta_sigma_gm_covariance,
             {
-                "galaxy_bias": 1.5,
                 "omega_m": 0.3,
                 "rho_crit": 2.0,
                 "delta_pi_gm_squared_window": 4.0,
@@ -594,7 +565,6 @@ def test_joint_delta_sigma_covariance_assembles_blocks():
         (
             delta_sigma_gg_covariance,
             {
-                "galaxy_bias": 1.5,
                 "rho_crit": 2.0,
                 "delta_pi_gg": 5.0,
                 "shot_noise": 0.2,
@@ -605,7 +575,6 @@ def test_joint_delta_sigma_covariance_assembles_blocks():
         (
             delta_sigma_gm_gg_cross_covariance,
             {
-                "galaxy_bias": 1.5,
                 "omega_m": 0.3,
                 "rho_crit": 2.0,
                 "delta_pi_gm_gg": 7.0,
@@ -634,7 +603,7 @@ def test_covariance_functions_reject_non_positive_scalars(
         covariance_function(
             hankel,
             k,
-            pk,
+            **covariance_power_spectra(covariance_function, pk),
             **kwargs,
         )
 
@@ -645,7 +614,6 @@ def test_covariance_functions_reject_non_positive_scalars(
         (
             delta_sigma_gm_covariance,
             {
-                "galaxy_bias": 1.5,
                 "omega_m": 0.3,
                 "rho_crit": 2.0,
                 "delta_pi_gm_squared_window": 4.0,
@@ -658,7 +626,6 @@ def test_covariance_functions_reject_non_positive_scalars(
         (
             delta_sigma_gg_covariance,
             {
-                "galaxy_bias": 1.5,
                 "rho_crit": 2.0,
                 "delta_pi_gg": 5.0,
                 "shot_noise": 0.2,
@@ -668,7 +635,6 @@ def test_covariance_functions_reject_non_positive_scalars(
         (
             delta_sigma_gm_gg_cross_covariance,
             {
-                "galaxy_bias": 1.5,
                 "omega_m": 0.3,
                 "rho_crit": 2.0,
                 "delta_pi_gm_gg": 7.0,
@@ -693,6 +659,83 @@ def test_covariance_functions_reject_invalid_power_spectrum_shape(
         covariance_function(
             hankel,
             k,
-            pk,
+            **covariance_power_spectra(covariance_function, pk),
             **kwargs,
         )
+
+
+@pytest.mark.parametrize("block", ["gm", "cross"])
+def test_covariance_blocks_use_distinct_spectra(monkeypatch, hankel, block):
+    """Tests that covariance blocks use distinct physical power spectra."""
+    patch_projected_covariance(monkeypatch, hankel)
+
+    k = np.array([0.1, 1.0, 20.0])
+    pk_gg = np.array([2.0, 3.0, 5.0])
+    pk_gm = np.array([7.0, 11.0, 13.0])
+    pk_mm = np.array([17.0, 19.0, 23.0])
+
+    kwargs = dict(omega_m=0.3, rho_crit=2.0, shot_noise=0.2, volume=10.0)
+
+    galaxy_power = pk_gg + 0.2
+    galaxy_shear_power = pk_gm * 0.6
+
+    if block == "gm":
+        _, covariance = delta_sigma_gm_covariance(
+            hankel, k, pk_gg, pk_gm, pk_mm,
+            **kwargs,
+            delta_pi_gm_squared_window=4.0,
+            sigma_crit_squared_average=6.0,
+            shape_noise=0.1,
+        )
+
+        shear_power = pk_mm * 0.6**2 * 4.0 + 0.6
+        expected = (
+            np.outer(galaxy_power, shear_power)
+            + 4.0 * np.outer(galaxy_shear_power, galaxy_shear_power)
+        ) / 10.0
+
+    else:
+        _, covariance = delta_sigma_gm_gg_cross_covariance(
+            hankel, k, pk_gg, pk_gm,
+            **kwargs,
+            delta_pi_gm_gg=7.0,
+        )
+
+        expected = np.outer(galaxy_shear_power, galaxy_power) * 2.0 * 7.0 * 2.0 / 10.0
+
+    np.testing.assert_allclose(covariance, expected)
+
+
+@pytest.mark.parametrize(
+    "covariance_function,bad_spectrum",
+    [
+        (delta_sigma_gm_covariance, "pk_gg"),
+        (delta_sigma_gm_covariance, "pk_gm"),
+        (delta_sigma_gm_covariance, "pk_mm"),
+        (delta_sigma_gm_gg_cross_covariance, "pk_gg"),
+        (delta_sigma_gm_gg_cross_covariance, "pk_gm"),
+    ],
+)
+def test_covariance_blocks_validate_each_spectrum(
+    monkeypatch,
+    hankel,
+    covariance_function,
+    bad_spectrum,
+):
+    """A malformed individual spectrum is rejected before Hankel projection."""
+    patch_projected_covariance(monkeypatch, hankel)
+    k = np.array([0.1, 1.0, 20.0])
+    spectra = covariance_power_spectra(covariance_function, np.ones(3))
+    spectra[bad_spectrum] = np.ones(2)
+    kwargs = dict(omega_m=0.3, rho_crit=2.0, shot_noise=0.2, volume=10.0)
+    if covariance_function is delta_sigma_gm_covariance:
+        kwargs.update(
+            delta_pi_gm_squared_window=4.0, sigma_crit_squared_average=6.0, shape_noise=0.1
+        )
+    else:
+        kwargs["delta_pi_gm_gg"] = 7.0
+
+    with pytest.raises(ValueError):
+        covariance_function(hankel, k, **spectra, **kwargs)
+
+    assert hankel.calls == []

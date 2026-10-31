@@ -10,7 +10,7 @@ from __future__ import annotations
 import numpy as np
 import pyccl as ccl
 
-from dsf.utils.converters import redshift_to_scale_factor, resolve_h
+from dsf.utils.converters import redshift_to_scale_factor
 from dsf.utils.types import FloatArray
 from dsf.utils.validators import (
     validate_positive_strictly_increasing_1d_array,
@@ -27,8 +27,6 @@ def lens_averaged_matter_power(
     k: FloatArray,
     z_lens: FloatArray,
     nz_lens: FloatArray,
-    *,
-    h: float | None = None,
 ) -> FloatArray:
     """Return the matter power spectrum averaged over a lens redshift distribution.
 
@@ -38,14 +36,11 @@ def lens_averaged_matter_power(
         k: Wavenumber grid in ``h / Mpc``.
         z_lens: Lens redshift grid.
         nz_lens: Normalized lens redshift distribution evaluated on ``z_lens``.
-        h: Dimensionless Hubble parameter. If not supplied, read from
-            ``cosmo["h"]``.
 
     Returns:
         Lens-redshift-averaged matter power spectrum in ``(Mpc / h)^3``.
     """
-    h = resolve_h(cosmo, h)
-
+    h = cosmo["h"]
     k_arr = validate_positive_strictly_increasing_1d_array(k, "k")
     z_arr, nz_arr = validate_redshift_distribution(
         z_lens,

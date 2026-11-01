@@ -1,3 +1,8 @@
+.. image:: _static/dsf_logo.svg
+   :alt: DSF logo
+   :width: 140px
+   :align: center
+
 DSF
 ===
 

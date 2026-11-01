@@ -1,0 +1,27 @@
+/* Reduce spacing between the homepage logo and title. */
+
+article .align-center {
+    margin-bottom: 0 !important;
+}
+
+article h1 {
+    margin-top: 0 !important;
+}
+
+/* Reduce spacing around the sidebar logo. */
+
+.sidebar-brand {
+    padding-bottom: 0 !important;
+}
+
+.sidebar-logo-container {
+    margin-bottom: 0 !important;
+}
+
+.sidebar-logo {
+    max-height: 80px;
+}
+
+.sidebar-brand-text {
+    margin-top: 0 !important;
+}

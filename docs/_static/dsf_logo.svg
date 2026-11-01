@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="284.4pt" height="284.4pt" viewBox="0 0 284.4 284.4" xmlns="http://www.w3.org/2000/svg" version="1.1">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="277.2pt" height="277.2pt" viewBox="0 0 277.2 277.2" xmlns="http://www.w3.org/2000/svg" version="1.1">
  <metadata>
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-10-31T21:59:13.716836</dc:date>
+    <dc:date>2026-10-31T22:03:12.490831</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -21,18 +21,18 @@
  </defs>
  <g id="figure_1">
   <g id="patch_1">
-   <path d="M 0 284.4 
-L 284.4 284.4 
-L 284.4 0 
+   <path d="M 0 277.2 
+L 277.2 277.2 
+L 277.2 0 
 L 0 0 
-L 0 284.4 
+L 0 277.2 
 z
 " style="fill: none"/>
   </g>
   <g id="axes_1">
    <g id="text_1">
     <!-- $\Delta$ -->
-    <g style="fill: #3e5964" transform="translate(55.95 207.141406) scale(2.5 -2.5)">
+    <g style="fill: #3e5964" transform="translate(52.35 203.541406) scale(2.5 -2.5)">
      <defs>
       <path id="DejaVuSans-329" d="M 2188 4044 
 L 906 525 
@@ -52,7 +52,7 @@ z
    </g>
    <g id="text_2">
     <!-- $\Sigma$ -->
-    <g style="fill: #ef846e" transform="translate(115 180.912078) scale(0.85 -0.85)">
+    <g style="fill: #ef846e" transform="translate(111.4 177.312078) scale(0.85 -0.85)">
      <defs>
       <path id="DejaVuSans-337" d="M 1353 531 
 L 3634 531 

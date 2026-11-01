@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from dsf.hankel.hankel import HankelTransform
+from dsf.hankel.hankel_transform import HankelTransform
 from dsf.hankel.hankel_utils import compute_bin_radial_matrix
 
 

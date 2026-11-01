@@ -5,7 +5,7 @@ import pyccl as ccl
 import pytest
 from scipy.special import jv
 
-from dsf.hankel.hankel import HankelTransform
+from dsf.hankel.hankel_transform import HankelTransform
 from dsf.utils.integrators import trapezoid_integral
 
 

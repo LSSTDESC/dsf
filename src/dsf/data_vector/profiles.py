@@ -1,12 +1,11 @@
-"""Power-spectrum-backed density profiles for Delta Sigma.
+"""Power spectrum-backed density profiles for Delta Sigma.
 
-This module builds generic CCL ``Pk2D`` objects that represent
-density-weighted matter power spectra. These objects can be passed to
-``HaloProfileGeneric`` so that CCL's projected-profile machinery can be reused
-to compute Delta Sigma profiles.
+This module builds generic CCL ``Pk2D`` objects representing density-weighted
+matter power spectra. These objects are used by the standalone ``DeltaSigma``
+class to compute excess surface density profiles using a Hankel transform.
 
-The returned profiles are not halo-mass-dependent halo profiles. They are
-Fourier-space density profiles constructed from
+The returned profiles are not halo mass-dependent halo profiles. They are
+Fourier space density profiles constructed from
 
     rho_m(a) * P_mm(k, a),
 
@@ -94,8 +93,8 @@ def linear_twohalo_density_profile(
 
         \rho_\mathrm{m}(a) P_\mathrm{lin}(k, a),
 
-    which can be used by ``HaloProfileGeneric`` as the Fourier-space profile
-    for a linear two-halo Delta Sigma calculation.
+    which is used by ``DeltaSigma`` to calculate the linear two-halo
+    excess surface density.
 
     Args:
         cosmo: CCL cosmology object.
@@ -117,8 +116,8 @@ def nonlinear_twohalo_density_profile(
 
         \rho_\mathrm{m}(a) P_\mathrm{nl}(k, a),
 
-    which can be used by ``HaloProfileGeneric`` as the Fourier-space profile
-    for a nonlinear two-halo Delta Sigma calculation.
+    which is used by ``DeltaSigma`` to calculate the nonlinear two-halo
+    excess surface density.
 
     Args:
         cosmo: CCL cosmology object.

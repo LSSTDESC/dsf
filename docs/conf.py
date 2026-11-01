@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 project = "DSF"
-author = "Nikolina Sarcevic, Ben Levine"
+author = "Niko Šarčević, Ben Levine"
 copyright = "2026, LSST Dark Energy Science Collaboration"
 
 html_title = "DSF Documentation"
@@ -34,6 +34,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "api/modules.rst"]
 
 html_theme = "furo"
 html_static_path = ["_static"]
+html_logo = "_static/dsf_logo.svg"
+html_css_files = ["custom.css"]
 
 autodoc_typehints = "description"
 napoleon_google_docstring = True

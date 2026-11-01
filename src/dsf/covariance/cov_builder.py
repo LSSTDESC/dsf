@@ -40,7 +40,7 @@ from dsf.covariance.ingredients.power_spectrum import (
     lens_averaged_power_spectrum,
 )
 from dsf.covariance.ingredients.sigma_crit import effective_squared_sigma_crit
-from dsf.hankel.hankel import HankelTransform
+from dsf.hankel.hankel_transform import HankelTransform
 from dsf.utils.converters import (
     resolve_h,
     resolve_omega_m,

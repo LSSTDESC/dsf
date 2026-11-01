@@ -22,7 +22,7 @@ from typing import Any
 
 import numpy as np
 
-from dsf.hankel.hankel import HankelTransform
+from dsf.hankel.hankel_transform import HankelTransform
 from dsf.utils.types import ArrayLike
 from dsf.utils.validators import (
     as_1d_float_array,

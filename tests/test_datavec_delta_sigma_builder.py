@@ -11,39 +11,25 @@ from dsf.data_vector.delta_sigma_builder import (
 
 
 class DummyProfile:
-    """Small stand-in for the CCL halo profile projection backend."""
+    """Small stand-in for the standalone Delta Sigma projection."""
 
     def __init__(self, pk2d, **kwargs):
-        """Store the profile inputs."""
+        """Store the projection inputs."""
         self.pk2d = pk2d
         self.kwargs = kwargs
-        self.projected_calls = []
-        self.cumul2d_calls = []
+        self.calls = []
 
-    def projected(self, cosmo, r, mass, a):
-        """Return a deterministic projected surface-density profile."""
-        self.projected_calls.append(
-            (cosmo, np.asarray(r, dtype=float), mass, a)
-        )
-        return 1.0e12 * a * np.asarray(r, dtype=float)
-
-    def cumul2d(self, cosmo, r, mass, a):
-        """Return a deterministic enclosed projected surface-density profile."""
-        self.cumul2d_calls.append(
-            (cosmo, np.asarray(r, dtype=float), mass, a)
-        )
-        return 1.0e12 * a * (np.asarray(r, dtype=float) + 2.0)
+    def delta_sigma(self, cosmo, r, a):
+        """Return a deterministic excess surface density."""
+        self.calls.append((cosmo, np.asarray(r, dtype=float), a))
+        return 1.0e12 * a * np.full_like(np.asarray(r, dtype=float), 2.0)
 
 
 class NonFiniteProfile:
-    """Small profile backend that returns non-finite Delta Sigma values."""
+    """Small projection backend that returns non-finite values."""
 
-    def projected(self, cosmo, r, mass, a):
-        """Return finite projected values."""
-        return np.zeros_like(np.asarray(r, dtype=float))
-
-    def cumul2d(self, cosmo, r, mass, a):
-        """Return one non-finite enclosed projected value."""
+    def delta_sigma(self, cosmo, r, a):
+        """Return one non-finite excess surface density value."""
         values = np.ones_like(np.asarray(r, dtype=float))
         values[1] = np.nan
         return values
@@ -63,11 +49,9 @@ class DummyPk2DFunction:
 
 
 @pytest.fixture
-def patch_halo_profile(monkeypatch):
-    """Patch the CCL profile wrapper with a lightweight fake profile."""
-    monkeypatch.setattr(
-        delta_sigma_builder, "HaloProfileGeneric", DummyProfile
-    )
+def patch_delta_sigma(monkeypatch):
+    """Patch the standalone Delta Sigma projection with a lightweight fake."""
+    monkeypatch.setattr(delta_sigma_builder, "DeltaSigma", DummyProfile)
 
 
 def test_delta_sigma_calculator_stores_pk2d_function():
@@ -77,44 +61,39 @@ def test_delta_sigma_calculator_stores_pk2d_function():
     calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)
 
     assert calculator.pk2d_func is pk2d_func
-    assert calculator._ccl_profile_cache is None
+    assert calculator._delta_sigma_cache is None
 
 
-def test_generate_ccl_profile_builds_profile_and_stores_cache(
-    patch_halo_profile,
-):
-    """Tests that profile generation builds and stores a CCL profile wrapper."""
+def test_generate_delta_sigma_builds_projection_and_stores_cache(patch_delta_sigma):
+    """Tests that projection generation builds and stores a Delta Sigma object."""
     pk2d_func = DummyPk2DFunction()
     calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)
 
-    profile = calculator._generate_ccl_profile(
+    profile = calculator._generate_delta_sigma(
         cosmo="cosmo",
         pk2d_kwargs={"model": "test"},
         overwrite_cache=True,
     )
 
-    assert profile is calculator._ccl_profile_cache
+    assert profile is calculator._delta_sigma_cache
     assert profile.pk2d == {
         "pk2d_kwargs": {"cosmo": "cosmo", "model": "test"}
-    }
-    assert profile.kwargs == {
-        "padding_lo_fftlog": 1.0e-6,
-        "padding_hi_fftlog": 1.0e6,
     }
     assert pk2d_func.calls == [{"cosmo": "cosmo", "model": "test"}]
 
 
-def test_generate_ccl_profile_reuses_cache_when_requested(patch_halo_profile):
-    """Tests that profile generation reuses the cached profile when allowed."""
+def test_generate_delta_sigma_reuses_cache_when_requested(patch_delta_sigma):
+    """Tests that projection generation reuses the cache when requested."""
     pk2d_func = DummyPk2DFunction()
     calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)
 
-    first = calculator._generate_ccl_profile(
+    first = calculator._generate_delta_sigma(
         cosmo="cosmo",
         pk2d_kwargs={"model": "first"},
         overwrite_cache=True,
     )
-    second = calculator._generate_ccl_profile(
+
+    second = calculator._generate_delta_sigma(
         cosmo="cosmo",
         pk2d_kwargs={"model": "second"},
         overwrite_cache=False,
@@ -124,34 +103,33 @@ def test_generate_ccl_profile_reuses_cache_when_requested(patch_halo_profile):
     assert pk2d_func.calls == [{"cosmo": "cosmo", "model": "first"}]
 
 
-def test_generate_ccl_profile_overwrites_cache_when_requested(
-    patch_halo_profile,
-):
-    """Tests that profile generation rebuilds the cache when requested."""
+def test_generate_delta_sigma_overwrites_cache_when_requested(patch_delta_sigma):
+    """Tests that projection generation rebuilds the cache when requested."""
     pk2d_func = DummyPk2DFunction()
     calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)
 
-    first = calculator._generate_ccl_profile(
+    first = calculator._generate_delta_sigma(
         cosmo="cosmo",
         pk2d_kwargs={"model": "first"},
         overwrite_cache=True,
     )
-    second = calculator._generate_ccl_profile(
+
+    second = calculator._generate_delta_sigma(
         cosmo="cosmo",
         pk2d_kwargs={"model": "second"},
         overwrite_cache=True,
     )
 
     assert second is not first
-    assert second is calculator._ccl_profile_cache
+    assert second is calculator._delta_sigma_cache
     assert pk2d_func.calls == [
         {"cosmo": "cosmo", "model": "first"},
         {"cosmo": "cosmo", "model": "second"},
     ]
 
 
-def test_delta_sigma_from_profile_returns_mean_minus_projected_in_pc_units():
-    """Tests that Delta Sigma is mean-minus-projected converted to pc units."""
+def test_delta_sigma_from_profile_converts_to_pc_units():
+    """Tests that excess surface density is converted from Mpc to pc units."""
     calculator = DeltaSigmaCalculator(pk2d_func=DummyPk2DFunction())
     profile = DummyProfile(pk2d=None)
 
@@ -168,8 +146,8 @@ def test_delta_sigma_from_profile_returns_mean_minus_projected_in_pc_units():
     np.testing.assert_allclose(result, expected)
 
 
-def test_delta_sigma_from_profile_calls_projection_with_dummy_mass():
-    """Tests that profile projection calls use the expected dummy mass."""
+def test_delta_sigma_from_profile_forwards_projection_arguments():
+    """Tests that cosmology, radii, and scale factor reach the projection."""
     calculator = DeltaSigmaCalculator(pk2d_func=DummyPk2DFunction())
     profile = DummyProfile(pk2d=None)
 
@@ -181,18 +159,11 @@ def test_delta_sigma_from_profile_calls_projection_with_dummy_mass():
         cosmo="cosmo",
     )
 
-    projected_call = profile.projected_calls[-1]
-    cumul2d_call = profile.cumul2d_calls[-1]
+    called_cosmo, called_r, called_a = profile.calls[-1]
 
-    assert projected_call[0] == "cosmo"
-    np.testing.assert_allclose(projected_call[1], r)
-    assert projected_call[2] == 1.0
-    assert projected_call[3] == 0.75
-
-    assert cumul2d_call[0] == "cosmo"
-    np.testing.assert_allclose(cumul2d_call[1], r)
-    assert cumul2d_call[2] == 1.0
-    assert cumul2d_call[3] == 0.75
+    assert called_cosmo == "cosmo"
+    np.testing.assert_allclose(called_r, r)
+    assert called_a == 0.75
 
 
 @pytest.mark.parametrize("a", [-0.1, 0.0, 1.1])
@@ -224,9 +195,7 @@ def test_delta_sigma_from_profile_rejects_non_finite_values():
         )
 
 
-def test_delta_sigma_validates_radius_and_uses_generated_profile(
-    patch_halo_profile,
-):
+def test_delta_sigma_validates_radius_and_uses_generated_profile(patch_delta_sigma):
     """Tests that single-redshift Delta Sigma validates radii and uses a profile."""
     pk2d_func = DummyPk2DFunction()
     calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)
@@ -250,7 +219,7 @@ def test_delta_sigma_validates_radius_and_uses_generated_profile(
         np.array([[1.0, 2.0]]),
     ],
 )
-def test_delta_sigma_rejects_invalid_radius_arrays(patch_halo_profile, r):
+def test_delta_sigma_rejects_invalid_radius_arrays(patch_delta_sigma, r):
     """Tests that single-redshift Delta Sigma rejects invalid radial arrays."""
     calculator = DeltaSigmaCalculator(pk2d_func=DummyPk2DFunction())
 
@@ -263,7 +232,7 @@ def test_delta_sigma_rejects_invalid_radius_arrays(patch_halo_profile, r):
 
 
 def test_delta_sigma_lens_bin_averages_over_redshift_distribution(
-    patch_halo_profile,
+    patch_delta_sigma,
 ):
     """Tests that lens-bin Delta Sigma averages over the redshift distribution."""
     calculator = DeltaSigmaCalculator(pk2d_func=DummyPk2DFunction())
@@ -284,7 +253,7 @@ def test_delta_sigma_lens_bin_averages_over_redshift_distribution(
     np.testing.assert_allclose(result, expected)
 
 
-def test_delta_sigma_lens_bin_applies_redshift_window(patch_halo_profile):
+def test_delta_sigma_lens_bin_applies_redshift_window(patch_delta_sigma):
     """Tests that lens-bin Delta Sigma applies redshift window limits."""
     calculator = DeltaSigmaCalculator(pk2d_func=DummyPk2DFunction())
 
@@ -303,6 +272,7 @@ def test_delta_sigma_lens_bin_applies_redshift_window(patch_halo_profile):
     z_use = np.array([0.5, 1.0])
     a_use = 1.0 / (1.0 + z_use)
     nz_use = np.ones_like(z_use)
+
     expected = np.full(
         r.size,
         np.trapezoid(nz_use * a_use * 2.0, z_use)
@@ -312,7 +282,7 @@ def test_delta_sigma_lens_bin_applies_redshift_window(patch_halo_profile):
     np.testing.assert_allclose(result, expected)
 
 
-def test_delta_sigma_lens_bin_trims_edge_points(patch_halo_profile):
+def test_delta_sigma_lens_bin_trims_edge_points(patch_delta_sigma):
     """Tests that lens-bin Delta Sigma trims selected support edge points."""
     calculator = DeltaSigmaCalculator(pk2d_func=DummyPk2DFunction())
 
@@ -330,6 +300,7 @@ def test_delta_sigma_lens_bin_trims_edge_points(patch_halo_profile):
     z_use = np.array([0.5, 1.0])
     a_use = 1.0 / (1.0 + z_use)
     nz_use = np.ones_like(z_use)
+
     expected = np.full(
         r.size,
         np.trapezoid(nz_use * a_use * 2.0, z_use)
@@ -341,7 +312,7 @@ def test_delta_sigma_lens_bin_trims_edge_points(patch_halo_profile):
 
 @pytest.mark.parametrize("trim_edge_points", [-1, 0.5, 1.2])
 def test_delta_sigma_lens_bin_rejects_invalid_trim_edge_points(
-    patch_halo_profile,
+    patch_delta_sigma,
     trim_edge_points,
 ):
     """Tests that invalid edge-trimming values are rejected."""
@@ -357,7 +328,7 @@ def test_delta_sigma_lens_bin_rejects_invalid_trim_edge_points(
 
 
 def test_delta_sigma_lens_bin_rejects_trim_that_removes_all_support(
-    patch_halo_profile,
+    patch_delta_sigma,
 ):
     """Tests that trimming away all lens support raises an error."""
     calculator = DeltaSigmaCalculator(pk2d_func=DummyPk2DFunction())
@@ -372,7 +343,7 @@ def test_delta_sigma_lens_bin_rejects_trim_that_removes_all_support(
 
 
 def test_delta_sigma_lens_bin_rejects_too_few_support_points(
-    patch_halo_profile,
+    patch_delta_sigma,
 ):
     """Tests that at least two selected redshift support points are required."""
     calculator = DeltaSigmaCalculator(pk2d_func=DummyPk2DFunction())
@@ -394,7 +365,7 @@ def test_delta_sigma_lens_bin_rejects_too_few_support_points(
     ],
 )
 def test_delta_sigma_lens_bin_rejects_invalid_redshift_window(
-    patch_halo_profile,
+    patch_delta_sigma,
     z_min,
     z_max,
 ):
@@ -413,7 +384,7 @@ def test_delta_sigma_lens_bin_rejects_invalid_redshift_window(
 
 def test_delta_sigma_lens_bin_raises_before_integration_for_non_finite_values(
     monkeypatch,
-    patch_halo_profile,
+    patch_delta_sigma,
 ):
     """Tests that non-finite redshift-dependent Delta Sigma values are rejected."""
     calculator = DeltaSigmaCalculator(pk2d_func=DummyPk2DFunction())
@@ -440,7 +411,7 @@ def test_delta_sigma_lens_bin_raises_before_integration_for_non_finite_values(
 
 def test_delta_sigma_lens_bin_raises_after_integration_for_non_finite_values(
     monkeypatch,
-    patch_halo_profile,
+    patch_delta_sigma,
 ):
     """Tests that non-finite integrated Delta Sigma values are rejected."""
     calculator = DeltaSigmaCalculator(pk2d_func=DummyPk2DFunction())
@@ -507,3 +478,86 @@ def test_stellar_point_mass_delta_sigma_rejects_non_finite_mass(
             r=np.array([1.0, 2.0]),
             log10_mstellar=log10_mstellar,
         )
+
+
+def test_delta_sigma_rebuilds_projection_between_calls(patch_delta_sigma):
+    """Tests that successive evaluations rebuild the power-spectrum projection."""
+    pk2d_func = DummyPk2DFunction()
+    calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)
+
+    first = calculator.delta_sigma(
+        r=np.array([1.0, 2.0]),
+        a=0.5,
+        cosmo="cosmo",
+        pk2d_kwargs={"model": "first"},
+    )
+    first_profile = calculator._delta_sigma_cache
+
+    second = calculator.delta_sigma(
+        r=np.array([1.0, 2.0]),
+        a=0.5,
+        cosmo="cosmo",
+        pk2d_kwargs={"model": "second"},
+    )
+    second_profile = calculator._delta_sigma_cache
+
+    np.testing.assert_allclose(first, second)
+    assert first_profile is not second_profile
+    assert pk2d_func.calls == [
+        {"cosmo": "cosmo", "model": "first"},
+        {"cosmo": "cosmo", "model": "second"},
+    ]
+
+
+def test_delta_sigma_lens_bin_builds_projection_once(patch_delta_sigma):
+    """Tests that lens-bin integration reuses one projection across redshifts."""
+    pk2d_func = DummyPk2DFunction()
+    calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)
+
+    calculator.delta_sigma_lens_bin(
+        r=np.array([1.0, 2.0]),
+        lens_dndz=(np.array([0.0, 0.5, 1.0]), np.ones(3)),
+        cosmo="cosmo",
+    )
+
+    assert len(pk2d_func.calls) == 1
+    assert len(calculator._delta_sigma_cache.calls) == 3
+
+
+def test_delta_sigma_lens_bin_uses_normalized_nonuniform_distribution(
+    patch_delta_sigma,
+):
+    """Tests redshift weighting with nonuniform sampling and lens weights."""
+    calculator = DeltaSigmaCalculator(pk2d_func=DummyPk2DFunction())
+
+    r = np.array([1.0, 2.0])
+    z = np.array([0.0, 0.2, 0.7, 1.5])
+    nz = np.array([1.0, 3.0, 2.0, 1.0])
+
+    result = calculator.delta_sigma_lens_bin(
+        r=r,
+        lens_dndz=(z, nz),
+        cosmo="cosmo",
+    )
+
+    a = 1.0 / (1.0 + z)
+    expected = np.trapezoid(nz * 2.0 * a, z) / np.trapezoid(nz, z)
+
+    np.testing.assert_allclose(result, np.full(r.size, expected))
+
+
+def test_delta_sigma_lens_bin_forwards_pk2d_kwargs(patch_delta_sigma):
+    """Tests that lens-bin projection forwards power-spectrum parameters."""
+    pk2d_func = DummyPk2DFunction()
+    calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)
+
+    calculator.delta_sigma_lens_bin(
+        r=np.array([1.0, 2.0]),
+        lens_dndz=(np.array([0.0, 0.5, 1.0]), np.ones(3)),
+        cosmo="cosmo",
+        pk2d_kwargs={"model": "nonlinear", "amplitude": 2.0},
+    )
+
+    assert pk2d_func.calls == [
+        {"cosmo": "cosmo", "model": "nonlinear", "amplitude": 2.0}
+    ]

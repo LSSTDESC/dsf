@@ -17,7 +17,7 @@ import numpy as np
 import pyccl as ccl
 from numpy.typing import NDArray
 
-from dsf.hankel.hankel import HankelTransform
+from dsf.hankel.hankel_transform import HankelTransform
 from dsf.utils.converters import (
     hubble_over_c_cubed,
     redshift_to_scale_factor,

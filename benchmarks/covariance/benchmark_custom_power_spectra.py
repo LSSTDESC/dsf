@@ -129,11 +129,12 @@ def compare_covariances(reference, equivalent, modified):
 
         np.testing.assert_allclose(custom, baseline, rtol=1e-6, atol=0.0)
 
+        equivalent_difference = np.linalg.norm(custom - baseline) / np.linalg.norm(baseline)
         difference = np.linalg.norm(changed - baseline)
         relative_change = difference / np.linalg.norm(baseline)
 
         print(f"\n{block}")
-        print("  Equivalent custom spectra: PASS")
+        print(f"  Equivalent custom spectra: PASS ({equivalent_difference:.3e})")
         print(f"  Relative Frobenius difference: {relative_change:.3e}")
 
         if block != "cov_gm_gg":

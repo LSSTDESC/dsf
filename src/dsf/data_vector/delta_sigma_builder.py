@@ -6,14 +6,14 @@ This module evaluates the projected excess surface density,
 
     \Delta\Sigma(R, z) = \bar{\Sigma}(<R, z) - \Sigma(R, z),
 
-from power-spectrum-backed CCL halo profiles.  The main use case is the
-galaxy-galaxy lensing observable around a lens sample, optionally averaged over
-a lens-bin redshift distribution.
+from CCL ``Pk2D`` objects using a second-order Hankel transform.
+The main use case is the galaxy-galaxy lensing observable around a lens
+sample, optionally averaged over a lens-bin redshift distribution.
 
 The returned profiles use projected comoving radii and are reported in
-:math:`M_\odot / \mathrm{pc}^2`.  Any conversion between comoving and proper
-surface-density conventions should be applied consistently at the likelihood or
-data-vector level.
+:math:`M_\odot / \mathrm{pc}^2`. Any conversion between comoving and proper
+surface-density conventions should be applied consistently at the likelihood
+or data-vector level.
 """
 
 from __future__ import annotations
@@ -35,7 +35,9 @@ from dsf.utils.validators import (
     validate_scale_factor,
 )
 
-from .ccl_integration import HaloProfileGeneric
+from .ccl_integration import DeltaSigma
+
+__all__ = ["DeltaSigmaCalculator", "stellar_point_mass_delta_sigma"]
 
 
 class DeltaSigmaCalculator:
@@ -69,54 +71,49 @@ class DeltaSigmaCalculator:
                 keyword argument.
         """
         self.pk2d_func = pk2d_func
-        self._ccl_profile_cache: HaloProfileGeneric | None = None
+        self._delta_sigma_cache: DeltaSigma | None = None
 
-    def _generate_ccl_profile(
+    def _generate_delta_sigma(
         self,
         cosmo: ccl.Cosmology,
         pk2d_kwargs: dict[str, Any] | None = None,
         *,
         overwrite_cache: bool = True,
-    ) -> HaloProfileGeneric:
-        r"""Build the CCL profile used to project the 3D density field.
+    ) -> DeltaSigma:
+        """Build the excess surface density projection from a CCL power spectrum.
 
         Args:
             cosmo: CCL cosmology object.
             pk2d_kwargs: Additional keyword arguments for the profile model.
-            overwrite_cache: Whether to rebuild the stored CCL profile.
+            overwrite_cache: Whether to rebuild the stored projection.
 
         Returns:
-            CCL-compatible profile whose projection gives
-            :math:`\Sigma(R, z)` and :math:`\bar{\Sigma}(<R, z)`.
+            Standalone excess surface density projection.
         """
         kwargs = {} if pk2d_kwargs is None else pk2d_kwargs
 
-        if overwrite_cache or self._ccl_profile_cache is None:
+        if overwrite_cache or self._delta_sigma_cache is None:
             pk2d = self.pk2d_func(cosmo=cosmo, **kwargs)
-            self._ccl_profile_cache = HaloProfileGeneric(
-                pk2d=pk2d,
-                padding_lo_fftlog=1.0e-6,
-                padding_hi_fftlog=1.0e6,
-            )
+            self._delta_sigma_cache = DeltaSigma(pk2d=pk2d)
 
-        profile = self._ccl_profile_cache
+        projection = self._delta_sigma_cache
 
-        if profile is None:
-            raise RuntimeError("CCL profile cache was not initialized.")
+        if projection is None:
+            raise RuntimeError("Delta Sigma cache was not initialized.")
 
-        return profile
+        return projection
 
     def _delta_sigma_from_profile(
         self,
-        profile: HaloProfileGeneric,
+        profile: DeltaSigma,
         r: NDArray[np.float64],
         a: float,
         cosmo: ccl.Cosmology,
     ) -> NDArray[np.float64]:
-        r"""Evaluate the excess surface density from a projected profile.
+        r"""Evaluate the excess surface density from a CCL power spectrum.
 
         Args:
-            profile: CCL-compatible profile describing the 3D density field.
+            profile: Standalone excess surface density projection.
             r: Projected comoving radii in Mpc.
             a: Scale factor at which the lensing profile is evaluated.
             cosmo: CCL cosmology object.
@@ -127,11 +124,8 @@ class DeltaSigmaCalculator:
         """
         validate_scale_factor(a)
 
-        sigma = profile.projected(cosmo, r, 1.0, a)
-        mean_sigma = profile.cumul2d(cosmo, r, 1.0, a)
-
-        delta_sigma_msun_mpc2 = np.asarray(mean_sigma - sigma, dtype=float)
-        delta_sigma_msun_pc2 = delta_sigma_msun_mpc2 / 1.0e12
+        delta_sigma_msun_mpc2 = profile.delta_sigma(cosmo=cosmo, r=r, a=a)
+        delta_sigma_msun_pc2 = np.asarray(delta_sigma_msun_mpc2, dtype=float) / 1.0e12
 
         if np.any(~np.isfinite(delta_sigma_msun_pc2)):
             bad = np.where(~np.isfinite(delta_sigma_msun_pc2))[0]
@@ -172,7 +166,7 @@ class DeltaSigmaCalculator:
         """
         r_arr = validate_positive_1d_array(r, "r")
 
-        profile = self._generate_ccl_profile(
+        profile = self._generate_delta_sigma(
             cosmo=cosmo,
             pk2d_kwargs=pk2d_kwargs,
             overwrite_cache=True,
@@ -248,7 +242,7 @@ class DeltaSigmaCalculator:
 
         nz_norm = nz_use / norm
 
-        profile = self._generate_ccl_profile(
+        profile = self._generate_delta_sigma(
             cosmo=cosmo,
             pk2d_kwargs=pk2d_kwargs,
             overwrite_cache=True,

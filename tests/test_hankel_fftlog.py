@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from pytest import param
 
-from dsf.hankel.hankel import HankelTransform
+from dsf.hankel.hankel_transform import HankelTransform
 from dsf.hankel.hankel_transform_fftlog import (
     HankelTransformFFTLog,
     hankel_projected,

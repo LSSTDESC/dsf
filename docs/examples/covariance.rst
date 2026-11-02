@@ -33,21 +33,20 @@ Minimal gm covariance example
    )
 
    tomography = TomographyBuilder(
-       lens_survey="lsst",
-       source_survey="lsst",
-       lens_sample=None,
-       source_sample=None,
-       lens_year="1",
-       source_year="1",
-       lens_role="lens",
-       source_role="source",
+       lens={
+           "survey": "lsst",
+           "year": "1",
+           "role": "lens",
+           "overrides": {"bins": {"count": 2}},
+       },
+       source={
+           "survey": "lsst",
+           "year": "1",
+           "role": "source",
+           "overrides": {"bins": {"count": 2}},
+       },
        overlap_threshold=0.10,
        source_behind_lens=True,
-       shared_overrides={
-           "bins": {
-               "count": 2,
-           },
-       },
    )
 
    tomo_inputs = tomography.prepare_bins()

@@ -19,3 +19,4 @@ notebooks/plots/*.pdf
 notebooks/logs/
 docs/_generated/
 /.coverage
+benchmarks/covariance/optimization_regression/*.npz

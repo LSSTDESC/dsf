@@ -30,21 +30,20 @@ def is_pos_semi_def(x, tol=1e-12):
 z = np.linspace(0.0, 5.0, 1000)
 
 tomography = TomographyBuilder(
-    lens_survey="desi",
-    source_survey="lsst",
-    lens_sample='lrg',
-    source_sample=None,
-    lens_year=None,
-    source_year="1",
-    lens_role="lens",
-    source_role="source",
+    lens={
+        "survey": "desi",
+        "sample": "lrg",
+        "role": "lens",
+        "overrides": {"bins": {"count": 5}},
+    },
+    source={
+        "survey": "lsst",
+        "year": "1",
+        "role": "source",
+        "overrides": {"bins": {"count": 5}},
+    },
     overlap_threshold=0.1,
     source_behind_lens=True,
-    shared_overrides={
-        "bins": {
-            "count": 5,
-        },
-    },
 )
 
 tomo_inputs = tomography.prepare_bins()

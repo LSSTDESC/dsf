@@ -1,12 +1,11 @@
 """Benchmark numerical accuracy and performance of lens-averaged power spectra."""
 
-from functools import partial
 from time import perf_counter
 
 import numpy as np
 import pyccl as ccl
 
-from dsf.covariance.ingredients.power_spectrum import lens_averaged_matter_power
+from dsf.covariance.ingredients.power_spectrum import lens_averaged_power_spectrum
 from dsf.tomography.tomo_builder import TomographyBuilder
 from dsf.utils.converters import redshift_to_scale_factor
 from dsf.utils.integrators import weighted_trapezoid_average
@@ -45,7 +44,7 @@ def original_lens_averaged_matter_power(cosmo, k, z_lens, nz_lens):
     )
 
 
-def benchmark(function, cosmo, k, z_lens, nz_lens):
+def benchmark(function, cosmo, k, z_lens, nz_lens, **kwargs):
     """Measure the median runtime of a power-spectrum implementation."""
     times = []
     result = None
@@ -53,7 +52,7 @@ def benchmark(function, cosmo, k, z_lens, nz_lens):
     for _ in range(N_REPEATS):
         start = perf_counter()
 
-        result = function(cosmo=cosmo, k=k, z_lens=z_lens, nz_lens=nz_lens)
+        result = function(cosmo=cosmo, k=k, z_lens=z_lens, nz_lens=nz_lens, **kwargs)
 
         times.append(perf_counter() - start)
 
@@ -63,21 +62,20 @@ def benchmark(function, cosmo, k, z_lens, nz_lens):
 def main():
     """Compare the original and optimized implementations for DESI LRG bins."""
     tomography = TomographyBuilder(
-        lens_survey="desi",
-        source_survey="lsst",
-        lens_sample="lrg",
-        source_sample=None,
-        lens_year=None,
-        source_year="1",
-        lens_role="lens",
-        source_role="source",
+        lens={
+            "survey": "desi",
+            "sample": "lrg",
+            "role": "lens",
+            "overrides": {"bins": {"count": 5}},
+        },
+        source={
+            "survey": "lsst",
+            "year": "1",
+            "role": "source",
+            "overrides": {"bins": {"count": 5}},
+        },
         overlap_threshold=0.1,
         source_behind_lens=True,
-        shared_overrides={
-            "bins": {
-                "count": 5,
-            },
-        },
     )
 
     tomo_inputs = tomography.prepare_bins()
@@ -98,6 +96,8 @@ def main():
         transfer_function="boltzmann_camb",
         matter_power_spectrum="halofit",
     )
+
+    pk_mm = cosmo.get_nonlin_power()
 
     print("\nLens-averaged matter power spectrum benchmark")
     print("============================================")
@@ -124,11 +124,12 @@ def main():
         )
 
         optimized, optimized_time = benchmark(
-            partial(lens_averaged_matter_power, pk=ccl.nonlin_matter_power),
+            lens_averaged_power_spectrum,
             cosmo,
             k,
             z_lens,
             nz_lens,
+            pk=pk_mm,
         )
 
         np.testing.assert_allclose(

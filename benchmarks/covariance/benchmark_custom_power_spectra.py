@@ -40,17 +40,20 @@ def build_cosmology():
 def build_tomography():
     """Construct the DESI lens and LSST source tomography."""
     tomography = TomographyBuilder(
-        lens_survey="desi",
-        source_survey="lsst",
-        lens_sample="lrg",
-        source_sample=None,
-        lens_year=None,
-        source_year="1",
-        lens_role="lens",
-        source_role="source",
+        lens={
+            "survey": "desi",
+            "sample": "lrg",
+            "role": "lens",
+            "overrides": {"bins": {"count": 5}},
+        },
+        source={
+            "survey": "lsst",
+            "year": "1",
+            "role": "source",
+            "overrides": {"bins": {"count": 5}},
+        },
         overlap_threshold=0.1,
         source_behind_lens=True,
-        shared_overrides={"bins": {"count": 5}},
     )
 
     return tomography.prepare_bins()
@@ -106,11 +109,13 @@ def modified_power_spectra(cosmo, bias):
 
 def compute_covariance(builder, label):
     """Compute and time the covariance for one tomographic bin pair."""
+    print(f"Starting {label} covariance...", flush=True)
+
     start = time.perf_counter()
     covariance = builder.covariance_for_pair(LENS_BIN, SOURCE_BIN)
     elapsed = time.perf_counter() - start
 
-    print(f"{label}: {elapsed:.3f} s")
+    print(f"{label}: {elapsed:.3f} s", flush=True)
 
     return covariance
 
@@ -229,10 +234,22 @@ def plot_correlation_matrices(reference, modified):
 
 def main():
     """Run the custom galaxy power-spectrum covariance benchmark."""
+    total_start = time.perf_counter()
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
+    print("\n[1/9] Building cosmology...", flush=True)
+    start = time.perf_counter()
     cosmo = build_cosmology()
+    print(f"Cosmology built in {time.perf_counter() - start:.3f} s", flush=True)
+
+    print("\n[2/9] Building tomography...", flush=True)
+    start = time.perf_counter()
     tomography = build_tomography()
+    print(f"Tomography built in {time.perf_counter() - start:.3f} s", flush=True)
+
+    print("\n[3/9] Preparing covariance inputs...", flush=True)
+    start = time.perf_counter()
 
     builder_inputs = {
         "cosmo": cosmo,
@@ -244,43 +261,78 @@ def main():
         "hankel": build_hankel_config(),
     }
 
+    print(f"Covariance inputs prepared in {time.perf_counter() - start:.3f} s", flush=True)
+
+    print("\n[4/9] Computing nonlinear matter power spectrum...", flush=True)
+    start = time.perf_counter()
     pk_mm = cosmo.get_nonlin_power()
+    print(f"Nonlinear power spectrum computed in {time.perf_counter() - start:.3f} s", flush=True)
+
+    print("\n[5/9] Building default covariance builder...", flush=True)
+    start = time.perf_counter()
 
     default_builder = DeltaSigmaCovarianceBuilder(
         **builder_inputs,
         galaxy_bias=GALAXY_BIAS,
     )
 
+    print(f"Default builder constructed in {time.perf_counter() - start:.3f} s", flush=True)
+
+    print("\n[6/9] Building equivalent custom covariance builder...", flush=True)
+    start = time.perf_counter()
+
     equivalent_builder = DeltaSigmaCovarianceBuilder(
-        **builder_inputs,
+        **(builder_inputs | {"hankel": default_builder.hankel}),
         pk_gg=GALAXY_BIAS**2 * pk_mm,
         pk_gm=GALAXY_BIAS * pk_mm,
     )
+
+    print(f"Equivalent builder constructed in {time.perf_counter() - start:.3f} s", flush=True)
+
+    print("\n[7/9] Building modified custom covariance builder...", flush=True)
+    start = time.perf_counter()
 
     pk_gg_modified, pk_gm_modified = modified_power_spectra(
         cosmo, GALAXY_BIAS
     )
 
+    print(f"Modified spectra constructed in {time.perf_counter() - start:.3f} s", flush=True)
+
+    start = time.perf_counter()
+
     modified_builder = DeltaSigmaCovarianceBuilder(
-        **builder_inputs,
+        **(builder_inputs | {"hankel": default_builder.hankel}),
         pk_gg=pk_gg_modified,
         pk_gm=pk_gm_modified,
     )
 
-    print("\nComputing covariance matrices")
-    print("-" * 65)
+    print(f"Modified builder constructed in {time.perf_counter() - start:.3f} s", flush=True)
+
+    print("\n[8/9] Computing covariance matrices...", flush=True)
+    print("-" * 65, flush=True)
+
+    start = time.perf_counter()
 
     reference = compute_covariance(default_builder, "Default")
     equivalent = compute_covariance(equivalent_builder, "Equivalent custom")
     modified = compute_covariance(modified_builder, "Modified custom")
+
+    print(f"\nAll covariance calculations: {time.perf_counter() - start:.3f} s", flush=True)
+
+    print("\n[9/9] Comparing covariances and generating figures...", flush=True)
+    start = time.perf_counter()
 
     compare_covariances(reference, equivalent, modified)
 
     plot_diagonal_errors(reference, modified)
     plot_correlation_matrices(reference, modified)
 
+    print(f"\nComparison and plotting: {time.perf_counter() - start:.3f} s", flush=True)
+
     print(f"\nFigures saved to: {OUTPUT_DIR}")
     print("All custom power-spectrum benchmark checks passed.")
+
+    print(f"\nTotal benchmark runtime: {time.perf_counter() - total_start:.3f} s", flush=True)
 
 
 if __name__ == "__main__":

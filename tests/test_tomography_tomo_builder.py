@@ -1,4 +1,4 @@
-"""Unit tests for ``dsf.data_vector.tomography``."""
+"""Unit tests for ``dsf.tomography.tomo_builder``."""
 
 from types import SimpleNamespace
 
@@ -18,12 +18,7 @@ class DummyNZTomography:
     def __init__(self):
         """Initialize call logs and default return values."""
         self.build_survey_bins_calls = []
-        self.shape_stats_calls = []
-        self.population_stats_calls = []
         self.result = DummyNZTomography.next_result
-        self.shape_stats_result = None
-        self.population_stats_result = None
-
         DummyNZTomography.instances.append(self)
 
     def build_survey_bins(
@@ -38,49 +33,20 @@ class DummyNZTomography:
         include_tomo_metadata,
     ):
         """Record Binny build inputs and return a configured result."""
-        self.build_survey_bins_calls.append(
-            {
-                "survey": survey,
-                "role": role,
-                "year": year,
-                "scenario": scenario,
-                "sample": sample,
-                "overrides": overrides,
-                "include_tomo_metadata": include_tomo_metadata,
-            }
-        )
+        self.build_survey_bins_calls.append({
+            "survey": survey,
+            "role": role,
+            "year": year,
+            "scenario": scenario,
+            "sample": sample,
+            "overrides": overrides,
+            "include_tomo_metadata": include_tomo_metadata,
+        })
 
         if self.result is None:
             raise RuntimeError("DummyNZTomography result was not configured.")
 
         return self.result
-
-    def shape_stats(self, *, center_method, decimal_places):
-        """Record shape-stat inputs and return configured bin centers."""
-        self.shape_stats_calls.append(
-            {
-                "center_method": center_method,
-                "decimal_places": decimal_places,
-            }
-        )
-
-        if self.shape_stats_result is None:
-            raise RuntimeError(
-                "DummyNZTomography shape stats were not configured."
-            )
-
-        return self.shape_stats_result
-
-    def population_stats(self, **kwargs):
-        """Record population-stat inputs and return configured stats."""
-        self.population_stats_calls.append(kwargs)
-
-        if self.population_stats_result is None:
-            raise RuntimeError(
-                "DummyNZTomography population stats were not configured."
-            )
-
-        return self.population_stats_result
 
 
 def make_result(
@@ -115,60 +81,36 @@ def patch_nz_tomography(monkeypatch):
     return DummyNZTomography.instances
 
 
-def configure_two_builders(instances, lens_result, source_result):
-    """Configure the two dummy Binny builders created by prepare_bins."""
-    lens_builder, source_builder = instances
-
-    lens_builder.result = lens_result
-    lens_builder.shape_stats_result = {"centers": {0: 0.4, 1: 0.8}}
-    lens_builder.population_stats_result = {"lens": "population"}
-
-    source_builder.result = source_result
-    source_builder.shape_stats_result = {"centers": {0: 0.6, 1: 1.2}}
-    source_builder.population_stats_result = {"source": "population"}
-
-    return lens_builder, source_builder
-
-
 def test_tomography_builder_stores_configuration():
     """Tests that the tomography builder stores user configuration."""
+    lens = {
+        "survey": "desi",
+        "sample": "lrg",
+        "year": "2025",
+        "scenario": "lens-scenario",
+        "role": "foreground",
+        "overrides": {"lens": True},
+    }
+    source = {
+        "survey": "lsst",
+        "sample": "gold",
+        "year": "1",
+        "scenario": "source-scenario",
+        "role": "background",
+        "overrides": {"source": True},
+    }
+
     builder = TomographyBuilder(
-        lens_survey="desi",
-        source_survey="lsst",
-        lens_sample="lrg",
-        source_sample="gold",
-        lens_year="2025",
-        source_year="1",
-        lens_scenario="lens-scenario",
-        source_scenario="source-scenario",
-        lens_role="foreground",
-        source_role="background",
+        lens=lens,
+        source=source,
         overlap_threshold=0.25,
         source_behind_lens=False,
-        center_method="median",
-        decimal_places=3,
-        shared_overrides={"z_grid": {"n": 50}},
-        lens_overrides={"lens": True},
-        source_overrides={"source": True},
     )
 
-    assert builder.lens_survey == "desi"
-    assert builder.source_survey == "lsst"
-    assert builder.lens_sample == "lrg"
-    assert builder.source_sample == "gold"
-    assert builder.lens_year == "2025"
-    assert builder.source_year == "1"
-    assert builder.lens_scenario == "lens-scenario"
-    assert builder.source_scenario == "source-scenario"
-    assert builder.lens_role == "foreground"
-    assert builder.source_role == "background"
+    assert builder.lens == lens
+    assert builder.source == source
     assert builder.overlap_threshold == 0.25
     assert builder.source_behind_lens is False
-    assert builder.center_method == "median"
-    assert builder.decimal_places == 3
-    assert builder.shared_overrides == {"z_grid": {"n": 50}}
-    assert builder.lens_overrides == {"lens": True}
-    assert builder.source_overrides == {"source": True}
 
 
 def test_sample_passes_expected_arguments_to_binny(patch_nz_tomography):
@@ -179,15 +121,14 @@ def test_sample_passes_expected_arguments_to_binny(patch_nz_tomography):
     )
     DummyNZTomography.next_result = result
 
-    builder, sample_result = TomographyBuilder._sample(
-        survey="desi",
-        role="lens",
-        sample="lrg",
-        year="1",
-        scenario="baseline",
-        shared_overrides={"shared": 1},
-        sample_overrides={"sample": 2},
-    )
+    builder, sample_result = TomographyBuilder._build_sample({
+        "survey": "desi",
+        "role": "lens",
+        "sample": "lrg",
+        "year": "1",
+        "scenario": "baseline",
+        "overrides": {"sample": 2},
+    })
 
     assert sample_result is result
     assert builder is patch_nz_tomography[0]
@@ -198,7 +139,151 @@ def test_sample_passes_expected_arguments_to_binny(patch_nz_tomography):
             "year": "1",
             "scenario": "baseline",
             "sample": "lrg",
-            "overrides": {"shared": 1, "sample": 2},
+            "overrides": {"sample": 2},
             "include_tomo_metadata": True,
         }
     ]
+
+
+def test_default_tomography_configuration():
+    """Tests the default lens and source configurations."""
+    builder = TomographyBuilder()
+
+    assert builder.lens == {"survey": "desi", "sample": "lrg"}
+    assert builder.source == {"survey": "lsst"}
+    assert builder.overlap_threshold == 0.10
+    assert builder.source_behind_lens is True
+
+
+@pytest.mark.parametrize("threshold", [-0.1, 1.1])
+def test_invalid_overlap_threshold(threshold):
+    """Tests that invalid overlap thresholds are rejected."""
+    with pytest.raises(ValueError, match="overlap_threshold"):
+        TomographyBuilder(overlap_threshold=threshold)
+
+
+def test_pair_selection_overlap_threshold():
+    """Tests that pair selection delegates overlap filtering to Binny."""
+    calls = []
+
+    def bin_combo_filter(spec, *, other):
+        calls.append((spec, other))
+        return [(0, 1)]
+
+    lens = SimpleNamespace(bin_combo_filter=bin_combo_filter)
+    source = SimpleNamespace()
+
+    builder = TomographyBuilder(
+        overlap_threshold=0.25,
+        source_behind_lens=False,
+    )
+
+    pairs = builder._selected_pairs(lens, source)
+
+    assert pairs == [(0, 1)]
+    assert calls == [
+        (
+            {
+                "topology": {"name": "pairs_cartesian"},
+                "filters": [
+                    {
+                        "name": "overlap_fraction",
+                        "threshold": 0.25,
+                        "compare": "le",
+                    }
+                ],
+            },
+            source,
+        )
+    ]
+
+
+def test_pair_selection_source_ordering():
+    """Tests that source ordering is included when requested."""
+    specs = []
+
+    def bin_combo_filter(spec, *, other):
+        specs.append(spec)
+        return [(0, 1)]
+
+    lens = SimpleNamespace(bin_combo_filter=bin_combo_filter)
+    source = SimpleNamespace()
+
+    builder = TomographyBuilder(source_behind_lens=True)
+    pairs = builder._selected_pairs(lens, source)
+
+    assert pairs == [(0, 1)]
+    assert specs[0]["filters"] == [
+        {
+            "name": "overlap_fraction",
+            "threshold": 0.10,
+            "compare": "le",
+        },
+        {
+            "name": "score_relation",
+            "score": "mean",
+            "relation": "gt",
+        },
+    ]
+
+
+def test_prepare_bins_no_pairs(monkeypatch):
+    """Tests that empty lens-source pair selection raises an error."""
+    result = make_result(
+        z=np.array([0.0, 0.5, 1.0]),
+        bins={0: np.array([0.0, 1.0, 0.0])},
+    )
+
+    result.shape_stats = lambda **kwargs: {"centers": {0: 0.5}}
+    result.population_stats = lambda **kwargs: {"density_per_bin": {0: 1.0}}
+
+    monkeypatch.setattr(
+        TomographyBuilder,
+        "_build_sample",
+        classmethod(lambda cls, config: (object(), result)),
+    )
+    monkeypatch.setattr(
+        TomographyBuilder,
+        "_selected_pairs",
+        lambda self, lens, source: [],
+    )
+
+    with pytest.raises(RuntimeError, match="No lens-source bin pairs"):
+        TomographyBuilder().prepare_bins()
+
+
+def test_prepare_bins_output_structure(monkeypatch):
+    """Tests that prepared tomography contains the expected products."""
+    result = make_result(
+        z=np.array([0.0, 0.5, 1.0]),
+        bins={0: np.array([0.0, 1.0, 0.0])},
+    )
+
+    result.shape_stats = lambda **kwargs: {"centers": {0: 0.5}}
+    result.population_stats = lambda **kwargs: {
+        "density_per_bin": {0: 1.0},
+        "density_unit": "arcmin^-2",
+    }
+
+    monkeypatch.setattr(
+        TomographyBuilder,
+        "_build_sample",
+        classmethod(lambda cls, config: (object(), result)),
+    )
+    monkeypatch.setattr(
+        TomographyBuilder,
+        "_selected_pairs",
+        lambda self, lens, source: [(0, 0)],
+    )
+
+    prepared = TomographyBuilder().prepare_bins()
+
+    assert prepared["bin_pairs"] == [(0, 0)]
+    assert prepared["lens_result"] is result
+    assert prepared["source_result"] is result
+    assert prepared["lens_bin_centers"] == {0: 0.5}
+    assert prepared["source_bin_centers"] == {0: 0.5}
+    assert prepared["lens_population_stats"]["density_per_bin"] == {0: 1.0}
+    assert prepared["source_population_stats"]["density_unit"] == "arcmin^-2"
+    assert prepared["lens_overrides"] == {}
+    assert prepared["source_overrides"] == {}

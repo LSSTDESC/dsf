@@ -45,7 +45,7 @@ dependencies = [
   "pyyaml",
   "pyccl",
   "astropy",
-  "pybinny>=0.3.2",
+  "pybinny>=0.6.0",
   "derivkit",
   "cmasher",
   "getdist",

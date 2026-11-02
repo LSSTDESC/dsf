@@ -5,7 +5,7 @@ import pyccl as ccl
 from dsf.covariance.ingredients.geometry import gm_lensing_window
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--output", required=True)
+parser.add_argument("--output", default="gm_convergence.npz")
 args = parser.parse_args()
 
 cosmo = ccl.CosmologyVanillaLCDM()

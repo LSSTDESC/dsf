@@ -89,7 +89,7 @@ class DeltaSigmaCovarianceBuilder:
         galaxy_bias: ScalarOrPerBin | None = None,
         k: FloatArray | None = None,
         projection: Mapping[str, Any] | None = None,
-        hankel: Mapping[str, Any] | None = None,
+        hankel: Mapping[str, Any] | HankelTransform | None = None,
     ) -> None:
         """Initialize the covariance builder.
 
@@ -115,9 +115,8 @@ class DeltaSigmaCovarianceBuilder:
             projection: Optional line-of-sight projection settings containing
                 ``pi`` (grid in ``Mpc / h``) and ``gm_window`` (galaxy-matter
                 line-of-sight window).
-            hankel: Optional Hankel configuration containing backend settings and
-                an ``orders`` mapping for the ``gm``, ``gg``, and ``cross`` covariance
-                blocks. Defaults to Bessel order 2 for all blocks.
+            hankel: Optional Hankel configuration mapping or precomputed
+                HankelTransform instance.
         """
         if (pk_gg is None) != (pk_gm is None):
             raise ValueError("pk_gg and pk_gm must be provided together.")
@@ -204,7 +203,9 @@ class DeltaSigmaCovarianceBuilder:
         self.pi = None if pi is None else np.asarray(pi, dtype=float)
         self.gm_window = None if gm_window is None else np.asarray(gm_window, dtype=float)
 
-        hankel_config = {} if hankel is None else dict(hankel)
+        hankel_config = {} if isinstance(hankel, HankelTransform) else (
+            {} if hankel is None else dict(hankel)
+        )
 
         self.taper = bool(hankel_config.pop("taper", True))
         self.taper_kwargs = hankel_config.pop("taper_kwargs", None)
@@ -219,7 +220,11 @@ class DeltaSigmaCovarianceBuilder:
         self._lens_ingredient_cache: dict[int, dict[str, Any]] = {}
         self._source_ingredient_cache: dict[int, dict[str, Any]] = {}
 
-        self.hankel = self.hankel_transform(hankel_config)
+        self.hankel = (
+            hankel
+            if isinstance(hankel, HankelTransform)
+            else self.hankel_transform(hankel_config)
+        )
 
     def covariance_for_pair(
         self,

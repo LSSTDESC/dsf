@@ -1,255 +1,187 @@
-"""Tomography inputs for Delta Sigma forecasts.
-
-This module provides a thin Binny-facing adapter for Delta Sigma forecasts.
-Binny owns the survey presets, redshift distributions, tomographic binning,
-bin summaries, densities, and pair filtering. DSF only chooses the lens and
-source samples needed by the forecast and optionally passes forecast-specific
-overrides into Binny.
-"""
+"""Binny tomography inputs for Delta Sigma forecasts."""
 
 from __future__ import annotations
 
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 
 import numpy as np
+import yaml
 from binny import NZTomography
 
-from dsf.utils.types import BinPairs, FloatArray, TomographyInputs
+from dsf.utils.types import BinPairs, TomographyInputs
 
-__all__ = [
-    "TomographyBuilder",
-]
+__all__ = ["TomographyBuilder"]
 
 
 class TomographyBuilder:
-    """Build Binny tomography inputs for a Delta Sigma forecast."""
+    """Prepare lens and source tomography using Binny."""
 
     def __init__(
         self,
+        lens: Mapping[str, Any] | None = None,
+        source: Mapping[str, Any] | None = None,
         *,
-        lens_survey: str = "desi",
-        source_survey: str = "lsst",
-        lens_sample: str | None = "lrg",
-        source_sample: str | None = None,
-        lens_year: str | None = None,
-        source_year: str | None = None,
-        lens_scenario: str | None = None,
-        source_scenario: str | None = None,
-        lens_role: str = "lens",
-        source_role: str = "source",
         overlap_threshold: float = 0.10,
         source_behind_lens: bool = True,
-        center_method: str = "mean",
-        decimal_places: int = 4,
-        shared_overrides: Mapping[str, Any] | None = None,
-        lens_overrides: Mapping[str, Any] | None = None,
-        source_overrides: Mapping[str, Any] | None = None,
     ) -> None:
-        """Set the survey samples, pair selection, and forecast overrides.
+        """Configure lens and source tomography.
 
         Args:
-            lens_survey: Built-in Binny survey preset used for the foreground
-                lens sample.
-            source_survey: Built-in Binny survey preset used for the background
-                source sample.
-            lens_sample: Optional lens sample label, for example ``"lrg"`` or
-                ``"elg"`` for DESI-style presets.
-            source_sample: Optional source sample label for presets that select
-                samples by name.
-            lens_year: Optional lens survey year label.
-            source_year: Optional source survey year label.
-            lens_scenario: Optional lens survey scenario label.
-            source_scenario: Optional source survey scenario label.
-            lens_role: Survey role used for the foreground sample.
-            source_role: Survey role used for the background sample.
-            overlap_threshold: Maximum allowed lens-source redshift-distribution
-                overlap fraction.
-            source_behind_lens: Whether to keep only pairs whose source-bin
-                center is larger than the lens-bin center.
-            center_method: Binny bin-center definition used for pair ordering.
-            decimal_places: Number of decimal places used by Binny summaries.
-            shared_overrides: Binny tomography-spec overrides applied to both
-                lens and source samples.
-            lens_overrides: Binny tomography-spec overrides applied only to the
-                lens sample.
-            source_overrides: Binny tomography-spec overrides applied only to the
-                source sample.
+            lens: Lens configuration using a Binny survey preset, parent n(z),
+                or predefined tomographic bins.
+            source: Source configuration using the same input conventions.
+            overlap_threshold: Maximum allowed lens-source distribution overlap.
+            source_behind_lens: Require source-bin centers above lens-bin centers.
         """
-        self.lens_survey = lens_survey
-        self.source_survey = source_survey
-
-        self.lens_sample = lens_sample
-        self.source_sample = source_sample
-
-        self.lens_year = lens_year
-        self.source_year = source_year
-
-        self.lens_scenario = lens_scenario
-        self.source_scenario = source_scenario
-
-        self.lens_role = lens_role
-        self.source_role = source_role
+        self.lens = dict(lens) if lens is not None else {
+            "survey": "desi", "sample": "lrg"
+        }
+        self.source = dict(source) if source is not None else {
+            "survey": "lsst"
+        }
 
         self.overlap_threshold = float(overlap_threshold)
         self.source_behind_lens = bool(source_behind_lens)
-        self.center_method = center_method
-        self.decimal_places = int(decimal_places)
 
-        self.shared_overrides = dict(shared_overrides or {})
-        self.lens_overrides = dict(lens_overrides or {})
-        self.source_overrides = dict(source_overrides or {})
+        if not 0.0 <= self.overlap_threshold <= 1.0:
+            raise ValueError("overlap_threshold must be between 0 and 1.")
 
-    def prepare_bins(self) -> TomographyInputs:
-        """Return Binny tomography products for Delta Sigma forecasts.
+    @staticmethod
+    def _read_config(config: Mapping[str, Any] | str | Path) -> dict[str, Any]:
+        """Read tomography metadata from a Python dictionary or YAML file."""
+        if isinstance(config, Mapping):
+            data = dict(config)
+        else:
+            with Path(config).open("r", encoding="utf-8") as stream:
+                data = yaml.safe_load(stream)
 
-        Returns:
-            Dictionary containing the Binny builders, Binny results, bin-shape
-            summaries, population summaries, tomography metadata, and selected
-            ``(lens_bin, source_bin)`` pairs.
+            if not isinstance(data, Mapping):
+                raise ValueError("Tomography YAML must contain a mapping.")
 
-        Raises:
-            RuntimeError: If no lens-source bin pair survives the requested
-                overlap and source-behind-lens cuts.
-        """
-        lens_builder, lens_result = self._lens_sample()
-        source_builder, source_result = self._source_sample()
+            data = dict(data)
 
-        lens_shape_stats = lens_builder.shape_stats(
-            center_method=self.center_method,
-            decimal_places=self.decimal_places,
-        )
-        source_shape_stats = source_builder.shape_stats(
-            center_method=self.center_method,
-            decimal_places=self.decimal_places,
-        )
+        if "tomography" in data:
+            entries = data["tomography"]
 
-        lens_population_stats = self._population_stats(
-            builder=lens_builder,
-            result=lens_result,
-        )
-        source_population_stats = self._population_stats(
-            builder=source_builder,
-            result=source_result,
-        )
+            if not isinstance(entries, list) or len(entries) != 1:
+                raise ValueError(
+                    "Custom tomography configuration must contain "
+                    "exactly one tomography entry."
+                )
 
-        lens_metadata = lens_result.tomo_meta
-        source_metadata = source_result.tomo_meta
+            data = dict(entries[0])
 
-        bin_pairs = self._selected_pairs(
-            lens_result=lens_result,
-            source_result=source_result,
-            lens_centers=lens_shape_stats["centers"],
-            source_centers=source_shape_stats["centers"],
-        )
+        return data
 
-        if not bin_pairs:
-            raise RuntimeError(
-                "No galaxy-galaxy-lensing lens-source pairs survived the "
-                f"selection cuts: overlap <= {self.overlap_threshold}"
-                + (" and source_bin_center > lens_bin_center." if self.source_behind_lens else ".")
+    @classmethod
+    def _build_sample(cls, config: Mapping[str, Any]) -> tuple[NZTomography, Any]:
+        """Build a survey, parent distribution, or predefined bins with Binny."""
+        config = dict(config)
+        builder = NZTomography()
+
+        if "survey" in config:
+            result = builder.build_survey_bins(
+                config["survey"],
+                role=config.get("role"),
+                year=config.get("year"),
+                scenario=config.get("scenario"),
+                sample=config.get("sample"),
+                overrides=config.get("overrides"),
+                include_tomo_metadata=True,
+            )
+            return builder, result
+
+        if "config" not in config:
+            raise ValueError(
+                "Custom tomography requires a 'config' dictionary or YAML path."
             )
 
-        return {
-            "lens_builder": lens_builder,
-            "source_builder": source_builder,
-            "lens_result": lens_result,
-            "source_result": source_result,
-            "lens_shape_stats": lens_shape_stats,
-            "source_shape_stats": source_shape_stats,
-            "lens_bin_centers": lens_shape_stats["centers"],
-            "source_bin_centers": source_shape_stats["centers"],
-            "lens_population_stats": lens_population_stats,
-            "source_population_stats": source_population_stats,
-            "lens_metadata": lens_metadata,
-            "source_metadata": source_metadata,
-            "bin_pairs": bin_pairs,
-            "shared_overrides": self.shared_overrides,
-            "lens_overrides": self.lens_overrides,
-            "source_overrides": self.source_overrides,
-        }
+        spec = cls._read_config(config["config"])
 
-    def prepare_tomography(self) -> TomographyInputs:
-        """Return Binny tomography products for Delta Sigma forecasts.
+        if "bins" in config:
+            if "z" not in config:
+                raise ValueError("Predefined bins require a redshift grid 'z'.")
 
-        This alias keeps older forecast scripts working while the preferred
-        public method name is ``prepare_bins``.
-        """
-        return self.prepare_bins()
+            properties = spec.get("sample_properties")
+            fractions = spec.get("population_fractions")
 
-    def _lens_sample(self) -> tuple[NZTomography, Any]:
-        """Return the foreground lens sample requested by the forecast."""
-        return self._sample(
-            survey=self.lens_survey,
-            role=self.lens_role,
-            sample=self.lens_sample,
-            year=self.lens_year,
-            scenario=self.lens_scenario,
-            shared_overrides=self.shared_overrides,
-            sample_overrides=self.lens_overrides,
-        )
+            if not isinstance(properties, Mapping):
+                raise ValueError("Predefined bins require sample_properties.")
 
-    def _source_sample(self) -> tuple[NZTomography, Any]:
-        """Return the background source sample requested by the forecast."""
-        return self._sample(
-            survey=self.source_survey,
-            role=self.source_role,
-            sample=self.source_sample,
-            year=self.source_year,
-            scenario=self.source_scenario,
-            shared_overrides=self.shared_overrides,
-            sample_overrides=self.source_overrides,
+            if not isinstance(fractions, Mapping):
+                raise ValueError("Predefined bins require population_fractions.")
+
+            density = properties.get("number_density")
+
+            if not isinstance(density, Mapping) or not density:
+                raise ValueError(
+                    "Predefined bins require sample_properties.number_density."
+                )
+
+            bins = config["bins"]
+            indices = {int(i) for i in bins}
+            fractions = {int(i): float(f) for i, f in fractions.items()}
+
+            if not indices or set(fractions) != indices:
+                raise ValueError(
+                    "population_fractions keys must match the bin indices."
+                )
+
+            if any(not np.isfinite(f) or f < 0.0 for f in fractions.values()):
+                raise ValueError(
+                    "population_fractions must be finite and nonnegative."
+                )
+
+            if not np.isclose(sum(fractions.values()), 1.0, rtol=1e-6, atol=1e-8):
+                raise ValueError("population_fractions must sum to one.")
+
+            result = builder.build_predefined_bins(
+                z=config["z"],
+                bins=bins,
+                normalize_bins=spec.get("normalize_bins", False),
+            )
+
+            result = type(result)(
+                z=result.z,
+                nz=result.nz,
+                spec={**result.spec, "sample_properties": dict(properties)},
+                bins=result.bins,
+                tomo_meta={"frac_per_bin": fractions},
+                survey_meta=result.survey_meta,
+                survey=result.survey,
+            )
+
+            return builder, result
+
+        if "z" in config and "nz" in config:
+            result = builder.build_bins(
+                z=config["z"],
+                nz=config["nz"],
+                tomo_spec=spec,
+                include_tomo_metadata=True,
+            )
+            return builder, result
+
+        if "z" in config or "nz" in config:
+            raise ValueError("Custom parent n(z) requires both 'z' and 'nz'.")
+
+        raise ValueError(
+            "Custom tomography requires 'z' and 'nz', or 'z' and 'bins'."
         )
 
     @staticmethod
-    def _sample(
-        *,
-        survey: str,
-        role: str,
-        sample: str | None = None,
-        year: str | None = None,
-        scenario: str | None = None,
-        shared_overrides: Mapping[str, Any] | None = None,
-        sample_overrides: Mapping[str, Any] | None = None,
-    ) -> tuple[NZTomography, Any]:
-        """Return one Binny survey sample with optional forecast overrides."""
-        builder = NZTomography()
+    def _population_stats(result: Any) -> dict[str, Any]:
+        """Return Binny population statistics using survey number densities."""
+        density = result.spec.get("sample_properties", {}).get("number_density", {})
 
-        overrides = {
-            **dict(shared_overrides or {}),
-            **dict(sample_overrides or {}),
-        }
-
-        result = builder.build_survey_bins(
-            survey,
-            role=role,
-            year=year,
-            scenario=scenario,
-            sample=sample,
-            overrides=overrides or None,
-            include_tomo_metadata=True,
-        )
-
-        return builder, result
-
-    def _population_stats(
-        self,
-        *,
-        builder: NZTomography,
-        result: Any,
-    ) -> dict[str, Any]:
-        """Return population statistics in the format expected by DSF."""
-        sample_properties = result.spec.get("sample_properties", {})
-        density = sample_properties.get("number_density", {})
-
-        kwargs: dict[str, Any] = {
-            "decimal_places": self.decimal_places,
-        }
+        kwargs: dict[str, Any] = {"decimal_places": 4}
 
         if "n_gal_arcmin2" in density:
             kwargs["density_total"] = float(density["n_gal_arcmin2"])
 
-        stats = dict(builder.population_stats(**kwargs))
+        stats = dict(result.population_stats(**kwargs))
 
         if "density_per_bin" in stats:
             return stats
@@ -257,121 +189,88 @@ class TomographyBuilder:
         if "n_gal_comoving_h3_mpc3" in density:
             nbar = float(density["n_gal_comoving_h3_mpc3"])
             stats["density_per_bin"] = {
-                int(bin_index): nbar * float(fraction)
-                for bin_index, fraction in stats.get("fractions", {}).items()
+                int(i): nbar * float(f)
+                for i, f in stats.get("fractions", {}).items()
             }
             stats["density_unit"] = "h^3 Mpc^-3"
             return stats
 
         if "total_count_per_bin" in stats and "volume_per_bin" in stats:
             stats["density_per_bin"] = {
-                int(bin_index): float(stats["total_count_per_bin"][bin_index])
-                / float(stats["volume_per_bin"][bin_index])
-                for bin_index in stats["total_count_per_bin"]
+                int(i): float(stats["total_count_per_bin"][i])
+                        / float(stats["volume_per_bin"][i])
+                for i in stats["total_count_per_bin"]
             }
             stats["density_unit"] = "h^3 Mpc^-3"
-            return stats
 
         return stats
 
+    def prepare_bins(self) -> TomographyInputs:
+        """Return Binny tomography products for Delta Sigma forecasts."""
+        lens_builder, lens_result = self._build_sample(self.lens)
+        source_builder, source_result = self._build_sample(self.source)
+
+        lens_shape = lens_result.shape_stats(
+            center_method="mean", decimal_places=4
+        )
+        source_shape = source_result.shape_stats(
+            center_method="mean", decimal_places=4
+        )
+
+        pairs = self._selected_pairs(lens_result, source_result)
+
+        if not pairs:
+            raise RuntimeError(
+                "No lens-source bin pairs survived the selection cuts."
+            )
+
+        return {
+            "lens_builder": lens_builder,
+            "source_builder": source_builder,
+            "lens_result": lens_result,
+            "source_result": source_result,
+            "lens_shape_stats": lens_shape,
+            "source_shape_stats": source_shape,
+            "lens_bin_centers": lens_shape["centers"],
+            "source_bin_centers": source_shape["centers"],
+            "lens_population_stats": self._population_stats(lens_result),
+            "source_population_stats": self._population_stats(source_result),
+            "lens_metadata": lens_result.tomo_meta,
+            "source_metadata": source_result.tomo_meta,
+            "bin_pairs": pairs,
+            "shared_overrides": {},
+            "lens_overrides": dict(self.lens.get("overrides") or {}),
+            "source_overrides": dict(self.source.get("overrides") or {}),
+        }
+
+    def prepare_tomography(self) -> TomographyInputs:
+        """Backward-compatible alias for prepare_bins."""
+        return self.prepare_bins()
+
     def _selected_pairs(
         self,
-        *,
         lens_result: Any,
         source_result: Any,
-        lens_centers: dict[int, float],
-        source_centers: dict[int, float],
     ) -> BinPairs:
-        """Return the lens-source bin pairs kept for the forecast.
+        """Select lens-source bin pairs using Binny."""
+        filters = [
+            {
+                "name": "overlap_fraction",
+                "threshold": self.overlap_threshold,
+                "compare": "le",
+            }
+        ]
 
-        The lens and source samples may be built on different parent redshift
-        grids. For pair selection, each source bin is interpolated onto the lens
-        redshift grid before the overlap fraction is evaluated. The original
-        Binny tomography outputs are left unchanged.
-        """
-        pairs: BinPairs = []
+        if self.source_behind_lens:
+            filters.append({
+                "name": "score_relation",
+                "score": "mean",
+                "relation": "gt",
+            })
 
-        lens_z: FloatArray = np.asarray(lens_result.z, dtype=float)
-        source_z: FloatArray = np.asarray(source_result.z, dtype=float)
+        spec = {
+            "topology": {"name": "pairs_cartesian"},
+            "filters": filters,
+        }
 
-        for lens_bin, lens_nz_raw in lens_result.bins.items():
-            lens_index = int(lens_bin)
-            lens_nz: FloatArray = np.asarray(lens_nz_raw, dtype=float)
-
-            for source_bin, source_nz_raw in source_result.bins.items():
-                source_index = int(source_bin)
-
-                if self.source_behind_lens:
-                    if float(source_centers[source_index]) <= float(lens_centers[lens_index]):
-                        continue
-
-                source_nz: FloatArray = np.asarray(source_nz_raw, dtype=float)
-
-                overlap = self._overlap_fraction_on_lens_grid(
-                    lens_z=lens_z,
-                    lens_nz=lens_nz,
-                    source_z=source_z,
-                    source_nz=source_nz,
-                )
-
-                if overlap <= self.overlap_threshold:
-                    pairs.append((lens_index, source_index))
-
-        return pairs
-
-    @staticmethod
-    def _overlap_fraction_on_lens_grid(
-        *,
-        lens_z: FloatArray,
-        lens_nz: FloatArray,
-        source_z: FloatArray,
-        source_nz: FloatArray,
-    ) -> float:
-        """Measure the fractional redshift overlap of a lens and source bin.
-
-        This helper compares the lens and source redshift distributions on the
-        lens redshift grid. It is useful when lens and source samples are defined
-        on different grids, but the overlap calculation needs both distributions
-        evaluated at the same redshift values.
-
-        Binny provides this type of overlap calculation natively, but expects the
-        lens and source distributions to be evaluated on a shared redshift grid.
-        This helper handles the case where the two samples are defined on different
-        redshift grids by evaluating the source distribution on the lens grid before
-        computing the fractional overlap.
-
-        Args:
-            lens_z: Redshift grid for the lens bin.
-            lens_nz: Lens redshift distribution evaluated on ``lens_z``.
-            source_z: Redshift grid for the source bin.
-            source_nz: Source redshift distribution evaluated on ``source_z``.
-
-        Returns:
-            Fractional overlap between the lens and source redshift distributions,
-            normalized by the smaller integrated distribution. Returns zero if
-            either distribution has a non-positive integral on the comparison grid.
-        """
-        source_on_lens_grid = np.interp(
-            lens_z,
-            source_z,
-            source_nz,
-            left=0.0,
-            right=0.0,
-        )
-
-        lens_integral = float(np.trapezoid(lens_nz, lens_z))
-        source_integral = float(np.trapezoid(source_on_lens_grid, lens_z))
-
-        denominator = min(lens_integral, source_integral)
-
-        if denominator <= 0.0:
-            return 0.0
-
-        overlap_integral = float(
-            np.trapezoid(
-                np.minimum(lens_nz, source_on_lens_grid),
-                lens_z,
-            )
-        )
-
-        return overlap_integral / denominator
+        return list(lens_result.bin_combo_filter(spec, other=source_result))

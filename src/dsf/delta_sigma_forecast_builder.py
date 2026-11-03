@@ -404,13 +404,8 @@ class DeltaSigmaForecastBuilder:
                 "pk2d_kwargs": {},
             }
 
-        context_dict: dict[str, Any] = dict(context)
-        mapped: dict[str, Any] = dict(self.theta_mapper(theta, context_dict))
-
-        if "cosmo" not in mapped:
-            mapped["cosmo"] = self.cosmo
-
-        if "pk2d_kwargs" not in mapped:
-            mapped["pk2d_kwargs"] = {}
+        mapped = dict(self.theta_mapper(theta, dict(context)))
+        mapped.setdefault("cosmo", self.cosmo)
+        mapped.setdefault("pk2d_kwargs", {})
 
         return mapped

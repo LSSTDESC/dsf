@@ -22,7 +22,9 @@ Minimal gm covariance example
 
    import matplotlib.pyplot as plt
    import numpy as np
+   from matplotlib.colors import LinearSegmentedColormap
 
+   from dsf import DSF_CMAP
    from dsf.covariance.cov_builder import DeltaSigmaCovarianceBuilder
    from dsf.modelling.cosmology import make_ccl_cosmology
    from dsf.tomography.tomo_builder import TomographyBuilder
@@ -89,10 +91,16 @@ Minimal gm covariance example
    print("diagonal error shape:", errors.shape)
    print("diagonal errors:", errors)
 
+   cmap = LinearSegmentedColormap.from_list(
+       "dsf_truncated",
+       DSF_CMAP(np.linspace(0.1, 0.9, 256)),
+   )
+
    fig, ax = plt.subplots(figsize=(5.4, 4.6))
 
    image = ax.imshow(
        corr,
+       cmap=cmap,
        vmin=-1.0,
        vmax=1.0,
        origin="lower",

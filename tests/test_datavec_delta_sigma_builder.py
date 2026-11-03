@@ -492,3 +492,73 @@ def test_delta_sigma_lens_bin_forwards_pk2d_kwargs(patch_delta_sigma):
     assert pk2d_func.calls == [
         {"cosmo": "cosmo", "model": "nonlinear", "amplitude": 2.0}
     ]
+
+
+def test_stacked_delta_sigma_builds_projection_once(patch_delta_sigma):
+    """Tests that stacked tomography builds one projection for all lens bins."""
+    from types import SimpleNamespace
+
+    pk2d_func = DummyPk2DFunction()
+    calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)
+
+    lens_result = SimpleNamespace(
+        z=np.array([0.0, 0.5, 1.0, 1.5, 2.0]),
+        bins={
+            0: np.array([1.0, 1.0, 1.0, 0.0, 0.0]),
+            1: np.array([0.0, 0.0, 1.0, 1.0, 1.0]),
+        },
+        tomo_meta={"bins": {"bin_edges": [0.0, 1.0, 2.0]}},
+    )
+
+    tomography = {
+        "lens_result": lens_result,
+        "bin_pairs": [(0, 0), (0, 1), (1, 1)],
+    }
+
+    result = calculator.stacked_delta_sigma(
+        r=np.array([1.0, 2.0]),
+        tomography=tomography,
+        cosmo="cosmo",
+    )
+
+    assert len(pk2d_func.calls) == 1
+    assert result.shape == (6,)
+    np.testing.assert_allclose(result[:2], result[2:4])
+
+
+def test_stacked_delta_sigma_rebuilds_projection_between_calls(patch_delta_sigma):
+    """Tests that separate model evaluations rebuild the power spectrum."""
+    from types import SimpleNamespace
+
+    pk2d_func = DummyPk2DFunction()
+    calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)
+
+    lens_result = SimpleNamespace(
+        z=np.array([0.0, 0.5, 1.0]),
+        bins={0: np.ones(3)},
+        tomo_meta={"bins": {"bin_edges": [0.0, 1.0]}},
+    )
+
+    tomography = {
+        "lens_result": lens_result,
+        "bin_pairs": [(0, 0)],
+    }
+
+    calculator.stacked_delta_sigma(
+        r=np.array([1.0, 2.0]),
+        tomography=tomography,
+        cosmo="cosmo",
+        pk2d_kwargs={"amplitude": 1.0},
+    )
+
+    calculator.stacked_delta_sigma(
+        r=np.array([1.0, 2.0]),
+        tomography=tomography,
+        cosmo="cosmo",
+        pk2d_kwargs={"amplitude": 1.1},
+    )
+
+    assert pk2d_func.calls == [
+        {"cosmo": "cosmo", "amplitude": 1.0},
+        {"cosmo": "cosmo", "amplitude": 1.1},
+    ]

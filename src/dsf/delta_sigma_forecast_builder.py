@@ -241,13 +241,6 @@ class DeltaSigmaForecastBuilder:
             "r": self.r,
             "rp_bin_edges": self.rp_bin_edges,
             "tomography": tomography,
-            "lens_result": tomography["lens_result"],
-            "source_result": tomography["source_result"],
-            "bin_pairs": list(tomography["bin_pairs"]),
-            "lens_bin_centers": tomography["lens_bin_centers"],
-            "source_bin_centers": tomography["source_bin_centers"],
-            "lens_shape_stats": tomography["lens_shape_stats"],
-            "source_shape_stats": tomography["source_shape_stats"],
             "covariance_builder": cov_builder,
             "cov_pairs": list(cov_pairs),
             "covariance_kind": "gm",
@@ -267,6 +260,13 @@ class DeltaSigmaForecastBuilder:
 
         forecast: dict[str, Any] = {
             **context,
+            "lens_result": tomography["lens_result"],
+            "source_result": tomography["source_result"],
+            "bin_pairs": list(tomography["bin_pairs"]),
+            "lens_bin_centers": tomography["lens_bin_centers"],
+            "source_bin_centers": tomography["source_bin_centers"],
+            "lens_shape_stats": tomography["lens_shape_stats"],
+            "source_shape_stats": tomography["source_shape_stats"],
             "model": self.model,
             "theta0": self.theta0,
             "parameter_names": self.parameter_names,
@@ -347,9 +347,8 @@ class DeltaSigmaForecastBuilder:
         """Return the shared forecast context.
 
         Returns:
-            Dictionary containing the tomography products, bin centers, selected
-            bin pairs, covariance builder, calculator, radius grids, and
-            fiducial cosmology.
+            Dictionary containing the tomography products, covariance builder,
+            calculator, radius grids, and fiducial cosmology.
 
         Notes:
             The returned dictionary is a shallow copy of the cached context so

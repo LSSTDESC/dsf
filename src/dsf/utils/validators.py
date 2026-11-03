@@ -37,6 +37,7 @@ __all__ = [
     "validate_redshift_distribution_support",
     "validate_redshift_edges",
     "validate_redshift_pair",
+    "validate_pk2d_grids",
     "validate_scale_factor",
     "validate_strictly_increasing",
 ]
@@ -842,3 +843,29 @@ def validate_bin_pair(
             f"Bin pair {pair} is not among the selected bin pairs: "
             f"{bin_pairs}. Indices refer to the original tomographic bins."
         )
+
+
+def validate_pk2d_grids(
+    k_array: NDArray[np.float64],
+    a_array: NDArray[np.float64],
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    """Validate wavenumber and scale-factor grids.
+
+    Args:
+        k_array: Wavenumber grid.
+        a_array: Scale-factor grid.
+
+    Returns:
+        Validated arrays.
+    """
+    k_arr = validate_positive_strictly_increasing_1d_array(
+        k_array, "k_array", min_size=2
+    )
+    a_arr = validate_positive_strictly_increasing_1d_array(
+        a_array, "a_array", min_size=2
+    )
+
+    for a in a_arr:
+        validate_scale_factor(float(a))
+
+    return k_arr, a_arr

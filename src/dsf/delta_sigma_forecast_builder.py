@@ -66,9 +66,7 @@ class DeltaSigmaForecastBuilder:
         theta_mapper: ThetaMapper | None = None,
         parameter_names: Sequence[str] | None = None,
         tomography_kwargs: Mapping[str, Any] | None = None,
-        observable: str = "delta_sigma",
         covariance_kwargs: Mapping[str, Any] | None = None,
-        covariance_kind: str = "gm",
         trim_edge_points: int = 0,
         verbose: bool = True,
     ) -> None:
@@ -98,27 +96,13 @@ class DeltaSigmaForecastBuilder:
             tomography_kwargs: Optional keyword arguments passed to
                 ``TomographyBuilder``. Defaults to DESI LRG lenses and
                 LSST sources unless overridden.
-            observable: Forecast observable to evaluate. Currently only
-                ``"delta_sigma"`` is supported.
             covariance_kwargs: Optional keyword arguments passed to
-                ``DeltaSigmaCovarianceBuilder``. Defaults to nonlinear
-                power with the covariance builder's default configuration.
-            covariance_kind: Covariance product to use. Only ``"gm"`` is currently
-                supported by this builder because the forecast data vector is
-                Delta Sigma-only. The ``"gg"`` and ``"joint"`` covariance paths are
-                reserved for future builders with matching data vectors.
+                ``DeltaSigmaCovarianceBuilder``.
             trim_edge_points: Number of edge points removed from each lens-bin
                 redshift distribution before averaging Delta Sigma.
             verbose: Whether progress messages are printed while preparing the
                 forecast.
         """
-        if covariance_kind != "gm":
-            raise NotImplementedError(
-                "Only covariance_kind='gm' is currently supported because "
-                "the forecast data vector is Delta Sigma-only. Add a joint data-vector "
-                "builder before using 'gg' or 'joint' covariance."
-            )
-
         self.cosmo = cosmo
         self.pk2d_func = pk2d_func
         self.pk2d_deltasigma = lambda **kwargs: self.pk2d_func(**kwargs)["pk_deltasigma"]
@@ -135,18 +119,6 @@ class DeltaSigmaForecastBuilder:
         self.sigma_e = sigma_e
         self.trim_edge_points = int(trim_edge_points)
 
-        allowed_observables = {"delta_sigma"}
-
-        if observable not in allowed_observables:
-            raise NotImplementedError(
-                f"observable={observable!r} is not supported yet. "
-                "Currently this builder supports only 'delta_sigma'. "
-                "Use a pair-dependent data-vector builder for gamma_t."
-            )
-
-        self.observable = observable
-
-        self.covariance_kind = covariance_kind
         self.verbose = bool(verbose)
 
         self.tomography_kwargs = {
@@ -156,10 +128,7 @@ class DeltaSigmaForecastBuilder:
             **(tomography_kwargs or {}),
         }
 
-        self.covariance_kwargs = {
-            "nonlinear": True,
-            **(covariance_kwargs or {}),
-        }
+        self.covariance_kwargs = dict(covariance_kwargs or {})
 
         self._forecast: dict[str, Any] | None = None
 
@@ -233,7 +202,7 @@ class DeltaSigmaForecastBuilder:
         ]
 
         if covariance is None:
-            self._log(f"[3/5] Computing {self.covariance_kind} block-diagonal covariance...")
+            self._log("[3/5] Computing gm block-diagonal covariance...")
 
             cov_pairs, cov = cov_builder.gm_block_diagonal(bin_pairs=data_pairs)
             cov_pairs = list(cov_pairs)
@@ -283,8 +252,8 @@ class DeltaSigmaForecastBuilder:
             "source_shape_stats": tomography["source_shape_stats"],
             "covariance_builder": cov_builder,
             "cov_pairs": list(cov_pairs),
-            "covariance_kind": self.covariance_kind,
-            "observable": self.observable,
+            "covariance_kind": "gm",
+            "observable": "delta_sigma",
         }
 
         self._log("[4/5] Done: forecast context prepared.")

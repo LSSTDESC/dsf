@@ -230,11 +230,11 @@ def test_init_forwards_tomography_kwargs(patched_dependencies):
 
 
 def test_init_forwards_covariance_kwargs(patched_dependencies):
-    """Tests that covariance settings are forwarded with the expected defaults."""
+    """Tests that covariance settings are forwarded to the covariance builder."""
     builder = make_builder(
         covariance_kwargs={
-            "nonlinear": False,
-            "hankel": {"backend": "fftlog"},
+            "k": np.array([0.01, 0.1, 1.0]),
+            "hankel": {"taper": False},
         }
     )
 
@@ -242,8 +242,9 @@ def test_init_forwards_covariance_kwargs(patched_dependencies):
 
     kwargs = DummyDeltaSigmaCovarianceBuilder.instances[0].kwargs
 
-    assert kwargs["nonlinear"] is False
-    assert kwargs["hankel"] == {"backend": "fftlog"}
+    np.testing.assert_array_equal(kwargs["k"], [0.01, 0.1, 1.0])
+    assert kwargs["hankel"] == {"taper": False}
+    assert "nonlinear" not in kwargs
 
 
 def test_prepare_builds_computed_covariance_and_stacked_data_vector(
@@ -473,18 +474,6 @@ def test_model_rejects_non_mapping_pk2d_kwargs(patched_dependencies):
 
     with pytest.raises(TypeError, match="pk2d_kwargs"):
         builder.model(builder.theta0, context={"tomography": make_tomography()})
-
-
-def test_init_rejects_non_gm_covariance_kind(patched_dependencies):
-    """Tests that initialization rejects unsupported covariance kinds."""
-    with pytest.raises(NotImplementedError, match="covariance_kind='gm'"):
-        make_builder(covariance_kind="joint")
-
-
-def test_init_rejects_unsupported_observable(patched_dependencies):
-    """Tests that initialization rejects unsupported observables."""
-    with pytest.raises(NotImplementedError, match="observable='gamma_t'"):
-        make_builder(observable="gamma_t")
 
 
 def test_init_does_not_evaluate_power_spectra(patched_dependencies):

@@ -24,7 +24,7 @@ Minimal gm covariance example
    import numpy as np
 
    from dsf.covariance.cov_builder import DeltaSigmaCovarianceBuilder
-   from dsf.modelling import make_ccl_cosmology
+   from dsf.modelling.cosmology import make_ccl_cosmology
    from dsf.tomography.tomo_builder import TomographyBuilder
 
    cosmo = make_ccl_cosmology(

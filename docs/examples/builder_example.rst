@@ -47,7 +47,8 @@ Forecast-builder example
    from getdist import plots as getdist_plots
 
    from dsf.delta_sigma_forecast_builder import DeltaSigmaForecastBuilder
-   from dsf.modelling import make_ccl_cosmology, pk2d_hod
+   from dsf.modelling.cosmology import make_ccl_cosmology
+   from dsf.modelling.hod import pk2d_hod
 
 
    np.set_printoptions(precision=8, suppress=True)

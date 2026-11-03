@@ -22,7 +22,8 @@ Minimal example
    import numpy as np
 
    from dsf.data_vector.delta_sigma_builder import DeltaSigmaCalculator
-   from dsf.modelling import make_ccl_cosmology, pk2d_hod
+   from dsf.modelling.cosmology import make_ccl_cosmology
+   from dsf.modelling.hod import pk2d_hod
 
 
    cosmo = make_ccl_cosmology(
@@ -142,11 +143,11 @@ ingredients without changing the data-vector call.
    import numpy as np
 
    from dsf.data_vector.delta_sigma_builder import DeltaSigmaCalculator
-   from dsf.modelling import (
-       make_ccl_cosmology,
-       pk2d_hod,
+   from dsf.modelling.cosmology import make_ccl_cosmology
+   from dsf.modelling.hod import pk2d_hod
+   from dsf.modelling.baryons import pk2d_hod_baryonified
+   from dsf.modelling.combinations import (
        pk2d_hod_with_nla,
-       pk2d_hod_baryonified,
        pk2d_hod_baryonified_with_nla,
    )
 
@@ -270,7 +271,8 @@ means it can be added after the baseline data vector has been evaluated.
    import numpy as np
 
    from dsf.data_vector.delta_sigma_builder import DeltaSigmaCalculator
-   from dsf.modelling import make_ccl_cosmology, pk2d_hod
+   from dsf.modelling.cosmology import make_ccl_cosmology
+   from dsf.modelling.hod import pk2d_hod
 
 
    cosmo = make_ccl_cosmology(
@@ -380,11 +382,9 @@ while keeping the same projected-radius grid and lens redshift.
    import numpy as np
 
    from dsf.data_vector.delta_sigma_builder import DeltaSigmaCalculator
-   from dsf.modelling import (
-       make_ccl_cosmology,
-       pk2d_hod,
-       pk2d_hod_with_nla,
-   )
+   from dsf.modelling.cosmology import make_ccl_cosmology
+   from dsf.modelling.hod import pk2d_hod
+   from dsf.modelling.combinations import pk2d_hod_with_nla
 
 
    cosmo = make_ccl_cosmology(
@@ -512,11 +512,9 @@ baseline Duffy relation, while values above unity increase concentrations.
    import numpy as np
 
    from dsf.data_vector.delta_sigma_builder import DeltaSigmaCalculator
-   from dsf.modelling import (
-       make_ccl_cosmology,
-       pk2d_hod,
-       pk2d_hod_baryonified,
-   )
+   from dsf.modelling.cosmology import make_ccl_cosmology
+   from dsf.modelling.hod import pk2d_hod
+   from dsf.modelling.baryons import pk2d_hod_baryonified
 
 
    cosmo = make_ccl_cosmology(
@@ -670,7 +668,8 @@ below shows both conventions with a secondary x-axis.
    import numpy as np
 
    from dsf.data_vector.delta_sigma_builder import DeltaSigmaCalculator
-   from dsf.modelling import make_ccl_cosmology, pk2d_hod
+   from dsf.modelling.cosmology import make_ccl_cosmology
+   from dsf.modelling.hod import pk2d_hod
 
 
    cosmo = make_ccl_cosmology(

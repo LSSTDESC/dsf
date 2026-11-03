@@ -10,6 +10,7 @@ Subpackages
    dsf.covariance
    dsf.data_vector
    dsf.hankel
+   dsf.modelling
    dsf.tomography
    dsf.utils
 
@@ -20,7 +21,6 @@ Submodules
    :maxdepth: 2
 
    dsf.delta_sigma_forecast_builder
-   dsf.modelling
 
 Module contents
 ---------------

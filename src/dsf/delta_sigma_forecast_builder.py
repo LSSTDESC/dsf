@@ -161,18 +161,16 @@ class DeltaSigmaForecastBuilder:
         self._log("[1/5] Building lens and source tomography...")
 
         model_inputs = self._model_inputs(self.theta0, context={})
-        self.fiducial_cosmo = model_inputs["cosmo"]
+        fiducial_cosmo = model_inputs["cosmo"]
 
         raw_pk2d_kwargs = model_inputs.get("pk2d_kwargs", {})
         if not isinstance(raw_pk2d_kwargs, Mapping):
             raise TypeError("theta_mapper output 'pk2d_kwargs' must be a mapping.")
 
         pk2d_spectra = self.pk2d_func(
-            cosmo=self.fiducial_cosmo,
+            cosmo=fiducial_cosmo,
             **dict(raw_pk2d_kwargs),
         )
-        self.pk2d_gm = pk2d_spectra["pk_gm"]
-        self.pk2d_gg = pk2d_spectra["pk_gg"]
 
         tomography = TomographyBuilder(**self.tomography_kwargs).prepare_bins()
 
@@ -185,13 +183,13 @@ class DeltaSigmaForecastBuilder:
         self._log("[2/5] Initializing Delta Sigma covariance builder...")
 
         cov_builder = DeltaSigmaCovarianceBuilder(
-            cosmo=self.fiducial_cosmo,
+            cosmo=fiducial_cosmo,
             tomography=tomography,
             rp_bin_edges=self.rp_bin_edges,
             area_deg2=self.area_deg2,
             sigma_e=self.sigma_e,
-            pk_gg=self.pk2d_gg,
-            pk_gm=self.pk2d_gm,
+            pk_gg=pk2d_spectra["pk_gg"],
+            pk_gm=pk2d_spectra["pk_gm"],
             **self.covariance_kwargs,
         )
 
@@ -238,7 +236,7 @@ class DeltaSigmaForecastBuilder:
         self._log("[4/5] Preparing shared forecast context...")
 
         context = {
-            "cosmo": self.fiducial_cosmo,
+            "cosmo": fiducial_cosmo,
             "calculator": self.calculator,
             "r": self.r,
             "rp_bin_edges": self.rp_bin_edges,

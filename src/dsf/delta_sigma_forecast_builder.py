@@ -295,10 +295,9 @@ class DeltaSigmaForecastBuilder:
         if covariance is None:
             self._log(f"[3/5] Computing {self.covariance_kind} block-diagonal covariance...")
 
-            cov_pairs, cov = self._covariance(
-                cov_builder=cov_builder,
-                bin_pairs=tomography["bin_pairs"],
-            )
+            cov_pairs, cov = cov_builder.gm_block_diagonal(bin_pairs=data_pairs)
+            cov_pairs = list(cov_pairs)
+            cov = np.asarray(cov, dtype=float)
 
             if list(cov_pairs) != data_pairs:
                 raise RuntimeError(
@@ -540,36 +539,6 @@ class DeltaSigmaForecastBuilder:
             mapped["pk2d_kwargs"] = {}
 
         return mapped
-
-    def _covariance(
-        self,
-        *,
-        cov_builder: DeltaSigmaCovarianceBuilder,
-        bin_pairs: Sequence[tuple[int, int]],
-    ) -> tuple[list[tuple[int, int]], FloatArray]:
-        """Return the covariance matrix requested by the forecast.
-
-        Args:
-            cov_builder: Covariance builder matched to the selected tomography.
-            bin_pairs: Lens-source bin pairs used by the Delta Sigma data vector.
-
-        Returns:
-            Bin-pair ordering and covariance matrix for the selected covariance
-            product.
-
-        Notes:
-            The default is ``gm`` because the current forecast data vector is the
-            lensing-style Delta Sigma signal. The ``joint`` option should only be
-            used when the data vector is also expanded to include the matching
-            galaxy-galaxy observable.
-        """
-        pair_list: list[tuple[int, int]] = [
-            (int(lens_bin), int(source_bin)) for lens_bin, source_bin in bin_pairs
-        ]
-
-        cov_pairs, cov = cov_builder.gm_block_diagonal(bin_pairs=pair_list)
-
-        return list(cov_pairs), np.asarray(cov, dtype=float)
 
     def _context(
         self,

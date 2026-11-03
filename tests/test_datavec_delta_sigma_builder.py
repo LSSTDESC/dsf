@@ -119,9 +119,7 @@ def test_delta_sigma_from_profile_rejects_non_finite_values():
     """Tests that non-finite Delta Sigma values raise an error."""
     calculator = DeltaSigmaCalculator(pk2d_func=DummyPk2DFunction())
 
-    with pytest.raises(
-        FloatingPointError, match="Non-finite Delta Sigma values"
-    ):
+    with pytest.raises(FloatingPointError, match="Non-finite Delta Sigma values"):
         calculator._delta_sigma_from_profile(
             profile=NonFiniteProfile(),
             r=np.array([1.0, 2.0, 3.0]),
@@ -210,8 +208,7 @@ def test_delta_sigma_lens_bin_applies_redshift_window(patch_delta_sigma):
 
     expected = np.full(
         r.size,
-        np.trapezoid(nz_use * a_use * 2.0, z_use)
-        / np.trapezoid(nz_use, z_use),
+        np.trapezoid(nz_use * a_use * 2.0, z_use) / np.trapezoid(nz_use, z_use),
     )
 
     np.testing.assert_allclose(result, expected)
@@ -238,8 +235,7 @@ def test_delta_sigma_lens_bin_trims_edge_points(patch_delta_sigma):
 
     expected = np.full(
         r.size,
-        np.trapezoid(nz_use * a_use * 2.0, z_use)
-        / np.trapezoid(nz_use, z_use),
+        np.trapezoid(nz_use * a_use * 2.0, z_use) / np.trapezoid(nz_use, z_use),
     )
 
     np.testing.assert_allclose(result, expected)
@@ -334,9 +330,7 @@ def test_delta_sigma_lens_bin_raises_before_integration_for_non_finite_values(
         bad_delta_sigma_from_profile,
     )
 
-    with pytest.raises(
-        FloatingPointError, match="before redshift integration"
-    ):
+    with pytest.raises(FloatingPointError, match="before redshift integration"):
         calculator.delta_sigma_lens_bin(
             r=np.array([1.0, 2.0]),
             lens_dndz=(np.array([0.1, 0.2, 0.3]), np.ones(3)),
@@ -361,9 +355,7 @@ def test_delta_sigma_lens_bin_raises_after_integration_for_non_finite_values(
         finite_then_infinite_delta_sigma_from_profile,
     )
 
-    with pytest.raises(
-        FloatingPointError, match="before redshift integration"
-    ):
+    with pytest.raises(FloatingPointError, match="before redshift integration"):
         calculator.delta_sigma_lens_bin(
             r=np.array([1.0, 2.0]),
             lens_dndz=(np.array([0.1, 0.2, 0.3]), np.ones(3)),
@@ -489,9 +481,7 @@ def test_delta_sigma_lens_bin_forwards_pk2d_kwargs(patch_delta_sigma):
         pk2d_kwargs={"model": "nonlinear", "amplitude": 2.0},
     )
 
-    assert pk2d_func.calls == [
-        {"cosmo": "cosmo", "model": "nonlinear", "amplitude": 2.0}
-    ]
+    assert pk2d_func.calls == [{"cosmo": "cosmo", "model": "nonlinear", "amplitude": 2.0}]
 
 
 def test_stacked_delta_sigma_builds_projection_once(patch_delta_sigma):

@@ -22,7 +22,11 @@ import pyccl as ccl
 from numpy.typing import NDArray
 
 from dsf.hankel.hankel_transform import HankelTransform
-from dsf.utils.validators import validate_positive_1d_array, validate_scale_factor
+from dsf.utils.validators import (
+    validate_positive_1d_array,
+    validate_positive_strictly_increasing_1d_array,
+    validate_scale_factor,
+)
 
 __all__ = ["DeltaSigma"]
 
@@ -42,29 +46,23 @@ class DeltaSigma:
         self,
         *,
         pk2d: ccl.Pk2D,
-        k_min: float = 1.0e-6,
-        k_max: float = 1.0e6,
-        n_k: int = 5000,
+        k: NDArray[np.float64] | None = None,
     ) -> None:
         """Initialize the excess surface density projection.
 
         Args:
             pk2d: CCL ``Pk2D`` object defining the Fourier-space density profile.
-            k_min: Minimum wavenumber in 1/Mpc.
-            k_max: Maximum wavenumber in 1/Mpc.
-            n_k: Number of logarithmically spaced wavenumbers.
+            k: Array of wavenumbers in 1/Mpc at which to evaluate the ``Pk2D``
+                profile. If ``None``, defaults to 10000 logarithmically spaced
+                points between 1e-6 and 1e6 1/Mpc.
         """
-        if not np.isfinite(k_min) or not np.isfinite(k_max):
-            raise ValueError("k_min and k_max must be finite.")
-
-        if not 0.0 < k_min < k_max:
-            raise ValueError("Require 0 < k_min < k_max.")
-
-        if n_k < 2:
-            raise ValueError("n_k must be at least 2.")
+        if k is not None:
+            k_arr = validate_positive_strictly_increasing_1d_array(k, "k", min_size=2)
+        else:
+            k_arr = np.geomspace(1.0e-6, 1.0e6, 10000)
 
         self.pk2d = pk2d
-        self.k = np.geomspace(k_min, k_max, n_k)
+        self.k = k_arr
         self.hankel = HankelTransform(backend="fftlog")
 
     def delta_sigma(

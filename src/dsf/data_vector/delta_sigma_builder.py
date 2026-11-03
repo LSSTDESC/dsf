@@ -114,6 +114,8 @@ class DeltaSigmaCalculator:
         a: float,
         cosmo: ccl.Cosmology,
         pk2d_kwargs: dict[str, Any] | None = None,
+        *,
+        k: NDArray[np.float64] | None = None,
     ) -> NDArray[np.float64]:
         r"""Calculate :math:`\Delta\Sigma(R)` at a single lens redshift.
 
@@ -129,6 +131,7 @@ class DeltaSigmaCalculator:
             a: Scale factor of the lens redshift.
             cosmo: CCL cosmology object.
             pk2d_kwargs: Additional parameters for the 3D profile model.
+            k: Array of wavenumbers in 1/Mpc at which to evaluate the density profile.
 
         Returns:
             Excess surface density in :math:`M_\odot / \mathrm{pc}^2`.
@@ -136,7 +139,7 @@ class DeltaSigmaCalculator:
         r_arr = validate_positive_1d_array(r, "r")
 
         pk2d = self.pk2d_func(cosmo=cosmo, **(pk2d_kwargs or {}))
-        profile = DeltaSigma(pk2d=pk2d)
+        profile = DeltaSigma(pk2d=pk2d, k=k)
 
         return self._delta_sigma_from_profile(
             profile=profile,
@@ -156,6 +159,7 @@ class DeltaSigmaCalculator:
         z_min: float | None = None,
         z_max: float | None = None,
         trim_edge_points: int = 0,
+        k: NDArray[np.float64] | None = None,
     ) -> NDArray[np.float64]:
         r"""Calculate lens-bin-averaged :math:`\Delta\Sigma(R)`.
 
@@ -182,6 +186,7 @@ class DeltaSigmaCalculator:
             z_max: Optional upper redshift limit of the lens bin.
             trim_edge_points: Number of edge points removed from each side of
                 the selected positive-support lens distribution.
+            k: Array of wavenumbers in 1/Mpc at which to evaluate the density profile.
 
         Returns:
             Lens-bin-averaged excess surface density in
@@ -212,7 +217,7 @@ class DeltaSigmaCalculator:
 
         if profile is None:
             pk2d = self.pk2d_func(cosmo=cosmo, **(pk2d_kwargs or {}))
-            profile = DeltaSigma(pk2d=pk2d)
+            profile = DeltaSigma(pk2d=pk2d, k=k)
 
         delta_sigma_arr = np.asarray(
             [
@@ -255,7 +260,6 @@ class DeltaSigmaCalculator:
 
         return delta_sigma_mean
 
-
     def stacked_delta_sigma(
         self,
         r: NDArray[np.float64],
@@ -264,6 +268,7 @@ class DeltaSigmaCalculator:
         pk2d_kwargs: dict[str, Any] | None = None,
         *,
         trim_edge_points: int = 0,
+        k: NDArray[np.float64] | None = None,
     ) -> NDArray[np.float64]:
         r"""Calculate the stacked tomographic :math:`\Delta\Sigma` data vector.
 
@@ -276,6 +281,7 @@ class DeltaSigmaCalculator:
             cosmo: CCL cosmology object.
             pk2d_kwargs: Additional parameters for the profile model.
             trim_edge_points: Number of edge points removed from each lens bin.
+            k: Array of wavenumbers in 1/Mpc at which to evaluate the density profile.
 
         Returns:
             Stacked Delta Sigma vector in :math:`M_\odot / \mathrm{pc}^2`.
@@ -290,7 +296,7 @@ class DeltaSigmaCalculator:
         block_by_lens_bin = {}
 
         pk2d = self.pk2d_func(cosmo=cosmo, **(pk2d_kwargs or {}))
-        profile = DeltaSigma(pk2d=pk2d)
+        profile = DeltaSigma(pk2d=pk2d, k=k)
 
         for lens_bin in unique_lens_bins:
             block_by_lens_bin[lens_bin] = self.delta_sigma_lens_bin(

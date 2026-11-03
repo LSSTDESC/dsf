@@ -226,6 +226,15 @@ class DeltaSigmaCovarianceBuilder:
             else self.hankel_transform(hankel_config)
         )
 
+        if isinstance(self.hankel, HankelTransform):
+            backend = self.hankel.backend
+            if hasattr(backend, "k") and isinstance(backend.k, dict):
+                k_min = min(float(grid[0]) for grid in backend.k.values())
+                k_max = max(float(grid[-1]) for grid in backend.k.values())
+
+                if self.k[0] > k_min or self.k[-1] < k_max:
+                    self.k = np.unique(np.concatenate((self.k, [k_min, k_max])))
+
     def covariance_for_pair(
         self,
         lens_bin_index: int,

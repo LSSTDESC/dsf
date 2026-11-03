@@ -48,7 +48,7 @@ class DeltaSigmaForecastBuilder:
 
     The current forecast data vector contains only the galaxy-matter
     Delta Sigma signal, so this builder currently supports only the matching
-    ``gm`` covariance block. The covariance layer also contains heleprs for
+    ``gm`` covariance block. The covariance layer also contains helpers for
     ``gg`` and joint covariance blocks, which are intended for future forecast
     builders once the corresponding ``gg`` or joint data vectors are added.
     """
@@ -375,12 +375,7 @@ class DeltaSigmaForecastBuilder:
             calls do not rebuild tomography or covariance.
         """
         forecast = self.forecast()
-
-        model = forecast["model"]
-        theta0 = forecast["theta0"]
-        cov = forecast["cov"]
-
-        return model, theta0, cov
+        return forecast["model"], forecast["theta0"], forecast["cov"]
 
     def _model_inputs(
         self,

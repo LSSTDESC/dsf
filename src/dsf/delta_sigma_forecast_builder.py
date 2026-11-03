@@ -328,11 +328,24 @@ class DeltaSigmaForecastBuilder:
 
         self._log("[4/5] Preparing shared forecast context...")
 
-        context = self._context(
-            tomography=tomography,
-            cov_builder=cov_builder,
-            cov_pairs=cov_pairs,
-        )
+        context = {
+            "cosmo": self.fiducial_cosmo,
+            "calculator": self.calculator,
+            "r": self.r,
+            "rp_bin_edges": self.rp_bin_edges,
+            "tomography": tomography,
+            "lens_result": tomography["lens_result"],
+            "source_result": tomography["source_result"],
+            "bin_pairs": list(tomography["bin_pairs"]),
+            "lens_bin_centers": tomography["lens_bin_centers"],
+            "source_bin_centers": tomography["source_bin_centers"],
+            "lens_shape_stats": tomography["lens_shape_stats"],
+            "source_shape_stats": tomography["source_shape_stats"],
+            "covariance_builder": cov_builder,
+            "cov_pairs": list(cov_pairs),
+            "covariance_kind": self.covariance_kind,
+            "observable": self.observable,
+        }
 
         self._log("[4/5] Done: forecast context prepared.")
 
@@ -539,46 +552,3 @@ class DeltaSigmaForecastBuilder:
             mapped["pk2d_kwargs"] = {}
 
         return mapped
-
-    def _context(
-        self,
-        *,
-        tomography: Mapping[str, Any],
-        cov_builder: DeltaSigmaCovarianceBuilder,
-        cov_pairs: Sequence[tuple[int, int]],
-    ) -> dict[str, Any]:
-        """Return shared objects needed by model and forecast calls.
-
-        Args:
-            tomography: Tomography products for the lens and source samples.
-            cov_builder: Covariance builder matched to the same tomography.
-            cov_pairs: Bin-pair ordering used by the covariance.
-
-        Returns:
-            Dictionary collecting the forecast state that should remain fixed
-            during model evaluations.
-
-        Notes:
-            The context is designed to keep expensive or shared objects in one
-            place. Forecast tools can repeatedly evaluate ``model(theta)`` while
-            reusing the same tomography, bin-pair selection, radius grids, and
-            covariance setup.
-        """
-        return {
-            "cosmo": self.fiducial_cosmo,
-            "calculator": self.calculator,
-            "r": self.r,
-            "rp_bin_edges": self.rp_bin_edges,
-            "tomography": tomography,
-            "lens_result": tomography["lens_result"],
-            "source_result": tomography["source_result"],
-            "bin_pairs": list(tomography["bin_pairs"]),
-            "lens_bin_centers": tomography["lens_bin_centers"],
-            "source_bin_centers": tomography["source_bin_centers"],
-            "lens_shape_stats": tomography["lens_shape_stats"],
-            "source_shape_stats": tomography["source_shape_stats"],
-            "covariance_builder": cov_builder,
-            "cov_pairs": list(cov_pairs),
-            "covariance_kind": self.covariance_kind,
-            "observable": self.observable,
-        }

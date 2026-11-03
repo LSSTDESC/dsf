@@ -7,6 +7,7 @@ Submodules
 .. toctree::
    :maxdepth: 2
 
+   dsf.utils.colors
    dsf.utils.converters
    dsf.utils.integrators
    dsf.utils.interpolators

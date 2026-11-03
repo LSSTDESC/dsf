@@ -163,13 +163,9 @@ class DeltaSigmaForecastBuilder:
         model_inputs = self._model_inputs(self.theta0, context={})
         fiducial_cosmo = model_inputs["cosmo"]
 
-        raw_pk2d_kwargs = model_inputs.get("pk2d_kwargs", {})
-        if not isinstance(raw_pk2d_kwargs, Mapping):
-            raise TypeError("theta_mapper output 'pk2d_kwargs' must be a mapping.")
-
         pk2d_spectra = self.pk2d_func(
             cosmo=fiducial_cosmo,
-            **dict(raw_pk2d_kwargs),
+            **model_inputs["pk2d_kwargs"],
         )
 
         tomography = TomographyBuilder(**self.tomography_kwargs).prepare_bins()
@@ -328,12 +324,7 @@ class DeltaSigmaForecastBuilder:
         model_inputs = self._model_inputs(theta_arr, context)
 
         cosmo = model_inputs["cosmo"]
-        raw_pk2d_kwargs = model_inputs.get("pk2d_kwargs", {})
-
-        if not isinstance(raw_pk2d_kwargs, Mapping):
-            raise TypeError("theta_mapper output 'pk2d_kwargs' must be a mapping.")
-
-        pk2d_kwargs: dict[str, Any] = dict(raw_pk2d_kwargs)
+        pk2d_kwargs = model_inputs["pk2d_kwargs"]
 
         return self.calculator.stacked_delta_sigma(
             r=self.r / float(cosmo["h"]),
@@ -396,13 +387,14 @@ class DeltaSigmaForecastBuilder:
             filled with sensible defaults.
         """
         if self.theta_mapper is None:
-            return {
-                "cosmo": self.cosmo,
-                "pk2d_kwargs": {},
-            }
+            return {"cosmo": self.cosmo, "pk2d_kwargs": {}}
 
         mapped = dict(self.theta_mapper(theta, dict(context)))
         mapped.setdefault("cosmo", self.cosmo)
-        mapped.setdefault("pk2d_kwargs", {})
 
+        pk2d_kwargs = mapped.get("pk2d_kwargs", {})
+        if not isinstance(pk2d_kwargs, Mapping):
+            raise TypeError("theta_mapper output 'pk2d_kwargs' must be a mapping.")
+
+        mapped["pk2d_kwargs"] = dict(pk2d_kwargs)
         return mapped

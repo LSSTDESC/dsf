@@ -50,7 +50,6 @@ Forecast-builder example
    from dsf.modelling.cosmology import make_ccl_cosmology
    from dsf.modelling.hod import pk2d_hod
 
-
    np.set_printoptions(precision=8, suppress=True)
 
    cache_path = Path("cached_files/builder_example_forecast_cache.npz")
@@ -60,6 +59,7 @@ Forecast-builder example
        r"\log_{10}(M_{\min}/[h^{-1}M_\odot])",
        r"\log_{10}(M_1/[h^{-1}M_\odot])",
    ]
+
    sigma_prior = np.array([0.50, 0.70], dtype=float)
    fisher_prior = np.diag(1.0 / sigma_prior**2)
 
@@ -90,7 +90,6 @@ Forecast-builder example
        k_array = np.geomspace(1.0e-3, 20.0, 40)
        a_array = np.linspace(0.35, 1.0, 10)
 
-
        def pk2d_func(*, cosmo, log10Mmin_0=12.5, log10M1_0=13.5):
            return pk2d_hod(
                cosmo,
@@ -100,18 +99,15 @@ Forecast-builder example
                log10M1_0=log10M1_0,
            )
 
-
        def theta_mapper(theta, context):
            log10Mmin_0, log10M1_0 = theta
 
            return {
-               "cosmo": context["cosmo"],
                "pk2d_kwargs": {
                    "log10Mmin_0": float(log10Mmin_0),
                    "log10M1_0": float(log10M1_0),
                },
            }
-
 
        builder = DeltaSigmaForecastBuilder(
            cosmo=cosmo,
@@ -124,22 +120,20 @@ Forecast-builder example
            area_deg2=1000.0,
            sigma_e=0.26,
            tomography_kwargs={
-               "lens_survey": "lsst",
-               "source_survey": "lsst",
-               "lens_sample": None,
-               "source_sample": None,
-               "lens_year": "1",
-               "source_year": "1",
-               "lens_role": "lens",
-               "source_role": "source",
+               "lens": {
+                   "survey": "lsst",
+                   "role": "lens",
+                   "year": "1",
+                   "overrides": {"bins": {"n_bins": 2}},
+               },
+               "source": {
+                   "survey": "lsst",
+                   "role": "source",
+                   "year": "1",
+                   "overrides": {"bins": {"n_bins": 2}},
+               },
                "overlap_threshold": 1.0,
                "source_behind_lens": True,
-               "shared_overrides": {
-                   "bins": {"n_bins": 2},
-               },
-           },
-           covariance_kwargs={
-               "k": np.geomspace(1.0e-2, 10.0, 40),
            },
            verbose=False,
        )
@@ -150,6 +144,7 @@ Forecast-builder example
        data_vector = forecast["fiducial_data_vector"]
        bin_pairs = forecast["bin_pairs"]
 
+       # Apply a small diagonal regularization for numerical stability.
        jitter = 1.0e-8 * np.max(np.diag(cov))
        cov = cov + jitter * np.eye(cov.shape[0])
 
@@ -242,8 +237,6 @@ Forecast-builder example
        contour_ls=["-", "-"],
    )
 
-   (g_like is not None) and (g_post is not None)
-
 
 Fisher input interface
 ----------------------
@@ -258,6 +251,11 @@ The returned ``model`` is a callable that maps a parameter vector to the stacked
 :math:`\Delta\Sigma` data vector. The returned ``theta0`` is the fiducial
 parameter vector, and ``cov`` is the matched ``gm`` covariance matrix.
 
+The covariance is evaluated at the fiducial parameter vector, receives a small
+diagonal regularization for numerical stability, and is held fixed when the
+model parameters vary. Consequently, the Fisher calculation includes
+derivatives of the data vector but not derivatives of the covariance.
+
 In this example, the forecast parameters enter through the HOD power-spectrum
 model,
 
@@ -268,6 +266,7 @@ model,
 This makes the example useful as an end-to-end test of the forecast plumbing
 before moving to richer SHMR, baryonic, intrinsic-alignment, or cosmological
 parameterizations.
+
 
 Gaussian priors
 ---------------
@@ -301,6 +300,7 @@ The example above uses
 The plotted contours compare the likelihood-only Fisher result with the
 posterior Fisher result after adding these Gaussian priors.
 
+
 Caching
 -------
 
@@ -308,11 +308,12 @@ The first execution builds the forecast products and writes
 
 .. code-block:: text
 
-   docs/examples/builder_example_forecast_cache.npz
+   docs/examples/cached_files/builder_example_forecast_cache.npz
 
 Subsequent documentation builds load the cached arrays and only recreate the
 GetDist Gaussian objects and plot. This keeps the example reproducible while
 avoiding repeated covariance construction during normal documentation builds.
+
 
 Notes
 -----

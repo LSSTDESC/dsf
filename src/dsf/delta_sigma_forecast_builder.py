@@ -65,21 +65,7 @@ class DeltaSigmaForecastBuilder:
         sigma_e: ScalarOrPerBin = 0.26,
         theta_mapper: ThetaMapper | None = None,
         parameter_names: Sequence[str] | None = None,
-        lens_survey: str = "desi",
-        source_survey: str = "lsst",
-        lens_sample: str | None = "lrg",
-        source_sample: str | None = None,
-        lens_year: str | None = None,
-        source_year: str | None = None,
-        lens_role: str = "lens",
-        source_role: str = "source",
-        overlap_threshold: float = 0.10,
-        source_behind_lens: bool = True,
-        center_method: str = "mean",
-        decimal_places: int = 4,
-        shared_overrides: Mapping[str, Any] | None = None,
-        lens_overrides: Mapping[str, Any] | None = None,
-        source_overrides: Mapping[str, Any] | None = None,
+        tomography_kwargs: Mapping[str, Any] | None = None,
         observable: str = "delta_sigma",
         k: FloatArray | None = None,
         nonlinear: bool = True,
@@ -112,26 +98,9 @@ class DeltaSigmaForecastBuilder:
                 forecast context into model inputs. It may return ``cosmo`` and
                 ``pk2d_kwargs``.
             parameter_names: Optional names for the entries of ``theta0``.
-            lens_survey: Survey preset used for the foreground lens sample.
-            source_survey: Survey preset used for the background source sample.
-            lens_sample: Optional sample label for the lens survey.
-            source_sample: Optional sample label for the source survey.
-            lens_year: Optional lens survey year or scenario label.
-            source_year: Optional source survey year or scenario label.
-            lens_role: Tomography role for the foreground sample.
-            source_role: Tomography role for the background sample.
-            overlap_threshold: Maximum allowed redshift overlap between a lens
-                bin and source bin.
-            source_behind_lens: Whether selected source bins must sit behind
-                selected lens bins.
-            center_method: Bin-center definition used when applying ordering
-                cuts to lens-source bin pairs.
-            decimal_places: Number of decimal places used in Binny summaries.
-            shared_overrides: Binny tomography-spec overrides applied to both samples.
-            lens_overrides: Binny tomography-spec overrides applied only to the lens
-                sample.
-            source_overrides: Binny tomography-spec overrides applied only to the
-                source sample.
+            tomography_kwargs: Optional keyword arguments passed to
+                ``TomographyBuilder``. Defaults to DESI LRG lenses and
+                LSST sources unless overridden.
             observable: Forecast observable to evaluate. Currently only
                 ``"delta_sigma"`` is supported.
             k: Wavenumber grid in ``h / Mpc`` used by the covariance.
@@ -189,22 +158,11 @@ class DeltaSigmaForecastBuilder:
         self.covariance_kind = covariance_kind
         self.verbose = bool(verbose)
 
-        self.tomography_kwargs: dict[str, Any] = {
-            "lens_survey": lens_survey,
-            "source_survey": source_survey,
-            "lens_sample": lens_sample,
-            "source_sample": source_sample,
-            "lens_year": lens_year,
-            "source_year": source_year,
-            "lens_role": lens_role,
-            "source_role": source_role,
-            "overlap_threshold": overlap_threshold,
-            "source_behind_lens": source_behind_lens,
-            "center_method": center_method,
-            "decimal_places": decimal_places,
-            "shared_overrides": shared_overrides,
-            "lens_overrides": lens_overrides,
-            "source_overrides": source_overrides,
+        self.tomography_kwargs = {
+            "lens_survey": "desi",
+            "source_survey": "lsst",
+            "lens_sample": "lrg",
+            **(tomography_kwargs or {}),
         }
 
         self.covariance_kwargs: dict[str, Any] = {

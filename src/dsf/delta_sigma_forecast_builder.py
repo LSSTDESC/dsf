@@ -378,25 +378,7 @@ class DeltaSigmaForecastBuilder:
         return forecast
 
     def forecast(self, covariance: FloatArray | None = None) -> dict[str, Any]:
-        """Return cached forecast products, preparing them if needed.
-
-        Args:
-            covariance: Optional precomputed covariance matrix. If provided and no
-                forecast has been cached yet, the builder uses this matrix instead
-                of recomputing the covariance.
-
-        Returns:
-            Dictionary of forecast products suitable for direct use in Fisher,
-            DALI, plotting, or diagnostic workflows.
-
-        Notes:
-            This is the safe accessor to use in downstream code. Unlike
-            ``prepare()``, it does not rebuild tomography and covariance if the
-            forecast has already been prepared.
-
-            If a cached forecast already exists, passing a new covariance is not
-            allowed because it would silently mismatch the cached context.
-        """
+        """Return cached forecast products, preparing them if needed."""
         if self._forecast is not None:
             if covariance is not None:
                 raise RuntimeError(
@@ -404,15 +386,9 @@ class DeltaSigmaForecastBuilder:
                     "DeltaSigmaForecastBuilder instance before supplying a new "
                     "covariance matrix."
                 )
-
             return self._forecast
 
-        self.prepare(covariance=covariance)
-
-        if self._forecast is None:
-            raise RuntimeError("Delta Sigma forecast products were not prepared.")
-
-        return self._forecast
+        return self.prepare(covariance=covariance)
 
     def model(
         self,

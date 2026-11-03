@@ -150,7 +150,7 @@ def test_default_tomography_configuration():
     builder = TomographyBuilder()
 
     assert builder.lens == {"survey": "desi", "sample": "lrg"}
-    assert builder.source == {"survey": "lsst"}
+    assert builder.source == {"survey": "lsst", "year": "1", "role": "source"}
     assert builder.overlap_threshold == 0.10
     assert builder.source_behind_lens is True
 

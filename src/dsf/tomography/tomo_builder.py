@@ -39,7 +39,7 @@ class TomographyBuilder:
             "survey": "desi", "sample": "lrg"
         }
         self.source = dict(source) if source is not None else {
-            "survey": "lsst"
+            "survey": "lsst", "role": "source", "year": "1"
         }
 
         self.overlap_threshold = float(overlap_threshold)

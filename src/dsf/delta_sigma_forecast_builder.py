@@ -105,8 +105,9 @@ class DeltaSigmaForecastBuilder:
         """
         self.cosmo = cosmo
         self.pk2d_func = pk2d_func
-        self.pk2d_deltasigma = lambda **kwargs: self.pk2d_func(**kwargs)["pk_deltasigma"]
-        self.calculator = DeltaSigmaCalculator(self.pk2d_deltasigma)
+        self.calculator = DeltaSigmaCalculator(
+            lambda **kwargs: pk2d_func(**kwargs)["pk_deltasigma"]
+        )
 
         self.theta0 = np.asarray(theta0, dtype=float)
         self.parameter_names = validate_parameter_names(parameter_names, self.theta0)

@@ -67,10 +67,7 @@ class DeltaSigmaForecastBuilder:
         parameter_names: Sequence[str] | None = None,
         tomography_kwargs: Mapping[str, Any] | None = None,
         observable: str = "delta_sigma",
-        k: FloatArray | None = None,
-        nonlinear: bool = True,
-        projection: Mapping[str, Any] | None = None,
-        hankel: Mapping[str, Any] | None = None,
+        covariance_kwargs: Mapping[str, Any] | None = None,
         covariance_kind: str = "gm",
         trim_edge_points: int = 0,
         verbose: bool = True,
@@ -103,15 +100,9 @@ class DeltaSigmaForecastBuilder:
                 LSST sources unless overridden.
             observable: Forecast observable to evaluate. Currently only
                 ``"delta_sigma"`` is supported.
-            k: Wavenumber grid in ``h / Mpc`` used by the covariance.
-            nonlinear: Whether covariance matter spectra should use nonlinear
-                power.
-            projection: Optional line-of-sight projection settings containing
-                ``pi`` (grid in ``Mpc / h``) and ``gm_window`` (galaxy-matter
-                line-of-sight window).
-            hankel: Optional Hankel configuration containing backend settings,
-                covariance Bessel orders, and taper settings (``taper`` and
-                ``taper_kwargs``). Tapering is enabled by default.
+            covariance_kwargs: Optional keyword arguments passed to
+                ``DeltaSigmaCovarianceBuilder``. Defaults to nonlinear
+                power with the covariance builder's default configuration.
             covariance_kind: Covariance product to use. Only ``"gm"`` is currently
                 supported by this builder because the forecast data vector is
                 Delta Sigma-only. The ``"gg"`` and ``"joint"`` covariance paths are
@@ -165,11 +156,9 @@ class DeltaSigmaForecastBuilder:
             **(tomography_kwargs or {}),
         }
 
-        self.covariance_kwargs: dict[str, Any] = {
-            "k": k,
-            "nonlinear": nonlinear,
-            "projection": projection,
-            "hankel": hankel,
+        self.covariance_kwargs = {
+            "nonlinear": True,
+            **(covariance_kwargs or {}),
         }
 
         self._forecast: dict[str, Any] | None = None

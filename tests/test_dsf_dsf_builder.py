@@ -211,6 +211,41 @@ def make_builder(**overrides):
     return DeltaSigmaForecastBuilder(**kwargs)
 
 
+def test_init_forwards_tomography_kwargs(patched_dependencies):
+    """Tests that tomography settings are forwarded with the expected defaults."""
+    builder = make_builder(
+        tomography_kwargs={
+            "lens_survey": "custom",
+            "lens_sample": "custom_sample",
+        }
+    )
+
+    builder.prepare()
+
+    kwargs = DummyTomographyBuilder.instances[0].kwargs
+
+    assert kwargs["lens_survey"] == "custom"
+    assert kwargs["source_survey"] == "lsst"
+    assert kwargs["lens_sample"] == "custom_sample"
+
+
+def test_init_forwards_covariance_kwargs(patched_dependencies):
+    """Tests that covariance settings are forwarded with the expected defaults."""
+    builder = make_builder(
+        covariance_kwargs={
+            "nonlinear": False,
+            "hankel": {"backend": "fftlog"},
+        }
+    )
+
+    builder.prepare()
+
+    kwargs = DummyDeltaSigmaCovarianceBuilder.instances[0].kwargs
+
+    assert kwargs["nonlinear"] is False
+    assert kwargs["hankel"] == {"backend": "fftlog"}
+
+
 def test_prepare_builds_computed_covariance_and_stacked_data_vector(
     patched_dependencies,
 ):

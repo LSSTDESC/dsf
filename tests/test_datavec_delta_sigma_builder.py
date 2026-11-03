@@ -61,71 +61,6 @@ def test_delta_sigma_calculator_stores_pk2d_function():
     calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)
 
     assert calculator.pk2d_func is pk2d_func
-    assert calculator._delta_sigma_cache is None
-
-
-def test_generate_delta_sigma_builds_projection_and_stores_cache(patch_delta_sigma):
-    """Tests that projection generation builds and stores a Delta Sigma object."""
-    pk2d_func = DummyPk2DFunction()
-    calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)
-
-    profile = calculator._generate_delta_sigma(
-        cosmo="cosmo",
-        pk2d_kwargs={"model": "test"},
-        overwrite_cache=True,
-    )
-
-    assert profile is calculator._delta_sigma_cache
-    assert profile.pk2d == {
-        "pk2d_kwargs": {"cosmo": "cosmo", "model": "test"}
-    }
-    assert pk2d_func.calls == [{"cosmo": "cosmo", "model": "test"}]
-
-
-def test_generate_delta_sigma_reuses_cache_when_requested(patch_delta_sigma):
-    """Tests that projection generation reuses the cache when requested."""
-    pk2d_func = DummyPk2DFunction()
-    calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)
-
-    first = calculator._generate_delta_sigma(
-        cosmo="cosmo",
-        pk2d_kwargs={"model": "first"},
-        overwrite_cache=True,
-    )
-
-    second = calculator._generate_delta_sigma(
-        cosmo="cosmo",
-        pk2d_kwargs={"model": "second"},
-        overwrite_cache=False,
-    )
-
-    assert second is first
-    assert pk2d_func.calls == [{"cosmo": "cosmo", "model": "first"}]
-
-
-def test_generate_delta_sigma_overwrites_cache_when_requested(patch_delta_sigma):
-    """Tests that projection generation rebuilds the cache when requested."""
-    pk2d_func = DummyPk2DFunction()
-    calculator = DeltaSigmaCalculator(pk2d_func=pk2d_func)
-
-    first = calculator._generate_delta_sigma(
-        cosmo="cosmo",
-        pk2d_kwargs={"model": "first"},
-        overwrite_cache=True,
-    )
-
-    second = calculator._generate_delta_sigma(
-        cosmo="cosmo",
-        pk2d_kwargs={"model": "second"},
-        overwrite_cache=True,
-    )
-
-    assert second is not first
-    assert second is calculator._delta_sigma_cache
-    assert pk2d_func.calls == [
-        {"cosmo": "cosmo", "model": "first"},
-        {"cosmo": "cosmo", "model": "second"},
-    ]
 
 
 def test_delta_sigma_from_profile_converts_to_pc_units():
@@ -491,7 +426,6 @@ def test_delta_sigma_rebuilds_projection_between_calls(patch_delta_sigma):
         cosmo="cosmo",
         pk2d_kwargs={"model": "first"},
     )
-    first_profile = calculator._delta_sigma_cache
 
     second = calculator.delta_sigma(
         r=np.array([1.0, 2.0]),
@@ -499,10 +433,8 @@ def test_delta_sigma_rebuilds_projection_between_calls(patch_delta_sigma):
         cosmo="cosmo",
         pk2d_kwargs={"model": "second"},
     )
-    second_profile = calculator._delta_sigma_cache
 
     np.testing.assert_allclose(first, second)
-    assert first_profile is not second_profile
     assert pk2d_func.calls == [
         {"cosmo": "cosmo", "model": "first"},
         {"cosmo": "cosmo", "model": "second"},
@@ -521,7 +453,6 @@ def test_delta_sigma_lens_bin_builds_projection_once(patch_delta_sigma):
     )
 
     assert len(pk2d_func.calls) == 1
-    assert len(calculator._delta_sigma_cache.calls) == 3
 
 
 def test_delta_sigma_lens_bin_uses_normalized_nonuniform_distribution(

@@ -71,7 +71,6 @@ class DeltaSigmaCalculator:
                 keyword argument.
         """
         self.pk2d_func = pk2d_func
-        self._delta_sigma_cache: DeltaSigma | None = None
 
     def _generate_delta_sigma(
         self,
@@ -166,11 +165,8 @@ class DeltaSigmaCalculator:
         """
         r_arr = validate_positive_1d_array(r, "r")
 
-        profile = self._generate_delta_sigma(
-            cosmo=cosmo,
-            pk2d_kwargs=pk2d_kwargs,
-            overwrite_cache=True,
-        )
+        pk2d = self.pk2d_func(cosmo=cosmo, **(pk2d_kwargs or {}))
+        profile = DeltaSigma(pk2d=pk2d)
 
         return self._delta_sigma_from_profile(
             profile=profile,
@@ -245,11 +241,8 @@ class DeltaSigmaCalculator:
         nz_norm = nz_use / norm
 
         if profile is None:
-            profile = self._generate_delta_sigma(
-                cosmo=cosmo,
-                pk2d_kwargs=pk2d_kwargs,
-                overwrite_cache=True,
-            )
+            pk2d = self.pk2d_func(cosmo=cosmo, **(pk2d_kwargs or {}))
+            profile = DeltaSigma(pk2d=pk2d)
 
         delta_sigma_arr = np.asarray(
             [
@@ -326,11 +319,8 @@ class DeltaSigmaCalculator:
         unique_lens_bins = sorted({int(lens_bin) for lens_bin, _ in bin_pairs})
         block_by_lens_bin = {}
 
-        profile = self._generate_delta_sigma(
-            cosmo=cosmo,
-            pk2d_kwargs=pk2d_kwargs,
-            overwrite_cache=True,
-        )
+        pk2d = self.pk2d_func(cosmo=cosmo, **(pk2d_kwargs or {}))
+        profile = DeltaSigma(pk2d=pk2d)
 
         for lens_bin in unique_lens_bins:
             block_by_lens_bin[lens_bin] = self.delta_sigma_lens_bin(

@@ -3,16 +3,19 @@
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-from dsf_colors import DSF_COLORS
+
+from dsf.utils.colors import DSF_COLORS
 
 fig, ax = plt.subplots(figsize=(5, 5))
 
+logo_color = DSF_COLORS[1]
+
 # Large Delta.
-ax.text(0, 0, r"$\Delta$", fontsize=250, color=DSF_COLORS[0],
+ax.text(0, 0, r"$\Delta$", fontsize=250, color=logo_color,
         ha="center", va="center")
 
 # Smaller Sigma inside Delta.
-ax.text(0, -0.12, r"$\Sigma$", fontsize=85, color=DSF_COLORS[5],
+ax.text(0, -0.12, r"$\Sigma$", fontsize=85, color=logo_color,
         ha="center", va="center")
 
 ax.set_xlim(-1, 1)

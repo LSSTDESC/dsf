@@ -11,6 +11,7 @@ Submodules
    dsf.modelling.combinations
    dsf.modelling.cosmology
    dsf.modelling.hod
+   dsf.modelling.mag_bias
    dsf.modelling.nla
 
 Module contents

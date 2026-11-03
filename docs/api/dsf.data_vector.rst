@@ -9,7 +9,6 @@ Submodules
 
    dsf.data_vector.ccl_integration
    dsf.data_vector.delta_sigma_builder
-   dsf.data_vector.mag_bias
    dsf.data_vector.profiles
 
 Module contents

@@ -52,7 +52,9 @@ class DeltaSigma:
 
         Args:
             pk2d: CCL ``Pk2D`` object defining the Fourier-space density profile.
-            k: Array of wavenumbers in 1/Mpc at which to evaluate the ``Pk2D`` profile.
+            k: Array of wavenumbers in 1/Mpc at which to evaluate the ``Pk2D``
+                profile. If ``None``, defaults to 10000 logarithmically spaced
+                points between 1e-6 and 1e6 1/Mpc.
         """
         if k is not None:
             k_arr = validate_positive_strictly_increasing_1d_array(k, "k", min_size=2)

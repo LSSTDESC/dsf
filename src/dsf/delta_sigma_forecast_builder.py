@@ -584,66 +584,14 @@ class DeltaSigmaForecastBuilder:
         pk2d_kwargs: Mapping[str, Any],
         tomography: Mapping[str, Any],
     ) -> FloatArray:
-        """Return the stacked lens-bin Delta Sigma vector in pair order.
-
-        Args:
-            cosmo: Cosmology used for the current model evaluation.
-            pk2d_kwargs: Keyword arguments passed to the profile model.
-            tomography: Tomography products containing lens bins and selected
-                lens-source bin pairs.
-
-        Returns:
-            One-dimensional stacked Delta Sigma vector ordered by the selected
-            lens-source bin pairs.
-
-        Notes:
-            Delta Sigma is computed once per unique lens bin because the mean
-            Delta Sigma profile is lens-bin dependent. The resulting blocks are
-            then repeated according to the exact Binny-selected pair order so
-            that the data vector remains matched to the covariance.
-        """
-        lens_result = tomography["lens_result"]
-        bin_pairs = tomography["bin_pairs"]
-
-        lens_edges = np.asarray(
-            lens_result.tomo_meta["bins"]["bin_edges"],
-            dtype=float,
+        """Return the stacked Delta Sigma vector in selected bin-pair order."""
+        return self.calculator.stacked_delta_sigma(
+            r=self.r / float(cosmo["h"]),
+            tomography=tomography,
+            cosmo=cosmo,
+            pk2d_kwargs=dict(pk2d_kwargs),
+            trim_edge_points=self.trim_edge_points,
         )
-
-        lens_z = np.asarray(lens_result.z, dtype=float)
-        unique_lens_bins = sorted({int(lens_bin) for lens_bin, _ in bin_pairs})
-
-        block_by_lens_bin = {}
-
-        # Keep the user-facing forecast and covariance radius grid in comoving
-        # Mpc / h. Convert to comoving Mpc here because the Delta Sigma
-        # data-vector calculation passes radii to the CCL-backed profile
-        # evaluation, which expects Mpc.
-        h = float(cosmo["h"])
-        r_mpc = self.r / h
-
-        for lens_bin in unique_lens_bins:
-            block_by_lens_bin[lens_bin] = np.asarray(
-                self.calculator.delta_sigma_lens_bin(
-                    r_mpc,
-                    lens_dndz=(
-                        lens_z,
-                        np.asarray(lens_result.bins[lens_bin], dtype=float),
-                    ),
-                    cosmo=cosmo,
-                    pk2d_kwargs=dict(pk2d_kwargs),
-                    z_min=float(lens_edges[lens_bin]),
-                    z_max=float(lens_edges[lens_bin + 1]),
-                    trim_edge_points=self.trim_edge_points,
-                ),
-                dtype=float,
-            )
-
-        blocks = [block_by_lens_bin[int(lens_bin)] for lens_bin, _ in bin_pairs]
-
-        data_vector = np.concatenate(blocks)
-
-        return np.asarray(data_vector, dtype=float)
 
     def _covariance(
         self,

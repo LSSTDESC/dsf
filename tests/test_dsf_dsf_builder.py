@@ -135,6 +135,40 @@ class DummyDeltaSigmaCalculator:
 
         return np.full(np.size(r_mpc), lens_id + amplitude, dtype=float)
 
+    def stacked_delta_sigma(
+        self,
+        r,
+        tomography,
+        cosmo,
+        pk2d_kwargs=None,
+        *,
+        trim_edge_points=0,
+    ):
+        """Return stacked Delta Sigma profiles in tomography pair order."""
+        lens_result = tomography["lens_result"]
+        bin_pairs = tomography["bin_pairs"]
+
+        lens_edges = np.asarray(lens_result.tomo_meta["bins"]["bin_edges"], dtype=float)
+        lens_z = np.asarray(lens_result.z, dtype=float)
+
+        unique_lens_bins = sorted({int(lens_bin) for lens_bin, _ in bin_pairs})
+        block_by_lens_bin = {}
+
+        for lens_bin in unique_lens_bins:
+            block_by_lens_bin[lens_bin] = self.delta_sigma_lens_bin(
+                r,
+                lens_dndz=(lens_z, np.asarray(lens_result.bins[lens_bin], dtype=float)),
+                cosmo=cosmo,
+                pk2d_kwargs=pk2d_kwargs,
+                z_min=float(lens_edges[lens_bin]),
+                z_max=float(lens_edges[lens_bin + 1]),
+                trim_edge_points=trim_edge_points,
+            )
+
+        return np.concatenate(
+            [block_by_lens_bin[int(lens_bin)] for lens_bin, _ in bin_pairs]
+        )
+
 
 @pytest.fixture
 def patched_dependencies(monkeypatch):

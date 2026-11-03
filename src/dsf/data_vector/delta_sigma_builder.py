@@ -18,7 +18,7 @@ or data-vector level.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Any
 
 import numpy as np
@@ -288,6 +288,55 @@ class DeltaSigmaCalculator:
             )
 
         return np.asarray(delta_sigma_mean, dtype=float)
+
+
+    def stacked_delta_sigma(
+        self,
+        r: NDArray[np.float64],
+        tomography: Mapping[str, Any],
+        cosmo: ccl.Cosmology,
+        pk2d_kwargs: dict[str, Any] | None = None,
+        *,
+        trim_edge_points: int = 0,
+    ) -> NDArray[np.float64]:
+        r"""Calculate the stacked tomographic :math:`\Delta\Sigma` data vector.
+
+        The profile is evaluated once per unique lens bin and repeated in the
+        exact lens-source bin-pair order supplied by the tomography.
+
+        Args:
+            r: Projected comoving radii in Mpc.
+            tomography: Tomography products containing lens bins and bin pairs.
+            cosmo: CCL cosmology object.
+            pk2d_kwargs: Additional parameters for the profile model.
+            trim_edge_points: Number of edge points removed from each lens bin.
+
+        Returns:
+            Stacked Delta Sigma vector in :math:`M_\odot / \mathrm{pc}^2`.
+        """
+        lens_result = tomography["lens_result"]
+        bin_pairs = tomography["bin_pairs"]
+
+        lens_edges = np.asarray(lens_result.tomo_meta["bins"]["bin_edges"], dtype=float)
+        lens_z = np.asarray(lens_result.z, dtype=float)
+
+        unique_lens_bins = sorted({int(lens_bin) for lens_bin, _ in bin_pairs})
+        block_by_lens_bin = {}
+
+        for lens_bin in unique_lens_bins:
+            block_by_lens_bin[lens_bin] = self.delta_sigma_lens_bin(
+                r,
+                lens_dndz=(lens_z, np.asarray(lens_result.bins[lens_bin], dtype=float)),
+                cosmo=cosmo,
+                pk2d_kwargs=pk2d_kwargs,
+                z_min=float(lens_edges[lens_bin]),
+                z_max=float(lens_edges[lens_bin + 1]),
+                trim_edge_points=trim_edge_points,
+            )
+
+        blocks = [block_by_lens_bin[int(lens_bin)] for lens_bin, _ in bin_pairs]
+
+        return np.asarray(np.concatenate(blocks), dtype=float)
 
 
 def stellar_point_mass_delta_sigma(

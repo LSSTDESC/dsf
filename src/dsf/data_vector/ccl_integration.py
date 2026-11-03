@@ -95,6 +95,7 @@ class DeltaSigma:
             spectrum=pk,
             order=2,
             grid_spacing="linear",
+            taper=True,
         )
 
         return np.asarray(delta_sigma, dtype=float)

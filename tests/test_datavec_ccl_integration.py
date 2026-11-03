@@ -331,3 +331,41 @@ def test_delta_sigma_converges_with_wavenumber_resolution():
         rtol=1.0e-2,
         atol=1.0e-6,
     )
+
+
+def test_delta_sigma_suppresses_fftlog_ringing():
+    """Tests that FFTLog boundary tapering stabilizes the projected profile."""
+
+    def power_spectrum(k, a):
+        """Return a smooth spectrum with extended power-law tails."""
+        k = np.asarray(k, dtype=float)
+        return a / (1.0 + k**2)
+
+    r = np.geomspace(0.2, 30.0, 24)
+
+    reference = DeltaSigma(
+        pk2d=power_spectrum,
+        k_min=1.0e-6,
+        k_max=1.0e6,
+        n_k=5000,
+    )
+
+    comparison = DeltaSigma(
+        pk2d=power_spectrum,
+        k_min=1.0e-4,
+        k_max=1.0e4,
+        n_k=5000,
+    )
+
+    reference_result = reference.delta_sigma(cosmo=None, r=r, a=0.7)
+    comparison_result = comparison.delta_sigma(cosmo=None, r=r, a=0.7)
+
+    assert np.all(np.isfinite(reference_result))
+    assert np.all(np.isfinite(comparison_result))
+
+    np.testing.assert_allclose(
+        comparison_result,
+        reference_result,
+        rtol=1.0e-3,
+        atol=1.0e-8,
+    )

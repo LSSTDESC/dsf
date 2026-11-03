@@ -186,6 +186,7 @@ class DeltaSigmaCalculator:
         cosmo: ccl.Cosmology,
         pk2d_kwargs: dict[str, Any] | None = None,
         *,
+        profile: DeltaSigma | None = None,
         z_min: float | None = None,
         z_max: float | None = None,
         trim_edge_points: int = 0,
@@ -210,6 +211,7 @@ class DeltaSigmaCalculator:
                 distribution.
             cosmo: CCL cosmology object.
             pk2d_kwargs: Additional parameters for the 3D profile model.
+            profile: Optional precomputed Delta Sigma projection.
             z_min: Optional lower redshift limit of the lens bin.
             z_max: Optional upper redshift limit of the lens bin.
             trim_edge_points: Number of edge points removed from each side of
@@ -242,11 +244,12 @@ class DeltaSigmaCalculator:
 
         nz_norm = nz_use / norm
 
-        profile = self._generate_delta_sigma(
-            cosmo=cosmo,
-            pk2d_kwargs=pk2d_kwargs,
-            overwrite_cache=True,
-        )
+        if profile is None:
+            profile = self._generate_delta_sigma(
+                cosmo=cosmo,
+                pk2d_kwargs=pk2d_kwargs,
+                overwrite_cache=True,
+            )
 
         delta_sigma_arr = np.asarray(
             [
@@ -323,12 +326,19 @@ class DeltaSigmaCalculator:
         unique_lens_bins = sorted({int(lens_bin) for lens_bin, _ in bin_pairs})
         block_by_lens_bin = {}
 
+        profile = self._generate_delta_sigma(
+            cosmo=cosmo,
+            pk2d_kwargs=pk2d_kwargs,
+            overwrite_cache=True,
+        )
+
         for lens_bin in unique_lens_bins:
             block_by_lens_bin[lens_bin] = self.delta_sigma_lens_bin(
                 r,
                 lens_dndz=(lens_z, np.asarray(lens_result.bins[lens_bin], dtype=float)),
                 cosmo=cosmo,
                 pk2d_kwargs=pk2d_kwargs,
+                profile=profile,
                 z_min=float(lens_edges[lens_bin]),
                 z_max=float(lens_edges[lens_bin + 1]),
                 trim_edge_points=trim_edge_points,

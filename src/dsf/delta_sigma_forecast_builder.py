@@ -23,6 +23,7 @@ from typing import Any
 
 import numpy as np
 import pyccl as ccl
+from derivkit import ForecastKit
 
 from dsf.covariance.cov_builder import DeltaSigmaCovarianceBuilder
 from dsf.data_vector.delta_sigma_builder import DeltaSigmaCalculator
@@ -63,6 +64,7 @@ class DeltaSigmaForecastBuilder:
         rp_bin_edges: ArrayLike,
         area_deg2: float,
         sigma_e: ScalarOrPerBin = 0.26,
+        pk2d_kwargs: Mapping[str, Any] | None = None,
         theta_mapper: ThetaMapper | None = None,
         parameter_names: Sequence[str] | None = None,
         tomography_kwargs: Mapping[str, Any] | None = None,
@@ -89,8 +91,12 @@ class DeltaSigmaForecastBuilder:
             area_deg2: Survey overlap area in square degrees.
             sigma_e: Source ellipticity dispersion used for the shape-noise
                 contribution to the covariance.
+            pk2d_kwargs: Optional fixed keyword arguments passed to the
+                power-spectrum model.
             theta_mapper: Optional function mapping a parameter vector and
-                forecast context into model inputs. It may return ``cosmo`` and
+                forecast context into model inputs. If omitted, parameter names
+                are mapped directly to power-spectrum keyword arguments.
+                If supplied, the mapper may override ``cosmo`` and
                 ``pk2d_kwargs``.
             parameter_names: Optional names for the entries of ``theta0``.
             tomography_kwargs: Optional keyword arguments passed to
@@ -105,10 +111,10 @@ class DeltaSigmaForecastBuilder:
         """
         self.cosmo = cosmo
         self.pk2d_func = pk2d_func
+        self.pk2d_kwargs = dict(pk2d_kwargs or {})
         self.calculator = DeltaSigmaCalculator(
             lambda **kwargs: pk2d_func(**kwargs)["pk_deltasigma"]
         )
-
         self.theta0 = np.asarray(theta0, dtype=float)
         self.parameter_names = validate_parameter_names(parameter_names, self.theta0)
         self.theta_mapper = theta_mapper
@@ -361,6 +367,19 @@ class DeltaSigmaForecastBuilder:
         forecast = self.forecast()
         return forecast["model"], forecast["theta0"], forecast["cov"]
 
+    def forecastkit(self) -> ForecastKit:
+        """Return a DerivKit ForecastKit initialized with the forecast inputs."""
+        model, theta0, cov = self.forecast_inputs()
+        return ForecastKit(function=model, theta0=theta0, cov=cov)
+
+    def fisher(self) -> FloatArray:
+        """Compute the Fisher matrix using DerivKit defaults."""
+        return self.forecastkit().fisher()
+
+    def dali(self) -> dict[str, FloatArray]:
+        """Compute the DALI tensors using DerivKit defaults."""
+        return self.forecastkit().dali()
+
     def _model_inputs(
         self,
         theta: FloatArray,
@@ -373,24 +392,31 @@ class DeltaSigmaForecastBuilder:
             context: Shared forecast context.
 
         Returns:
-            Dictionary containing the cosmology and profile keyword arguments
-            used to evaluate the Delta Sigma model.
+            Dictionary containing the cosmology and power-spectrum keyword
+            arguments used to evaluate the Delta Sigma model.
 
         Notes:
-            If no ``theta_mapper`` is supplied, the model uses the fiducial
-            cosmology and no additional ``pk2d_func`` keyword arguments. If a
-            mapper is supplied, missing ``cosmo`` or ``pk2d_kwargs`` entries are
-            filled with sensible defaults.
+            Fixed model keyword arguments are combined with parameter-dependent
+            values. If no theta_mapper is supplied, parameter names are mapped
+            directly to model keyword arguments. Otherwise, the mapper controls
+            the parameter-dependent inputs.
         """
+        pk2d_kwargs = dict(self.pk2d_kwargs)
+
         if self.theta_mapper is None:
-            return {"cosmo": self.cosmo, "pk2d_kwargs": {}}
+            pk2d_kwargs.update(
+                zip(self.parameter_names, map(float, theta), strict=True)
+            )
+            return {"cosmo": self.cosmo, "pk2d_kwargs": pk2d_kwargs}
 
         mapped = dict(self.theta_mapper(theta, dict(context)))
         mapped.setdefault("cosmo", self.cosmo)
 
-        pk2d_kwargs = mapped.get("pk2d_kwargs", {})
-        if not isinstance(pk2d_kwargs, Mapping):
+        varying_kwargs = mapped.get("pk2d_kwargs", {})
+        if not isinstance(varying_kwargs, Mapping):
             raise TypeError("theta_mapper output 'pk2d_kwargs' must be a mapping.")
 
-        mapped["pk2d_kwargs"] = dict(pk2d_kwargs)
+        pk2d_kwargs.update(varying_kwargs)
+        mapped["pk2d_kwargs"] = pk2d_kwargs
+
         return mapped

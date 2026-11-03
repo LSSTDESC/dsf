@@ -491,3 +491,84 @@ def test_init_does_not_evaluate_power_spectra(patched_dependencies):
     builder.prepare()
 
     assert len(calls) == 1
+
+
+def test_forecastkit_initializes_derivkit(patched_dependencies, monkeypatch):
+    """Tests that forecastkit initializes DerivKit with the forecast inputs."""
+    calls = []
+
+    class DummyForecastKit:
+        """Minimal DerivKit ForecastKit stand-in."""
+
+        def __init__(self, function, theta0, cov):
+            """Store the supplied forecast inputs."""
+            calls.append((function, theta0, cov))
+
+    monkeypatch.setattr(forecast_module, "ForecastKit", DummyForecastKit)
+
+    builder = make_builder()
+    fk = builder.forecastkit()
+
+    assert isinstance(fk, DummyForecastKit)
+    assert calls[0][0].__self__ is builder
+    np.testing.assert_array_equal(calls[0][1], builder.theta0)
+    np.testing.assert_array_equal(calls[0][2], np.eye(9))
+
+
+def test_fisher_uses_derivkit_defaults(patched_dependencies, monkeypatch):
+    """Tests that fisher delegates to DerivKit without additional arguments."""
+    expected = np.array([[2.0, 0.5], [0.5, 3.0]])
+
+    class DummyForecastKit:
+        """Minimal DerivKit ForecastKit stand-in."""
+
+        def __init__(self, function, theta0, cov):
+            """Accept the forecast inputs."""
+
+        def fisher(self):
+            """Return a deterministic Fisher matrix."""
+            return expected
+
+    monkeypatch.setattr(forecast_module, "ForecastKit", DummyForecastKit)
+
+    builder = make_builder()
+    result = builder.fisher()
+
+    np.testing.assert_array_equal(result, expected)
+
+
+def test_dali_uses_derivkit_defaults(patched_dependencies, monkeypatch):
+    """Tests that dali delegates to DerivKit without additional arguments."""
+    expected = {"F": np.eye(2), "S": np.ones((2, 2, 2))}
+
+    class DummyForecastKit:
+        """Minimal DerivKit ForecastKit stand-in."""
+
+        def __init__(self, function, theta0, cov):
+            """Accept the forecast inputs."""
+
+        def dali(self):
+            """Return deterministic DALI tensors."""
+            return expected
+
+    monkeypatch.setattr(forecast_module, "ForecastKit", DummyForecastKit)
+
+    builder = make_builder()
+    result = builder.dali()
+
+    assert result is expected
+
+
+def test_model_inputs_maps_parameters_and_preserves_fixed_kwargs(patched_dependencies):
+    """Tests automatic parameter mapping and fixed power-spectrum arguments."""
+    builder = make_builder()
+    builder.pk2d_kwargs = {"k_array": np.array([0.1, 1.0]), "log10Mmin_0": 0.0}
+    builder.parameter_names = ["log10Mmin_0", "log10M1_0"]
+    builder.theta0 = np.array([12.5, 13.5])
+
+    result = builder._model_inputs(builder.theta0, {})
+
+    assert result["cosmo"] is builder.cosmo
+    np.testing.assert_array_equal(result["pk2d_kwargs"]["k_array"], [0.1, 1.0])
+    assert result["pk2d_kwargs"]["log10Mmin_0"] == 12.5
+    assert result["pk2d_kwargs"]["log10M1_0"] == 13.5

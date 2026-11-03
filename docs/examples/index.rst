@@ -14,4 +14,4 @@ Available examples
    tomography
    data_vector
    covariance
-   builder_example
+   forecast

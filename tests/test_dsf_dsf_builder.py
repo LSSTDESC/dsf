@@ -212,21 +212,20 @@ def make_builder(**overrides):
 
 
 def test_init_forwards_tomography_kwargs(patched_dependencies):
-    """Tests that tomography settings are forwarded with the expected defaults."""
+    """Tests that tomography configuration is forwarded to TomographyBuilder."""
     builder = make_builder(
         tomography_kwargs={
-            "lens_survey": "custom",
-            "lens_sample": "custom_sample",
+            "lens": {"survey": "custom", "sample": "custom_sample"},
+            "source": {"survey": "lsst", "role": "source", "year": "1"},
         }
     )
 
     builder.prepare()
 
-    kwargs = DummyTomographyBuilder.instances[0].kwargs
+    kwargs = DummyTomographyBuilder.instances[-1].kwargs
 
-    assert kwargs["lens_survey"] == "custom"
-    assert kwargs["source_survey"] == "lsst"
-    assert kwargs["lens_sample"] == "custom_sample"
+    assert kwargs["lens"] == {"survey": "custom", "sample": "custom_sample"}
+    assert kwargs["source"] == {"survey": "lsst", "role": "source", "year": "1"}
 
 
 def test_init_forwards_covariance_kwargs(patched_dependencies):

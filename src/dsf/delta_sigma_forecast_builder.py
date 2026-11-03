@@ -94,8 +94,8 @@ class DeltaSigmaForecastBuilder:
                 ``pk2d_kwargs``.
             parameter_names: Optional names for the entries of ``theta0``.
             tomography_kwargs: Optional keyword arguments passed to
-                ``TomographyBuilder``. Defaults to DESI LRG lenses and
-                LSST sources unless overridden.
+                ``TomographyBuilder``, including ``lens`` and ``source``
+                configurations. Defaults are defined by ``TomographyBuilder``.
             covariance_kwargs: Optional keyword arguments passed to
                 ``DeltaSigmaCovarianceBuilder``.
             trim_edge_points: Number of edge points removed from each lens-bin
@@ -122,12 +122,7 @@ class DeltaSigmaForecastBuilder:
 
         self.verbose = bool(verbose)
 
-        self.tomography_kwargs = {
-            "lens_survey": "desi",
-            "source_survey": "lsst",
-            "lens_sample": "lrg",
-            **(tomography_kwargs or {}),
-        }
+        self.tomography_kwargs = dict(tomography_kwargs or {})
 
         self.covariance_kwargs = dict(covariance_kwargs or {})
 

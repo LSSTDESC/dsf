@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
+import numpy as np
 import pyccl as ccl
 from numpy.typing import NDArray
-import numpy as np
 
 from dsf.modelling.baryons import pk2d_hod_baryonified
 from dsf.modelling.hod import hod_galaxy_bias, pk2d_hod

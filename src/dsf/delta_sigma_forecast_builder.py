@@ -450,10 +450,12 @@ class DeltaSigmaForecastBuilder:
 
         pk2d_kwargs: dict[str, Any] = dict(raw_pk2d_kwargs)
 
-        return self._data_vector(
+        return self.calculator.stacked_delta_sigma(
+            r=self.r / float(cosmo["h"]),
+            tomography=context["tomography"],
             cosmo=cosmo,
             pk2d_kwargs=pk2d_kwargs,
-            tomography=context["tomography"],
+            trim_edge_points=self.trim_edge_points,
         )
 
     def context(self) -> dict[str, Any]:
@@ -537,61 +539,6 @@ class DeltaSigmaForecastBuilder:
             mapped["pk2d_kwargs"] = {}
 
         return mapped
-
-    def _data_vector(
-        self,
-        *,
-        cosmo: ccl.Cosmology,
-        pk2d_kwargs: Mapping[str, Any],
-        tomography: Mapping[str, Any],
-    ) -> FloatArray:
-        """Return the stacked forecast data vector for selected bin pairs.
-
-        Args:
-            cosmo: Cosmology used for the current model evaluation.
-            pk2d_kwargs: Keyword arguments passed to the profile model.
-            tomography: Tomography products containing lens bins, source bins,
-                and selected lens-source bin pairs.
-
-        Returns:
-            One-dimensional stacked data vector.
-
-        Notes:
-            For the current ``delta_sigma`` observable, the mean signal depends
-            on the lens bin only. The selected source bin still matters for the
-            pair selection and covariance ordering, so the returned vector keeps
-            the exact Binny lens-source pair order.
-
-            A future ``gamma_t`` observable should be evaluated per full
-            lens-source pair because the source redshift distribution enters
-            through the lensing efficiency or effective critical surface density.
-        """
-        if self.observable == "delta_sigma":
-            return self._delta_sigma_data_vector(
-                cosmo=cosmo,
-                pk2d_kwargs=pk2d_kwargs,
-                tomography=tomography,
-            )
-
-        raise NotImplementedError(
-            f"observable={self.observable!r} is not supported by this builder."
-        )
-
-    def _delta_sigma_data_vector(
-        self,
-        *,
-        cosmo: ccl.Cosmology,
-        pk2d_kwargs: Mapping[str, Any],
-        tomography: Mapping[str, Any],
-    ) -> FloatArray:
-        """Return the stacked Delta Sigma vector in selected bin-pair order."""
-        return self.calculator.stacked_delta_sigma(
-            r=self.r / float(cosmo["h"]),
-            tomography=tomography,
-            cosmo=cosmo,
-            pk2d_kwargs=dict(pk2d_kwargs),
-            trim_edge_points=self.trim_edge_points,
-        )
 
     def _covariance(
         self,

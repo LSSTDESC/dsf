@@ -450,3 +450,21 @@ def test_init_rejects_unsupported_observable(patched_dependencies):
     """Tests that initialization rejects unsupported observables."""
     with pytest.raises(NotImplementedError, match="observable='gamma_t'"):
         make_builder(observable="gamma_t")
+
+
+def test_init_does_not_evaluate_power_spectra(patched_dependencies):
+    """Tests that initialization defers power-spectrum evaluation."""
+    calls = []
+
+    def pk2d_func(**kwargs):
+        """Record power-spectrum evaluations."""
+        calls.append(kwargs)
+        return dummy_pk2d_func(**kwargs)
+
+    builder = make_builder(pk2d_func=pk2d_func)
+
+    assert calls == []
+
+    builder.prepare()
+
+    assert len(calls) == 1

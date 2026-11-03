@@ -167,26 +167,13 @@ class DeltaSigmaForecastBuilder:
             )
 
         self.cosmo = cosmo
-        self.pk2d_deltasigma = lambda **kwargs: pk2d_func(**kwargs)["pk_deltasigma"]
+        self.pk2d_func = pk2d_func
+        self.pk2d_deltasigma = lambda **kwargs: self.pk2d_func(**kwargs)["pk_deltasigma"]
         self.calculator = DeltaSigmaCalculator(self.pk2d_deltasigma)
 
         self.theta0 = np.asarray(theta0, dtype=float)
         self.parameter_names = validate_parameter_names(parameter_names, self.theta0)
         self.theta_mapper = theta_mapper
-
-        model_inputs = self._model_inputs(self.theta0, context={})
-        self.fiducial_cosmo = model_inputs["cosmo"]
-
-        raw_pk2d_kwargs = model_inputs.get("pk2d_kwargs", {})
-        if not isinstance(raw_pk2d_kwargs, Mapping):
-            raise TypeError("theta_mapper output 'pk2d_kwargs' must be a mapping.")
-
-        pk2d_spectra = pk2d_func(
-            cosmo=self.fiducial_cosmo,
-            **dict(raw_pk2d_kwargs),
-        )
-        self.pk2d_gm = pk2d_spectra["pk_gm"]
-        self.pk2d_gg = pk2d_spectra["pk_gg"]
 
         self.r = np.asarray(r, dtype=float)
         self.rp_bin_edges = np.asarray(rp_bin_edges, dtype=float)
@@ -228,8 +215,6 @@ class DeltaSigmaForecastBuilder:
         }
 
         self.covariance_kwargs: dict[str, Any] = {
-            "pk_gg": self.pk2d_gg,
-            "pk_gm": self.pk2d_gm,
             "k": k,
             "nonlinear": nonlinear,
             "projection": projection,
@@ -266,6 +251,20 @@ class DeltaSigmaForecastBuilder:
         """
         self._log("[1/5] Building lens and source tomography...")
 
+        model_inputs = self._model_inputs(self.theta0, context={})
+        self.fiducial_cosmo = model_inputs["cosmo"]
+
+        raw_pk2d_kwargs = model_inputs.get("pk2d_kwargs", {})
+        if not isinstance(raw_pk2d_kwargs, Mapping):
+            raise TypeError("theta_mapper output 'pk2d_kwargs' must be a mapping.")
+
+        pk2d_spectra = self.pk2d_func(
+            cosmo=self.fiducial_cosmo,
+            **dict(raw_pk2d_kwargs),
+        )
+        self.pk2d_gm = pk2d_spectra["pk_gm"]
+        self.pk2d_gg = pk2d_spectra["pk_gg"]
+
         tomography = TomographyBuilder(**self.tomography_kwargs).prepare_bins()
 
         self._log(
@@ -282,6 +281,8 @@ class DeltaSigmaForecastBuilder:
             rp_bin_edges=self.rp_bin_edges,
             area_deg2=self.area_deg2,
             sigma_e=self.sigma_e,
+            pk_gg=self.pk2d_gg,
+            pk_gm=self.pk2d_gm,
             **self.covariance_kwargs,
         )
 

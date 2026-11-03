@@ -72,36 +72,6 @@ class DeltaSigmaCalculator:
         """
         self.pk2d_func = pk2d_func
 
-    def _generate_delta_sigma(
-        self,
-        cosmo: ccl.Cosmology,
-        pk2d_kwargs: dict[str, Any] | None = None,
-        *,
-        overwrite_cache: bool = True,
-    ) -> DeltaSigma:
-        """Build the excess surface density projection from a CCL power spectrum.
-
-        Args:
-            cosmo: CCL cosmology object.
-            pk2d_kwargs: Additional keyword arguments for the profile model.
-            overwrite_cache: Whether to rebuild the stored projection.
-
-        Returns:
-            Standalone excess surface density projection.
-        """
-        kwargs = {} if pk2d_kwargs is None else pk2d_kwargs
-
-        if overwrite_cache or self._delta_sigma_cache is None:
-            pk2d = self.pk2d_func(cosmo=cosmo, **kwargs)
-            self._delta_sigma_cache = DeltaSigma(pk2d=pk2d)
-
-        projection = self._delta_sigma_cache
-
-        if projection is None:
-            raise RuntimeError("Delta Sigma cache was not initialized.")
-
-        return projection
-
     def _delta_sigma_from_profile(
         self,
         profile: DeltaSigma,
@@ -136,7 +106,7 @@ class DeltaSigmaCalculator:
                 f"r = {r[first_bad]}, a = {a}."
             )
 
-        return np.asarray(delta_sigma_msun_pc2, dtype=float)
+        return delta_sigma_msun_pc2
 
     def delta_sigma(
         self,
@@ -283,7 +253,7 @@ class DeltaSigmaCalculator:
                 f"First bad index: {first_bad}."
             )
 
-        return np.asarray(delta_sigma_mean, dtype=float)
+        return delta_sigma_mean
 
 
     def stacked_delta_sigma(
@@ -327,7 +297,6 @@ class DeltaSigmaCalculator:
                 r,
                 lens_dndz=(lens_z, np.asarray(lens_result.bins[lens_bin], dtype=float)),
                 cosmo=cosmo,
-                pk2d_kwargs=pk2d_kwargs,
                 profile=profile,
                 z_min=float(lens_edges[lens_bin]),
                 z_max=float(lens_edges[lens_bin + 1]),
@@ -336,7 +305,7 @@ class DeltaSigmaCalculator:
 
         blocks = [block_by_lens_bin[int(lens_bin)] for lens_bin, _ in bin_pairs]
 
-        return np.asarray(np.concatenate(blocks), dtype=float)
+        return np.concatenate(blocks)
 
 
 def stellar_point_mass_delta_sigma(

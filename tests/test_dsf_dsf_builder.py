@@ -135,6 +135,40 @@ class DummyDeltaSigmaCalculator:
 
         return np.full(np.size(r_mpc), lens_id + amplitude, dtype=float)
 
+    def stacked_delta_sigma(
+        self,
+        r,
+        tomography,
+        cosmo,
+        pk2d_kwargs=None,
+        *,
+        trim_edge_points=0,
+    ):
+        """Return stacked Delta Sigma profiles in tomography pair order."""
+        lens_result = tomography["lens_result"]
+        bin_pairs = tomography["bin_pairs"]
+
+        lens_edges = np.asarray(lens_result.tomo_meta["bins"]["bin_edges"], dtype=float)
+        lens_z = np.asarray(lens_result.z, dtype=float)
+
+        unique_lens_bins = sorted({int(lens_bin) for lens_bin, _ in bin_pairs})
+        block_by_lens_bin = {}
+
+        for lens_bin in unique_lens_bins:
+            block_by_lens_bin[lens_bin] = self.delta_sigma_lens_bin(
+                r,
+                lens_dndz=(lens_z, np.asarray(lens_result.bins[lens_bin], dtype=float)),
+                cosmo=cosmo,
+                pk2d_kwargs=pk2d_kwargs,
+                z_min=float(lens_edges[lens_bin]),
+                z_max=float(lens_edges[lens_bin + 1]),
+                trim_edge_points=trim_edge_points,
+            )
+
+        return np.concatenate(
+            [block_by_lens_bin[int(lens_bin)] for lens_bin, _ in bin_pairs]
+        )
+
 
 @pytest.fixture
 def patched_dependencies(monkeypatch):
@@ -175,6 +209,41 @@ def make_builder(**overrides):
     }
     kwargs.update(overrides)
     return DeltaSigmaForecastBuilder(**kwargs)
+
+
+def test_init_forwards_tomography_kwargs(patched_dependencies):
+    """Tests that tomography configuration is forwarded to TomographyBuilder."""
+    builder = make_builder(
+        tomography_kwargs={
+            "lens": {"survey": "custom", "sample": "custom_sample"},
+            "source": {"survey": "lsst", "role": "source", "year": "1"},
+        }
+    )
+
+    builder.prepare()
+
+    kwargs = DummyTomographyBuilder.instances[-1].kwargs
+
+    assert kwargs["lens"] == {"survey": "custom", "sample": "custom_sample"}
+    assert kwargs["source"] == {"survey": "lsst", "role": "source", "year": "1"}
+
+
+def test_init_forwards_covariance_kwargs(patched_dependencies):
+    """Tests that covariance settings are forwarded to the covariance builder."""
+    builder = make_builder(
+        covariance_kwargs={
+            "k": np.array([0.01, 0.1, 1.0]),
+            "hankel": {"taper": False},
+        }
+    )
+
+    builder.prepare()
+
+    kwargs = DummyDeltaSigmaCovarianceBuilder.instances[0].kwargs
+
+    np.testing.assert_array_equal(kwargs["k"], [0.01, 0.1, 1.0])
+    assert kwargs["hankel"] == {"taper": False}
+    assert "nonlinear" not in kwargs
 
 
 def test_prepare_builds_computed_covariance_and_stacked_data_vector(
@@ -406,13 +475,100 @@ def test_model_rejects_non_mapping_pk2d_kwargs(patched_dependencies):
         builder.model(builder.theta0, context={"tomography": make_tomography()})
 
 
-def test_init_rejects_non_gm_covariance_kind(patched_dependencies):
-    """Tests that initialization rejects unsupported covariance kinds."""
-    with pytest.raises(NotImplementedError, match="covariance_kind='gm'"):
-        make_builder(covariance_kind="joint")
+def test_init_does_not_evaluate_power_spectra(patched_dependencies):
+    """Tests that initialization defers power-spectrum evaluation."""
+    calls = []
+
+    def pk2d_func(**kwargs):
+        """Record power-spectrum evaluations."""
+        calls.append(kwargs)
+        return dummy_pk2d_func(**kwargs)
+
+    builder = make_builder(pk2d_func=pk2d_func)
+
+    assert calls == []
+
+    builder.prepare()
+
+    assert len(calls) == 1
 
 
-def test_init_rejects_unsupported_observable(patched_dependencies):
-    """Tests that initialization rejects unsupported observables."""
-    with pytest.raises(NotImplementedError, match="observable='gamma_t'"):
-        make_builder(observable="gamma_t")
+def test_forecastkit_initializes_derivkit(patched_dependencies, monkeypatch):
+    """Tests that forecastkit initializes DerivKit with the forecast inputs."""
+    calls = []
+
+    class DummyForecastKit:
+        """Minimal DerivKit ForecastKit stand-in."""
+
+        def __init__(self, function, theta0, cov):
+            """Store the supplied forecast inputs."""
+            calls.append((function, theta0, cov))
+
+    monkeypatch.setattr(forecast_module, "ForecastKit", DummyForecastKit)
+
+    builder = make_builder()
+    fk = builder.forecastkit()
+
+    assert isinstance(fk, DummyForecastKit)
+    assert calls[0][0].__self__ is builder
+    np.testing.assert_array_equal(calls[0][1], builder.theta0)
+    np.testing.assert_array_equal(calls[0][2], np.eye(9))
+
+
+def test_fisher_uses_derivkit_defaults(patched_dependencies, monkeypatch):
+    """Tests that fisher delegates to DerivKit without additional arguments."""
+    expected = np.array([[2.0, 0.5], [0.5, 3.0]])
+
+    class DummyForecastKit:
+        """Minimal DerivKit ForecastKit stand-in."""
+
+        def __init__(self, function, theta0, cov):
+            """Accept the forecast inputs."""
+
+        def fisher(self):
+            """Return a deterministic Fisher matrix."""
+            return expected
+
+    monkeypatch.setattr(forecast_module, "ForecastKit", DummyForecastKit)
+
+    builder = make_builder()
+    result = builder.fisher()
+
+    np.testing.assert_array_equal(result, expected)
+
+
+def test_dali_uses_derivkit_defaults(patched_dependencies, monkeypatch):
+    """Tests that dali delegates to DerivKit without additional arguments."""
+    expected = {"F": np.eye(2), "S": np.ones((2, 2, 2))}
+
+    class DummyForecastKit:
+        """Minimal DerivKit ForecastKit stand-in."""
+
+        def __init__(self, function, theta0, cov):
+            """Accept the forecast inputs."""
+
+        def dali(self):
+            """Return deterministic DALI tensors."""
+            return expected
+
+    monkeypatch.setattr(forecast_module, "ForecastKit", DummyForecastKit)
+
+    builder = make_builder()
+    result = builder.dali()
+
+    assert result is expected
+
+
+def test_model_inputs_maps_parameters_and_preserves_fixed_kwargs(patched_dependencies):
+    """Tests automatic parameter mapping and fixed power-spectrum arguments."""
+    builder = make_builder()
+    builder.pk2d_kwargs = {"k_array": np.array([0.1, 1.0]), "log10Mmin_0": 0.0}
+    builder.parameter_names = ["log10Mmin_0", "log10M1_0"]
+    builder.theta0 = np.array([12.5, 13.5])
+
+    result = builder._model_inputs(builder.theta0, {})
+
+    assert result["cosmo"] is builder.cosmo
+    np.testing.assert_array_equal(result["pk2d_kwargs"]["k_array"], [0.1, 1.0])
+    assert result["pk2d_kwargs"]["log10Mmin_0"] == 12.5
+    assert result["pk2d_kwargs"]["log10M1_0"] == 13.5

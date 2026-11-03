@@ -18,12 +18,12 @@ forecasts, HOD or SHMR parameter forecasts, and later Fisher/DALI comparisons.
 
 from __future__ import annotations
 
-import os
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 import numpy as np
 import pyccl as ccl
+from derivkit import ForecastKit
 
 from dsf.covariance.cov_builder import DeltaSigmaCovarianceBuilder
 from dsf.data_vector.delta_sigma_builder import DeltaSigmaCalculator
@@ -33,12 +33,6 @@ from dsf.utils.validators import (
     validate_forecast_vector_and_covariance,
     validate_parameter_names,
 )
-
-os.environ["OMP_NUM_THREADS"] = "1"
-os.environ["OPENBLAS_NUM_THREADS"] = "1"
-os.environ["MKL_NUM_THREADS"] = "1"
-os.environ["VECLIB_MAXIMUM_THREADS"] = "1"
-os.environ["NUMEXPR_NUM_THREADS"] = "1"
 
 __all__ = [
     "DeltaSigmaForecastBuilder",
@@ -55,7 +49,7 @@ class DeltaSigmaForecastBuilder:
 
     The current forecast data vector contains only the galaxy-matter
     Delta Sigma signal, so this builder currently supports only the matching
-    ``gm`` covariance block. The covariance layer also contains heleprs for
+    ``gm`` covariance block. The covariance layer also contains helpers for
     ``gg`` and joint covariance blocks, which are intended for future forecast
     builders once the corresponding ``gg`` or joint data vectors are added.
     """
@@ -70,29 +64,11 @@ class DeltaSigmaForecastBuilder:
         rp_bin_edges: ArrayLike,
         area_deg2: float,
         sigma_e: ScalarOrPerBin = 0.26,
+        pk2d_kwargs: Mapping[str, Any] | None = None,
         theta_mapper: ThetaMapper | None = None,
         parameter_names: Sequence[str] | None = None,
-        lens_survey: str = "desi",
-        source_survey: str = "lsst",
-        lens_sample: str | None = "lrg",
-        source_sample: str | None = None,
-        lens_year: str | None = None,
-        source_year: str | None = None,
-        lens_role: str = "lens",
-        source_role: str = "source",
-        overlap_threshold: float = 0.10,
-        source_behind_lens: bool = True,
-        center_method: str = "mean",
-        decimal_places: int = 4,
-        shared_overrides: Mapping[str, Any] | None = None,
-        lens_overrides: Mapping[str, Any] | None = None,
-        source_overrides: Mapping[str, Any] | None = None,
-        observable: str = "delta_sigma",
-        k: FloatArray | None = None,
-        nonlinear: bool = True,
-        projection: Mapping[str, Any] | None = None,
-        hankel: Mapping[str, Any] | None = None,
-        covariance_kind: str = "gm",
+        tomography_kwargs: Mapping[str, Any] | None = None,
+        covariance_kwargs: Mapping[str, Any] | None = None,
         trim_edge_points: int = 0,
         verbose: bool = True,
     ) -> None:
@@ -115,78 +91,33 @@ class DeltaSigmaForecastBuilder:
             area_deg2: Survey overlap area in square degrees.
             sigma_e: Source ellipticity dispersion used for the shape-noise
                 contribution to the covariance.
+            pk2d_kwargs: Optional fixed keyword arguments passed to the
+                power-spectrum model.
             theta_mapper: Optional function mapping a parameter vector and
-                forecast context into model inputs. It may return ``cosmo`` and
+                forecast context into model inputs. If omitted, parameter names
+                are mapped directly to power-spectrum keyword arguments.
+                If supplied, the mapper may override ``cosmo`` and
                 ``pk2d_kwargs``.
             parameter_names: Optional names for the entries of ``theta0``.
-            lens_survey: Survey preset used for the foreground lens sample.
-            source_survey: Survey preset used for the background source sample.
-            lens_sample: Optional sample label for the lens survey.
-            source_sample: Optional sample label for the source survey.
-            lens_year: Optional lens survey year or scenario label.
-            source_year: Optional source survey year or scenario label.
-            lens_role: Tomography role for the foreground sample.
-            source_role: Tomography role for the background sample.
-            overlap_threshold: Maximum allowed redshift overlap between a lens
-                bin and source bin.
-            source_behind_lens: Whether selected source bins must sit behind
-                selected lens bins.
-            center_method: Bin-center definition used when applying ordering
-                cuts to lens-source bin pairs.
-            decimal_places: Number of decimal places used in Binny summaries.
-            shared_overrides: Binny tomography-spec overrides applied to both samples.
-            lens_overrides: Binny tomography-spec overrides applied only to the lens
-                sample.
-            source_overrides: Binny tomography-spec overrides applied only to the
-                source sample.
-            observable: Forecast observable to evaluate. Currently only
-                ``"delta_sigma"`` is supported.
-            k: Wavenumber grid in ``h / Mpc`` used by the covariance.
-            nonlinear: Whether covariance matter spectra should use nonlinear
-                power.
-            projection: Optional line-of-sight projection settings containing
-                ``pi`` (grid in ``Mpc / h``) and ``gm_window`` (galaxy-matter
-                line-of-sight window).
-            hankel: Optional Hankel configuration containing backend settings,
-                covariance Bessel orders, and taper settings (``taper`` and
-                ``taper_kwargs``). Tapering is enabled by default.
-            covariance_kind: Covariance product to use. Only ``"gm"`` is currently
-                supported by this builder because the forecast data vector is
-                Delta Sigma-only. The ``"gg"`` and ``"joint"`` covariance paths are
-                reserved for future builders with matching data vectors.
+            tomography_kwargs: Optional keyword arguments passed to
+                ``TomographyBuilder``, including ``lens`` and ``source``
+                configurations. Defaults are defined by ``TomographyBuilder``.
+            covariance_kwargs: Optional keyword arguments passed to
+                ``DeltaSigmaCovarianceBuilder``.
             trim_edge_points: Number of edge points removed from each lens-bin
                 redshift distribution before averaging Delta Sigma.
             verbose: Whether progress messages are printed while preparing the
                 forecast.
         """
-        if covariance_kind != "gm":
-            raise NotImplementedError(
-                "Only covariance_kind='gm' is currently supported because "
-                "the forecast data vector is Delta Sigma-only. Add a joint data-vector "
-                "builder before using 'gg' or 'joint' covariance."
-            )
-
         self.cosmo = cosmo
-        self.pk2d_deltasigma = lambda **kwargs: pk2d_func(**kwargs)["pk_deltasigma"]
-        self.calculator = DeltaSigmaCalculator(self.pk2d_deltasigma)
-
+        self.pk2d_func = pk2d_func
+        self.pk2d_kwargs = dict(pk2d_kwargs or {})
+        self.calculator = DeltaSigmaCalculator(
+            lambda **kwargs: pk2d_func(**kwargs)["pk_deltasigma"]
+        )
         self.theta0 = np.asarray(theta0, dtype=float)
         self.parameter_names = validate_parameter_names(parameter_names, self.theta0)
         self.theta_mapper = theta_mapper
-
-        model_inputs = self._model_inputs(self.theta0, context={})
-        self.fiducial_cosmo = model_inputs["cosmo"]
-
-        raw_pk2d_kwargs = model_inputs.get("pk2d_kwargs", {})
-        if not isinstance(raw_pk2d_kwargs, Mapping):
-            raise TypeError("theta_mapper output 'pk2d_kwargs' must be a mapping.")
-
-        pk2d_spectra = pk2d_func(
-            cosmo=self.fiducial_cosmo,
-            **dict(raw_pk2d_kwargs),
-        )
-        self.pk2d_gm = pk2d_spectra["pk_gm"]
-        self.pk2d_gg = pk2d_spectra["pk_gg"]
 
         self.r = np.asarray(r, dtype=float)
         self.rp_bin_edges = np.asarray(rp_bin_edges, dtype=float)
@@ -195,46 +126,11 @@ class DeltaSigmaForecastBuilder:
         self.sigma_e = sigma_e
         self.trim_edge_points = int(trim_edge_points)
 
-        allowed_observables = {"delta_sigma"}
-
-        if observable not in allowed_observables:
-            raise NotImplementedError(
-                f"observable={observable!r} is not supported yet. "
-                "Currently this builder supports only 'delta_sigma'. "
-                "Use a pair-dependent data-vector builder for gamma_t."
-            )
-
-        self.observable = observable
-
-        self.covariance_kind = covariance_kind
         self.verbose = bool(verbose)
 
-        self.tomography_kwargs: dict[str, Any] = {
-            "lens_survey": lens_survey,
-            "source_survey": source_survey,
-            "lens_sample": lens_sample,
-            "source_sample": source_sample,
-            "lens_year": lens_year,
-            "source_year": source_year,
-            "lens_role": lens_role,
-            "source_role": source_role,
-            "overlap_threshold": overlap_threshold,
-            "source_behind_lens": source_behind_lens,
-            "center_method": center_method,
-            "decimal_places": decimal_places,
-            "shared_overrides": shared_overrides,
-            "lens_overrides": lens_overrides,
-            "source_overrides": source_overrides,
-        }
+        self.tomography_kwargs = dict(tomography_kwargs or {})
 
-        self.covariance_kwargs: dict[str, Any] = {
-            "pk_gg": self.pk2d_gg,
-            "pk_gm": self.pk2d_gm,
-            "k": k,
-            "nonlinear": nonlinear,
-            "projection": projection,
-            "hankel": hankel,
-        }
+        self.covariance_kwargs = dict(covariance_kwargs or {})
 
         self._forecast: dict[str, Any] | None = None
 
@@ -266,6 +162,14 @@ class DeltaSigmaForecastBuilder:
         """
         self._log("[1/5] Building lens and source tomography...")
 
+        model_inputs = self._model_inputs(self.theta0, context={})
+        fiducial_cosmo = model_inputs["cosmo"]
+
+        pk2d_spectra = self.pk2d_func(
+            cosmo=fiducial_cosmo,
+            **model_inputs["pk2d_kwargs"],
+        )
+
         tomography = TomographyBuilder(**self.tomography_kwargs).prepare_bins()
 
         self._log(
@@ -277,11 +181,13 @@ class DeltaSigmaForecastBuilder:
         self._log("[2/5] Initializing Delta Sigma covariance builder...")
 
         cov_builder = DeltaSigmaCovarianceBuilder(
-            cosmo=self.fiducial_cosmo,
+            cosmo=fiducial_cosmo,
             tomography=tomography,
             rp_bin_edges=self.rp_bin_edges,
             area_deg2=self.area_deg2,
             sigma_e=self.sigma_e,
+            pk_gg=pk2d_spectra["pk_gg"],
+            pk_gm=pk2d_spectra["pk_gm"],
             **self.covariance_kwargs,
         )
 
@@ -292,12 +198,11 @@ class DeltaSigmaForecastBuilder:
         ]
 
         if covariance is None:
-            self._log(f"[3/5] Computing {self.covariance_kind} block-diagonal covariance...")
+            self._log("[3/5] Computing gm block-diagonal covariance...")
 
-            cov_pairs, cov = self._covariance(
-                cov_builder=cov_builder,
-                bin_pairs=tomography["bin_pairs"],
-            )
+            cov_pairs, cov = cov_builder.gm_block_diagonal(bin_pairs=data_pairs)
+            cov_pairs = list(cov_pairs)
+            cov = np.asarray(cov, dtype=float)
 
             if list(cov_pairs) != data_pairs:
                 raise RuntimeError(
@@ -328,11 +233,17 @@ class DeltaSigmaForecastBuilder:
 
         self._log("[4/5] Preparing shared forecast context...")
 
-        context = self._context(
-            tomography=tomography,
-            cov_builder=cov_builder,
-            cov_pairs=cov_pairs,
-        )
+        context = {
+            "cosmo": fiducial_cosmo,
+            "calculator": self.calculator,
+            "r": self.r,
+            "rp_bin_edges": self.rp_bin_edges,
+            "tomography": tomography,
+            "covariance_builder": cov_builder,
+            "cov_pairs": list(cov_pairs),
+            "covariance_kind": "gm",
+            "observable": "delta_sigma",
+        }
 
         self._log("[4/5] Done: forecast context prepared.")
 
@@ -346,27 +257,23 @@ class DeltaSigmaForecastBuilder:
         self._log(f"[5/5] Done: fiducial data vector computed with length {len(data_vector)}.")
 
         forecast: dict[str, Any] = {
+            **context,
+            "lens_result": tomography["lens_result"],
+            "source_result": tomography["source_result"],
+            "bin_pairs": list(tomography["bin_pairs"]),
+            "lens_bin_centers": tomography["lens_bin_centers"],
+            "source_bin_centers": tomography["source_bin_centers"],
+            "lens_shape_stats": tomography["lens_shape_stats"],
+            "source_shape_stats": tomography["source_shape_stats"],
             "model": self.model,
             "theta0": self.theta0,
             "parameter_names": self.parameter_names,
             "cov": cov,
             "data_vector": data_vector,
             "fiducial_data_vector": data_vector,
-            "r": self.r,
-            "rp_bin_edges": self.rp_bin_edges,
-            "bin_pairs": list(tomography["bin_pairs"]),
-            "cov_pairs": list(cov_pairs),
-            "lens_result": tomography["lens_result"],
-            "source_result": tomography["source_result"],
             "lens_population_stats": tomography["lens_population_stats"],
             "source_population_stats": tomography["source_population_stats"],
-            "lens_bin_centers": tomography["lens_bin_centers"],
-            "source_bin_centers": tomography["source_bin_centers"],
-            "tomography": tomography,
-            "covariance_builder": cov_builder,
-            "calculator": self.calculator,
             "context": context,
-            "covariance_kind": self.covariance_kind,
         }
 
         self._forecast = forecast
@@ -376,25 +283,7 @@ class DeltaSigmaForecastBuilder:
         return forecast
 
     def forecast(self, covariance: FloatArray | None = None) -> dict[str, Any]:
-        """Return cached forecast products, preparing them if needed.
-
-        Args:
-            covariance: Optional precomputed covariance matrix. If provided and no
-                forecast has been cached yet, the builder uses this matrix instead
-                of recomputing the covariance.
-
-        Returns:
-            Dictionary of forecast products suitable for direct use in Fisher,
-            DALI, plotting, or diagnostic workflows.
-
-        Notes:
-            This is the safe accessor to use in downstream code. Unlike
-            ``prepare()``, it does not rebuild tomography and covariance if the
-            forecast has already been prepared.
-
-            If a cached forecast already exists, passing a new covariance is not
-            allowed because it would silently mismatch the cached context.
-        """
+        """Return cached forecast products, preparing them if needed."""
         if self._forecast is not None:
             if covariance is not None:
                 raise RuntimeError(
@@ -402,15 +291,9 @@ class DeltaSigmaForecastBuilder:
                     "DeltaSigmaForecastBuilder instance before supplying a new "
                     "covariance matrix."
                 )
-
             return self._forecast
 
-        self.prepare(covariance=covariance)
-
-        if self._forecast is None:
-            raise RuntimeError("Delta Sigma forecast products were not prepared.")
-
-        return self._forecast
+        return self.prepare(covariance=covariance)
 
     def model(
         self,
@@ -443,40 +326,29 @@ class DeltaSigmaForecastBuilder:
         model_inputs = self._model_inputs(theta_arr, context)
 
         cosmo = model_inputs["cosmo"]
-        raw_pk2d_kwargs = model_inputs.get("pk2d_kwargs", {})
+        pk2d_kwargs = model_inputs["pk2d_kwargs"]
 
-        if not isinstance(raw_pk2d_kwargs, Mapping):
-            raise TypeError("theta_mapper output 'pk2d_kwargs' must be a mapping.")
-
-        pk2d_kwargs: dict[str, Any] = dict(raw_pk2d_kwargs)
-
-        return self._data_vector(
+        return self.calculator.stacked_delta_sigma(
+            r=self.r / float(cosmo["h"]),
+            tomography=context["tomography"],
             cosmo=cosmo,
             pk2d_kwargs=pk2d_kwargs,
-            tomography=context["tomography"],
+            trim_edge_points=self.trim_edge_points,
         )
 
     def context(self) -> dict[str, Any]:
         """Return the shared forecast context.
 
         Returns:
-            Dictionary containing the tomography products, bin centers, selected
-            bin pairs, covariance builder, calculator, radius grids, and
-            fiducial cosmology.
+            Dictionary containing the tomography products, covariance builder,
+            calculator, radius grids, and fiducial cosmology.
 
         Notes:
             The returned dictionary is a shallow copy of the cached context so
             that model calls can safely use it without directly exposing the
             cached context object.
         """
-        forecast = self.forecast()
-        cached_context = forecast["context"]
-
-        if not isinstance(cached_context, Mapping):
-            raise TypeError("Cached forecast context must be a mapping.")
-
-        context: dict[str, Any] = dict(cached_context)
-        return context
+        return dict(self.forecast()["context"])
 
     def forecast_inputs(
         self,
@@ -493,12 +365,20 @@ class DeltaSigmaForecastBuilder:
             calls do not rebuild tomography or covariance.
         """
         forecast = self.forecast()
+        return forecast["model"], forecast["theta0"], forecast["cov"]
 
-        model = forecast["model"]
-        theta0 = forecast["theta0"]
-        cov = forecast["cov"]
+    def forecastkit(self) -> ForecastKit:
+        """Return a DerivKit ForecastKit initialized with the forecast inputs."""
+        model, theta0, cov = self.forecast_inputs()
+        return ForecastKit(function=model, theta0=theta0, cov=cov)
 
-        return model, theta0, cov
+    def fisher(self) -> FloatArray:
+        """Compute the Fisher matrix using DerivKit defaults."""
+        return self.forecastkit().fisher()
+
+    def dali(self) -> dict[str, FloatArray]:
+        """Compute the DALI tensors using DerivKit defaults."""
+        return self.forecastkit().dali()
 
     def _model_inputs(
         self,
@@ -512,208 +392,31 @@ class DeltaSigmaForecastBuilder:
             context: Shared forecast context.
 
         Returns:
-            Dictionary containing the cosmology and profile keyword arguments
-            used to evaluate the Delta Sigma model.
+            Dictionary containing the cosmology and power-spectrum keyword
+            arguments used to evaluate the Delta Sigma model.
 
         Notes:
-            If no ``theta_mapper`` is supplied, the model uses the fiducial
-            cosmology and no additional ``pk2d_func`` keyword arguments. If a
-            mapper is supplied, missing ``cosmo`` or ``pk2d_kwargs`` entries are
-            filled with sensible defaults.
+            Fixed model keyword arguments are combined with parameter-dependent
+            values. If no theta_mapper is supplied, parameter names are mapped
+            directly to model keyword arguments. Otherwise, the mapper controls
+            the parameter-dependent inputs.
         """
+        pk2d_kwargs = dict(self.pk2d_kwargs)
+
         if self.theta_mapper is None:
-            return {
-                "cosmo": self.cosmo,
-                "pk2d_kwargs": {},
-            }
+            pk2d_kwargs.update(
+                zip(self.parameter_names, map(float, theta), strict=True)
+            )
+            return {"cosmo": self.cosmo, "pk2d_kwargs": pk2d_kwargs}
 
-        context_dict: dict[str, Any] = dict(context)
-        mapped: dict[str, Any] = dict(self.theta_mapper(theta, context_dict))
+        mapped = dict(self.theta_mapper(theta, dict(context)))
+        mapped.setdefault("cosmo", self.cosmo)
 
-        if "cosmo" not in mapped:
-            mapped["cosmo"] = self.cosmo
+        varying_kwargs = mapped.get("pk2d_kwargs", {})
+        if not isinstance(varying_kwargs, Mapping):
+            raise TypeError("theta_mapper output 'pk2d_kwargs' must be a mapping.")
 
-        if "pk2d_kwargs" not in mapped:
-            mapped["pk2d_kwargs"] = {}
+        pk2d_kwargs.update(varying_kwargs)
+        mapped["pk2d_kwargs"] = pk2d_kwargs
 
         return mapped
-
-    def _data_vector(
-        self,
-        *,
-        cosmo: ccl.Cosmology,
-        pk2d_kwargs: Mapping[str, Any],
-        tomography: Mapping[str, Any],
-    ) -> FloatArray:
-        """Return the stacked forecast data vector for selected bin pairs.
-
-        Args:
-            cosmo: Cosmology used for the current model evaluation.
-            pk2d_kwargs: Keyword arguments passed to the profile model.
-            tomography: Tomography products containing lens bins, source bins,
-                and selected lens-source bin pairs.
-
-        Returns:
-            One-dimensional stacked data vector.
-
-        Notes:
-            For the current ``delta_sigma`` observable, the mean signal depends
-            on the lens bin only. The selected source bin still matters for the
-            pair selection and covariance ordering, so the returned vector keeps
-            the exact Binny lens-source pair order.
-
-            A future ``gamma_t`` observable should be evaluated per full
-            lens-source pair because the source redshift distribution enters
-            through the lensing efficiency or effective critical surface density.
-        """
-        if self.observable == "delta_sigma":
-            return self._delta_sigma_data_vector(
-                cosmo=cosmo,
-                pk2d_kwargs=pk2d_kwargs,
-                tomography=tomography,
-            )
-
-        raise NotImplementedError(
-            f"observable={self.observable!r} is not supported by this builder."
-        )
-
-    def _delta_sigma_data_vector(
-        self,
-        *,
-        cosmo: ccl.Cosmology,
-        pk2d_kwargs: Mapping[str, Any],
-        tomography: Mapping[str, Any],
-    ) -> FloatArray:
-        """Return the stacked lens-bin Delta Sigma vector in pair order.
-
-        Args:
-            cosmo: Cosmology used for the current model evaluation.
-            pk2d_kwargs: Keyword arguments passed to the profile model.
-            tomography: Tomography products containing lens bins and selected
-                lens-source bin pairs.
-
-        Returns:
-            One-dimensional stacked Delta Sigma vector ordered by the selected
-            lens-source bin pairs.
-
-        Notes:
-            Delta Sigma is computed once per unique lens bin because the mean
-            Delta Sigma profile is lens-bin dependent. The resulting blocks are
-            then repeated according to the exact Binny-selected pair order so
-            that the data vector remains matched to the covariance.
-        """
-        lens_result = tomography["lens_result"]
-        bin_pairs = tomography["bin_pairs"]
-
-        lens_edges = np.asarray(
-            lens_result.tomo_meta["bins"]["bin_edges"],
-            dtype=float,
-        )
-
-        lens_z = np.asarray(lens_result.z, dtype=float)
-        unique_lens_bins = sorted({int(lens_bin) for lens_bin, _ in bin_pairs})
-
-        block_by_lens_bin = {}
-
-        # Keep the user-facing forecast and covariance radius grid in comoving
-        # Mpc / h. Convert to comoving Mpc here because the Delta Sigma
-        # data-vector calculation passes radii to the CCL-backed profile
-        # evaluation, which expects Mpc.
-        h = float(cosmo["h"])
-        r_mpc = self.r / h
-
-        for lens_bin in unique_lens_bins:
-            block_by_lens_bin[lens_bin] = np.asarray(
-                self.calculator.delta_sigma_lens_bin(
-                    r_mpc,
-                    lens_dndz=(
-                        lens_z,
-                        np.asarray(lens_result.bins[lens_bin], dtype=float),
-                    ),
-                    cosmo=cosmo,
-                    pk2d_kwargs=dict(pk2d_kwargs),
-                    z_min=float(lens_edges[lens_bin]),
-                    z_max=float(lens_edges[lens_bin + 1]),
-                    trim_edge_points=self.trim_edge_points,
-                ),
-                dtype=float,
-            )
-
-        blocks = [block_by_lens_bin[int(lens_bin)] for lens_bin, _ in bin_pairs]
-
-        data_vector = np.concatenate(blocks)
-
-        return np.asarray(data_vector, dtype=float)
-
-    def _covariance(
-        self,
-        *,
-        cov_builder: DeltaSigmaCovarianceBuilder,
-        bin_pairs: Sequence[tuple[int, int]],
-    ) -> tuple[list[tuple[int, int]], FloatArray]:
-        """Return the covariance matrix requested by the forecast.
-
-        Args:
-            cov_builder: Covariance builder matched to the selected tomography.
-            bin_pairs: Lens-source bin pairs used by the Delta Sigma data vector.
-
-        Returns:
-            Bin-pair ordering and covariance matrix for the selected covariance
-            product.
-
-        Notes:
-            The default is ``gm`` because the current forecast data vector is the
-            lensing-style Delta Sigma signal. The ``joint`` option should only be
-            used when the data vector is also expanded to include the matching
-            galaxy-galaxy observable.
-        """
-        pair_list: list[tuple[int, int]] = [
-            (int(lens_bin), int(source_bin)) for lens_bin, source_bin in bin_pairs
-        ]
-
-        cov_pairs, cov = cov_builder.gm_block_diagonal(bin_pairs=pair_list)
-
-        return list(cov_pairs), np.asarray(cov, dtype=float)
-
-    def _context(
-        self,
-        *,
-        tomography: Mapping[str, Any],
-        cov_builder: DeltaSigmaCovarianceBuilder,
-        cov_pairs: Sequence[tuple[int, int]],
-    ) -> dict[str, Any]:
-        """Return shared objects needed by model and forecast calls.
-
-        Args:
-            tomography: Tomography products for the lens and source samples.
-            cov_builder: Covariance builder matched to the same tomography.
-            cov_pairs: Bin-pair ordering used by the covariance.
-
-        Returns:
-            Dictionary collecting the forecast state that should remain fixed
-            during model evaluations.
-
-        Notes:
-            The context is designed to keep expensive or shared objects in one
-            place. Forecast tools can repeatedly evaluate ``model(theta)`` while
-            reusing the same tomography, bin-pair selection, radius grids, and
-            covariance setup.
-        """
-        return {
-            "cosmo": self.fiducial_cosmo,
-            "calculator": self.calculator,
-            "r": self.r,
-            "rp_bin_edges": self.rp_bin_edges,
-            "tomography": tomography,
-            "lens_result": tomography["lens_result"],
-            "source_result": tomography["source_result"],
-            "bin_pairs": list(tomography["bin_pairs"]),
-            "lens_bin_centers": tomography["lens_bin_centers"],
-            "source_bin_centers": tomography["source_bin_centers"],
-            "lens_shape_stats": tomography["lens_shape_stats"],
-            "source_shape_stats": tomography["source_shape_stats"],
-            "covariance_builder": cov_builder,
-            "cov_pairs": list(cov_pairs),
-            "covariance_kind": self.covariance_kind,
-            "observable": self.observable,
-        }

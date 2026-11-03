@@ -633,3 +633,26 @@ def test_custom_galaxy_spectra_change_lens_ingredients(covariance_builder_inputs
     np.testing.assert_allclose(low["pk_gm"], high["pk_gm"])
     np.testing.assert_allclose(low["pk_mm"], high["pk_mm"])
     assert not np.allclose(low["pk_gg"], high["pk_gg"])
+
+
+def test_covariance_k_grid_covers_hankel_grid(covariance_builder_inputs, monkeypatch):
+    """Test that the covariance spectrum grid covers the Hankel matrix grid."""
+    from types import SimpleNamespace
+
+    from dsf.hankel.hankel_transform import HankelTransform
+
+    k = np.geomspace(1e-4, 30.0, 100)
+    matrix_k = np.array([0.9e-4, 1e-3, 30.1])
+
+    hankel = object.__new__(HankelTransform)
+    hankel.backend = SimpleNamespace(k={2: matrix_k})
+
+    builder = DeltaSigmaCovarianceBuilder(
+        **covariance_builder_inputs,
+        k=k,
+        hankel=hankel,
+    )
+
+    np.testing.assert_array_equal(builder.k[1:-1], k)
+    assert builder.k[0] == matrix_k[0]
+    assert builder.k[-1] == matrix_k[-1]

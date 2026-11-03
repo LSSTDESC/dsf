@@ -98,4 +98,4 @@ class DeltaSigma:
             taper=True,
         )
 
-        return np.asarray(delta_sigma, dtype=float)
+        return delta_sigma

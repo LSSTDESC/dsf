@@ -18,7 +18,7 @@ or data-vector level.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Any
 
 import numpy as np
@@ -71,37 +71,6 @@ class DeltaSigmaCalculator:
                 keyword argument.
         """
         self.pk2d_func = pk2d_func
-        self._delta_sigma_cache: DeltaSigma | None = None
-
-    def _generate_delta_sigma(
-        self,
-        cosmo: ccl.Cosmology,
-        pk2d_kwargs: dict[str, Any] | None = None,
-        *,
-        overwrite_cache: bool = True,
-    ) -> DeltaSigma:
-        """Build the excess surface density projection from a CCL power spectrum.
-
-        Args:
-            cosmo: CCL cosmology object.
-            pk2d_kwargs: Additional keyword arguments for the profile model.
-            overwrite_cache: Whether to rebuild the stored projection.
-
-        Returns:
-            Standalone excess surface density projection.
-        """
-        kwargs = {} if pk2d_kwargs is None else pk2d_kwargs
-
-        if overwrite_cache or self._delta_sigma_cache is None:
-            pk2d = self.pk2d_func(cosmo=cosmo, **kwargs)
-            self._delta_sigma_cache = DeltaSigma(pk2d=pk2d)
-
-        projection = self._delta_sigma_cache
-
-        if projection is None:
-            raise RuntimeError("Delta Sigma cache was not initialized.")
-
-        return projection
 
     def _delta_sigma_from_profile(
         self,
@@ -137,7 +106,7 @@ class DeltaSigmaCalculator:
                 f"r = {r[first_bad]}, a = {a}."
             )
 
-        return np.asarray(delta_sigma_msun_pc2, dtype=float)
+        return delta_sigma_msun_pc2
 
     def delta_sigma(
         self,
@@ -166,11 +135,8 @@ class DeltaSigmaCalculator:
         """
         r_arr = validate_positive_1d_array(r, "r")
 
-        profile = self._generate_delta_sigma(
-            cosmo=cosmo,
-            pk2d_kwargs=pk2d_kwargs,
-            overwrite_cache=True,
-        )
+        pk2d = self.pk2d_func(cosmo=cosmo, **(pk2d_kwargs or {}))
+        profile = DeltaSigma(pk2d=pk2d)
 
         return self._delta_sigma_from_profile(
             profile=profile,
@@ -186,6 +152,7 @@ class DeltaSigmaCalculator:
         cosmo: ccl.Cosmology,
         pk2d_kwargs: dict[str, Any] | None = None,
         *,
+        profile: DeltaSigma | None = None,
         z_min: float | None = None,
         z_max: float | None = None,
         trim_edge_points: int = 0,
@@ -210,6 +177,7 @@ class DeltaSigmaCalculator:
                 distribution.
             cosmo: CCL cosmology object.
             pk2d_kwargs: Additional parameters for the 3D profile model.
+            profile: Optional precomputed Delta Sigma projection.
             z_min: Optional lower redshift limit of the lens bin.
             z_max: Optional upper redshift limit of the lens bin.
             trim_edge_points: Number of edge points removed from each side of
@@ -242,11 +210,9 @@ class DeltaSigmaCalculator:
 
         nz_norm = nz_use / norm
 
-        profile = self._generate_delta_sigma(
-            cosmo=cosmo,
-            pk2d_kwargs=pk2d_kwargs,
-            overwrite_cache=True,
-        )
+        if profile is None:
+            pk2d = self.pk2d_func(cosmo=cosmo, **(pk2d_kwargs or {}))
+            profile = DeltaSigma(pk2d=pk2d)
 
         delta_sigma_arr = np.asarray(
             [
@@ -287,7 +253,59 @@ class DeltaSigmaCalculator:
                 f"First bad index: {first_bad}."
             )
 
-        return np.asarray(delta_sigma_mean, dtype=float)
+        return delta_sigma_mean
+
+
+    def stacked_delta_sigma(
+        self,
+        r: NDArray[np.float64],
+        tomography: Mapping[str, Any],
+        cosmo: ccl.Cosmology,
+        pk2d_kwargs: dict[str, Any] | None = None,
+        *,
+        trim_edge_points: int = 0,
+    ) -> NDArray[np.float64]:
+        r"""Calculate the stacked tomographic :math:`\Delta\Sigma` data vector.
+
+        The profile is evaluated once per unique lens bin and repeated in the
+        exact lens-source bin-pair order supplied by the tomography.
+
+        Args:
+            r: Projected comoving radii in Mpc.
+            tomography: Tomography products containing lens bins and bin pairs.
+            cosmo: CCL cosmology object.
+            pk2d_kwargs: Additional parameters for the profile model.
+            trim_edge_points: Number of edge points removed from each lens bin.
+
+        Returns:
+            Stacked Delta Sigma vector in :math:`M_\odot / \mathrm{pc}^2`.
+        """
+        lens_result = tomography["lens_result"]
+        bin_pairs = tomography["bin_pairs"]
+
+        lens_edges = np.asarray(lens_result.tomo_meta["bins"]["bin_edges"], dtype=float)
+        lens_z = np.asarray(lens_result.z, dtype=float)
+
+        unique_lens_bins = sorted({int(lens_bin) for lens_bin, _ in bin_pairs})
+        block_by_lens_bin = {}
+
+        pk2d = self.pk2d_func(cosmo=cosmo, **(pk2d_kwargs or {}))
+        profile = DeltaSigma(pk2d=pk2d)
+
+        for lens_bin in unique_lens_bins:
+            block_by_lens_bin[lens_bin] = self.delta_sigma_lens_bin(
+                r,
+                lens_dndz=(lens_z, np.asarray(lens_result.bins[lens_bin], dtype=float)),
+                cosmo=cosmo,
+                profile=profile,
+                z_min=float(lens_edges[lens_bin]),
+                z_max=float(lens_edges[lens_bin + 1]),
+                trim_edge_points=trim_edge_points,
+            )
+
+        blocks = [block_by_lens_bin[int(lens_bin)] for lens_bin, _ in bin_pairs]
+
+        return np.concatenate(blocks)
 
 
 def stellar_point_mass_delta_sigma(

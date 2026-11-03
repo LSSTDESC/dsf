@@ -19,7 +19,7 @@ class DummyPk2D:
         """Return a Gaussian spectrum while recording inputs."""
         k = np.asarray(k, dtype=float)
         self.calls.append((k.copy(), a))
-        return a * np.exp(-k**2)
+        return a * np.exp(-(k**2))
 
 
 def test_delta_sigma_stores_pk2d_object():
@@ -48,11 +48,10 @@ def test_delta_sigma_uses_fftlog_backend():
 )
 def test_delta_sigma_configures_wavenumber_grid(k_min, k_max, n_k):
     """Tests that the requested logarithmic wavenumber grid is constructed."""
+    k = np.geomspace(k_min, k_max, n_k)
     projection = DeltaSigma(
         pk2d=DummyPk2D(),
-        k_min=k_min,
-        k_max=k_max,
-        n_k=n_k,
+        k=k,
     )
 
     assert projection.k.shape == (n_k,)
@@ -77,21 +76,23 @@ def test_delta_sigma_configures_wavenumber_grid(k_min, k_max, n_k):
 )
 def test_delta_sigma_rejects_invalid_wavenumber_bounds(k_min, k_max):
     """Tests that invalid wavenumber bounds raise a ValueError."""
+    k = np.array([k_min, k_max], dtype=float)
     with pytest.raises(ValueError):
-        DeltaSigma(pk2d=DummyPk2D(), k_min=k_min, k_max=k_max)
+        DeltaSigma(pk2d=DummyPk2D(), k=k)
 
 
-@pytest.mark.parametrize("n_k", [0, 1, -1])
-def test_delta_sigma_rejects_invalid_grid_size(n_k):
+def test_delta_sigma_rejects_invalid_grid_size():
     """Tests that the wavenumber grid requires at least two samples."""
-    with pytest.raises(ValueError, match="n_k must be at least 2"):
-        DeltaSigma(pk2d=DummyPk2D(), n_k=n_k)
+    k = np.array([1.0])
+    with pytest.raises(ValueError, match="k must contain at least 2 values."):
+        DeltaSigma(pk2d=DummyPk2D(), k=k)
 
 
 def test_delta_sigma_forwards_wavenumbers_and_scale_factor():
     """Tests that the stored Pk2D receives the configured grid and scale factor."""
     pk2d = DummyPk2D()
-    projection = DeltaSigma(pk2d=pk2d, k_min=1.0e-3, k_max=1.0e3, n_k=256)
+    k = np.geomspace(1.0e-3, 1.0e3, 256)
+    projection = DeltaSigma(pk2d=pk2d, k=k)
 
     projection.delta_sigma(cosmo=None, r=np.array([0.5, 1.0]), a=0.7)
 
@@ -104,7 +105,8 @@ def test_delta_sigma_forwards_wavenumbers_and_scale_factor():
 
 def test_delta_sigma_returns_expected_shape():
     """Tests that the projected profile matches the requested radial grid."""
-    projection = DeltaSigma(pk2d=DummyPk2D(), n_k=1024)
+    k = np.geomspace(1.0e-6, 1.0e6, 1024)
+    projection = DeltaSigma(pk2d=DummyPk2D(), k=k)
     r = np.geomspace(0.1, 10.0, 20)
 
     result = projection.delta_sigma(cosmo=None, r=r, a=0.8)
@@ -116,7 +118,8 @@ def test_delta_sigma_returns_expected_shape():
 @pytest.mark.parametrize("a", [0.25, 0.5, 1.0])
 def test_delta_sigma_scales_with_pk2d_amplitude(a):
     """Tests that the projected profile scales linearly with the input spectrum."""
-    projection = DeltaSigma(pk2d=DummyPk2D(), n_k=1024)
+    k = np.geomspace(1.0e-6, 1.0e6, 1024)
+    projection = DeltaSigma(pk2d=DummyPk2D(), k=k)
     r = np.geomspace(0.1, 10.0, 20)
 
     reference = projection.delta_sigma(cosmo=None, r=r, a=1.0)
@@ -170,27 +173,25 @@ def test_delta_sigma_matches_direct_hankel_integration():
 
     The reference is evaluated independently using adaptive quadrature.
     """
-    projection = DeltaSigma(
-        pk2d=DummyPk2D(),
-        k_min=1.0e-4,
-        k_max=1.0e3,
-        n_k=4096,
-    )
+    k = np.geomspace(1.0e-4, 1.0e3, 4096)
+    projection = DeltaSigma(pk2d=DummyPk2D(), k=k)
 
     r = np.geomspace(0.5, 5.0, 10)
     result = projection.delta_sigma(cosmo=None, r=r, a=1.0)
 
-    expected = np.array([
-        quad(
-            lambda k, radius=radius: k * np.exp(-k**2) * jv(2, k * radius) / (2.0 * np.pi),
-            0.0,
-            20.0,
-            args=(),
-            epsabs=1.0e-11,
-            epsrel=1.0e-11,
-        )[0]
-        for radius in r
-    ])
+    expected = np.array(
+        [
+            quad(
+                lambda k, radius=radius: k * np.exp(-(k**2)) * jv(2, k * radius) / (2.0 * np.pi),
+                0.0,
+                20.0,
+                args=(),
+                epsabs=1.0e-11,
+                epsrel=1.0e-11,
+            )[0]
+            for radius in r
+        ]
+    )
 
     np.testing.assert_allclose(result, expected, rtol=1.0e-2, atol=1.0e-6)
 
@@ -222,12 +223,8 @@ def test_delta_sigma_matches_analytic_gaussian_transform():
         """Evaluate the Gaussian Fourier-space profile."""
         return a * np.exp(-alpha * np.asarray(k, dtype=float) ** 2)
 
-    projection = DeltaSigma(
-        pk2d=gaussian_pk,
-        k_min=1.0e-4,
-        k_max=1.0e3,
-        n_k=4096,
-    )
+    k = np.geomspace(1.0e-6, 1.0e6, 4096)
+    projection = DeltaSigma(pk2d=gaussian_pk, k=k)
 
     r = np.geomspace(0.5, 5.0, 20)
     result = projection.delta_sigma(cosmo=None, r=r, a=1.0)
@@ -243,7 +240,7 @@ def test_delta_sigma_is_linear_in_input_spectrum():
 
     def first_pk(k, a):
         """Return the first Gaussian spectrum."""
-        return a * np.exp(-np.asarray(k, dtype=float) ** 2)
+        return a * np.exp(-(np.asarray(k, dtype=float) ** 2))
 
     def second_pk(k, a):
         """Return the second Gaussian spectrum."""
@@ -253,11 +250,11 @@ def test_delta_sigma_is_linear_in_input_spectrum():
         """Return the sum of both spectra."""
         return first_pk(k, a) + second_pk(k, a)
 
-    kwargs = {"k_min": 1.0e-4, "k_max": 1.0e3, "n_k": 2048}
+    k = np.geomspace(1.0e-4, 1.0e3, 2048)
 
-    first = DeltaSigma(pk2d=first_pk, **kwargs)
-    second = DeltaSigma(pk2d=second_pk, **kwargs)
-    combined = DeltaSigma(pk2d=combined_pk, **kwargs)
+    first = DeltaSigma(pk2d=first_pk, k=k)
+    second = DeltaSigma(pk2d=second_pk, k=k)
+    combined = DeltaSigma(pk2d=combined_pk, k=k)
 
     r = np.geomspace(0.5, 5.0, 20)
 
@@ -275,12 +272,8 @@ def test_delta_sigma_is_linear_in_input_spectrum():
 
 def test_delta_sigma_preserves_radius_order():
     """Tests that the projection preserves the ordering of requested radii."""
-    projection = DeltaSigma(
-        pk2d=DummyPk2D(),
-        k_min=1.0e-4,
-        k_max=1.0e3,
-        n_k=2048,
-    )
+    k = np.geomspace(1.0e-4, 1.0e3, 2048)
+    projection = DeltaSigma(pk2d=DummyPk2D(), k=k)
 
     r_sorted = np.array([0.5, 1.0, 2.0, 5.0])
     r_unsorted = np.array([5.0, 0.5, 2.0, 1.0])
@@ -295,7 +288,8 @@ def test_delta_sigma_preserves_radius_order():
 
 def test_delta_sigma_is_independent_of_cosmology_argument():
     """Tests that the projection depends only on the supplied Pk2D object."""
-    projection = DeltaSigma(pk2d=DummyPk2D(), n_k=1024)
+    k = np.geomspace(1.0e-6, 1.0e6, 1024)
+    projection = DeltaSigma(pk2d=DummyPk2D(), k=k)
     r = np.geomspace(0.5, 5.0, 10)
 
     result_none = projection.delta_sigma(cosmo=None, r=r, a=0.7)
@@ -308,18 +302,20 @@ def test_delta_sigma_converges_with_wavenumber_resolution():
     """Tests numerical stability as the FFTLog wavenumber grid is refined."""
     r = np.geomspace(0.5, 5.0, 20)
 
-    coarse = DeltaSigma(
-        pk2d=DummyPk2D(),
-        k_min=1.0e-4,
-        k_max=1.0e3,
-        n_k=2048,
-    )
+    k_coarse = np.geomspace(1.0e-4, 1.0e3, 2048)
+    coarse = DeltaSigma(pk2d=DummyPk2D(), k=k_coarse)
 
-    fine = DeltaSigma(
-        pk2d=DummyPk2D(),
-        k_min=1.0e-4,
-        k_max=1.0e3,
-        n_k=4096,
+    k_fine = np.geomspace(1.0e-4, 1.0e3, 4096)
+    fine = DeltaSigma(pk2d=DummyPk2D(), k=k_fine)
+
+    coarse_result = coarse.delta_sigma(cosmo=None, r=r, a=1.0)
+    fine_result = fine.delta_sigma(cosmo=None, r=r, a=1.0)
+
+    np.testing.assert_allclose(
+        coarse_result,
+        fine_result,
+        rtol=1.0e-2,
+        atol=1.0e-6,
     )
 
     coarse_result = coarse.delta_sigma(cosmo=None, r=r, a=1.0)
@@ -342,20 +338,12 @@ def test_delta_sigma_suppresses_fftlog_ringing():
         return a / (1.0 + k**2)
 
     r = np.geomspace(0.2, 30.0, 24)
+    k_ref = np.geomspace(1.0e-6, 1.0e6, 5000)
 
-    reference = DeltaSigma(
-        pk2d=power_spectrum,
-        k_min=1.0e-6,
-        k_max=1.0e6,
-        n_k=5000,
-    )
+    reference = DeltaSigma(pk2d=power_spectrum, k=k_ref)
 
-    comparison = DeltaSigma(
-        pk2d=power_spectrum,
-        k_min=1.0e-4,
-        k_max=1.0e4,
-        n_k=5000,
-    )
+    k_comp = np.geomspace(1.0e-4, 1.0e4, 5000)
+    comparison = DeltaSigma(pk2d=power_spectrum, k=k_comp)
 
     reference_result = reference.delta_sigma(cosmo=None, r=r, a=0.7)
     comparison_result = comparison.delta_sigma(cosmo=None, r=r, a=0.7)

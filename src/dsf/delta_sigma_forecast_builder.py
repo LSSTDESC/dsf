@@ -359,27 +359,16 @@ class DeltaSigmaForecastBuilder:
         self._log(f"[5/5] Done: fiducial data vector computed with length {len(data_vector)}.")
 
         forecast: dict[str, Any] = {
+            **context,
             "model": self.model,
             "theta0": self.theta0,
             "parameter_names": self.parameter_names,
             "cov": cov,
             "data_vector": data_vector,
             "fiducial_data_vector": data_vector,
-            "r": self.r,
-            "rp_bin_edges": self.rp_bin_edges,
-            "bin_pairs": list(tomography["bin_pairs"]),
-            "cov_pairs": list(cov_pairs),
-            "lens_result": tomography["lens_result"],
-            "source_result": tomography["source_result"],
             "lens_population_stats": tomography["lens_population_stats"],
             "source_population_stats": tomography["source_population_stats"],
-            "lens_bin_centers": tomography["lens_bin_centers"],
-            "source_bin_centers": tomography["source_bin_centers"],
-            "tomography": tomography,
-            "covariance_builder": cov_builder,
-            "calculator": self.calculator,
             "context": context,
-            "covariance_kind": self.covariance_kind,
         }
 
         self._forecast = forecast
@@ -484,14 +473,7 @@ class DeltaSigmaForecastBuilder:
             that model calls can safely use it without directly exposing the
             cached context object.
         """
-        forecast = self.forecast()
-        cached_context = forecast["context"]
-
-        if not isinstance(cached_context, Mapping):
-            raise TypeError("Cached forecast context must be a mapping.")
-
-        context: dict[str, Any] = dict(cached_context)
-        return context
+        return dict(self.forecast()["context"])
 
     def forecast_inputs(
         self,

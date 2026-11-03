@@ -49,6 +49,7 @@ dependencies = [
   "derivkit",
   "cmasher",
   "getdist",
+  "tqdm",
 ]
 
 [dependency-groups]

@@ -13,5 +13,6 @@ Available examples
 
    tomography
    data_vector
+   systematics
    covariance
-   builder_example
+   forecast

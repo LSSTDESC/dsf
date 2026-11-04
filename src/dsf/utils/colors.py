@@ -17,16 +17,14 @@ __all__ = [
     "pastelize",
 ]
 
-PASTEL_AMOUNT = 0.25
+PASTEL_AMOUNT = 0.0
 
 _BASE_COLORS = [
-    "#294653",  # Deep slate blue
-    "#168C83",  # Teal
-    "#68C8B8",  # Mint
-    "#F2C75C",  # Golden yellow
-    "#F6A35C",  # Apricot
-    "#ED765E",  # Coral
-    "#D95C48",  # Terracotta
+    "#E14536",
+    "#FD7A03",
+    "#FAE403",
+    "#B3DD30",
+    "#11B5C2",
 ]
 
 

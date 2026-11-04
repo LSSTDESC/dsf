@@ -41,7 +41,8 @@ autodoc_typehints = "description"
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False
 
-plot_formats = [("png", 100)]
+
+plot_formats = [("png", 300)]
 plot_html_show_source_link = False
 plot_html_show_formats = False
 
@@ -49,6 +50,20 @@ plot_pre_code = """
 import matplotlib
 matplotlib.use("Agg")
 """
+
+# Global Matplotlib defaults for documentation figures.
+plot_rcparams = {
+    "figure.figsize": (7, 5),
+    "font.size": 15,
+    "axes.titlesize": 16,
+    "axes.labelsize": 15,
+    "xtick.labelsize": 13,
+    "ytick.labelsize": 13,
+    "legend.fontsize": 13,
+    "lines.linewidth": 1.8,
+    "patch.linewidth": 1.5,
+    "axes.linewidth": 1.2,
+}
 
 html_theme_options = {
     "source_repository": "https://github.com/LSSTDESC/dsf/",

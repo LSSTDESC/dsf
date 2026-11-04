@@ -5,7 +5,7 @@ import pytest
 from matplotlib.colors import BoundaryNorm, LinearSegmentedColormap, ListedColormap, to_rgb
 
 from dsf import DSF_CMAP, DSF_CMAP_DISCRETE, DSF_COLORS, DSF_NORM
-from dsf.utils.colors import PASTEL_AMOUNT, pastelize
+from dsf.utils.colors import pastelize
 
 BASE_COLORS = [
     "#294653",
@@ -52,7 +52,7 @@ def test_pastelize_endpoints(color):
 
 def test_dsf_colors_length():
     """Test that the DSF palette contains seven colors."""
-    assert len(DSF_COLORS) == 7
+    assert len(DSF_COLORS) == 5
 
 
 def test_dsf_colors_hex():
@@ -70,8 +70,14 @@ def test_dsf_colors_unique():
 
 
 def test_dsf_colors_values():
-    """Test that the DSF palette matches the pastelized base colors."""
-    expected = [pastelize(color, PASTEL_AMOUNT) for color in BASE_COLORS]
+    """Test that the DSF palette matches the defined colors."""
+    expected = [
+        "#e14536",
+        "#fd7a03",
+        "#fae403",
+        "#b3dd30",
+        "#11b5c2",
+    ]
 
     assert DSF_COLORS == expected
 

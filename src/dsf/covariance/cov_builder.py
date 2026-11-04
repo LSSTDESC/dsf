@@ -139,22 +139,11 @@ class DeltaSigmaCovarianceBuilder:
             self.lens_result.tomo_meta["bins"]["bin_edges"],
             dtype=float,
         )
-        self.source_edges = np.asarray(
-            self.source_result.tomo_meta["bins"]["bin_edges"],
-            dtype=float,
-        )
 
         self.lens_centers = np.asarray(
             [
-                self.lens_result.tomo_meta["bins"]["truez_summary"][i]["z_mean"]
-                for i in self.lens_result.tomo_meta["bins"]["indices"]
-            ],
-            dtype=float,
-        )
-        self.source_centers = np.asarray(
-            [
-                self.source_result.tomo_meta["bins"]["truez_summary"][i]["z_mean"]
-                for i in self.source_result.tomo_meta["bins"]["indices"]
+                self.lens_meta["bins"]["truez_summary"][i]["z_mean"]
+                for i in self.lens_meta["bins"]["indices"]
             ],
             dtype=float,
         )

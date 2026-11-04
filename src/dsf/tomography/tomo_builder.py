@@ -148,7 +148,10 @@ class TomographyBuilder:
                 nz=result.nz,
                 spec={**result.spec, "sample_properties": dict(properties)},
                 bins=result.bins,
-                tomo_meta={"frac_per_bin": fractions},
+                tomo_meta={
+                    **(result.tomo_meta or {}),
+                    "frac_per_bin": fractions,
+                },
                 survey_meta=result.survey_meta,
                 survey=result.survey,
             )

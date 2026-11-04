@@ -1,7 +1,9 @@
+
 # DSF
 
 [![CI](https://img.shields.io/github/actions/workflow/status/LSSTDESC/dsf/ci.yml?branch=main&label=CI&color=3b9ab2&style=flat-square)](https://github.com/LSSTDESC/dsf/actions/workflows/ci.yml)
 [![Docs](https://img.shields.io/github/actions/workflow/status/LSSTDESC/dsf/docs.yml?branch=main&label=docs&color=3b9ab2&style=flat-square)](https://lsstdesc.org/dsf/)
+[![PyPI](https://img.shields.io/pypi/v/lsst-desc-dsf?color=3b9ab2&style=flat-square)](https://pypi.org/project/lsst-desc-dsf/)
 [![License](https://img.shields.io/github/license/LSSTDESC/dsf?color=3b9ab2&style=flat-square)](LICENSE)
 
 Delta Sigma forecasting tools for LSST DESC galaxy-galaxy lensing analyses.
@@ -28,12 +30,25 @@ workflow.
 
 ## Installation
 
-Clone the repository:
+Install DSF from PyPI:
+
+```bash
+pip install lsst-desc-dsf
+```
+
+Alternatively, install the latest development version from GitHub:
 
 ```bash
 git clone https://github.com/LSSTDESC/dsf.git
 cd dsf
-````
+pip install -e .
+```
+
+The package can then be imported using:
+
+```python
+import dsf
+```
 
 ## Documentation
 

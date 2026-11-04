@@ -7,12 +7,12 @@ from dsf.modelling.combinations import (
 )
 from dsf.modelling.cosmology import make_ccl_cosmology
 from dsf.modelling.hod import hod_galaxy_bias, pk2d_hod
-from dsf.modelling.nla import pk2d_nla
 from dsf.modelling.mag_bias import (
     delta_sigma_lens_mag_correction,
     get_lens_mag_integ_params,
     set_lens_mag_integ_params,
 )
+from dsf.modelling.nla import pk2d_nla
 
 __all__ = [
     "make_ccl_cosmology",

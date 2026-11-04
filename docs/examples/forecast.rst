@@ -1,5 +1,10 @@
-End-to-end forecast
-===================
+.. |dsflogo| image:: ../_static/dsf_logo.svg
+   :alt: DSF logo
+   :height: 40px
+   :class: inline-dsf-logo
+
+|dsflogo| End-to-end forecast
+=============================
 
 This example demonstrates an end-to-end :math:`\Delta\Sigma(R)` forecast
 using ``DeltaSigmaForecastBuilder``.

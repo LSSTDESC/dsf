@@ -1,5 +1,10 @@
-Data vector
-===========
+.. |dsflogo| image:: ../_static/dsf_logo.svg
+   :alt: DSF logo
+   :height: 40px
+   :class: inline-dsf-logo
+
+|dsflogo| Data vector
+=====================
 
 DSF computes the excess surface density :math:`\Delta\Sigma(R)` from a
 Fourier-space ``Pk2D`` model. This page demonstrates a minimal calculation

@@ -1,5 +1,10 @@
-Systematics modelling
-=====================
+.. |dsflogo| image:: ../_static/dsf_logo.svg
+   :alt: DSF logo
+   :height: 40px
+   :class: inline-dsf-logo
+
+|dsflogo| Systematics modelling
+===============================
 
 DSF supports different physical ingredients through the ``pk2d_func``
 argument of ``DeltaSigmaCalculator``. The examples below compare HOD,

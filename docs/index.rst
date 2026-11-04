@@ -67,9 +67,8 @@ installation notes and worked examples will be added as the package matures.
    :caption: Documentation
 
    installation
+   theory/index
    examples/index
-   hankel_transform
-   unit_conventions
    contributing
    api/index
 

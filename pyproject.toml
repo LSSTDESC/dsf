@@ -1,5 +1,5 @@
 [project]
-name = "dsf"
+name = "lsst-desc-dsf"
 version = "0.1.0"
 description = "Delta Sigma forecasting tools for LSST DESC galaxy-galaxy lensing analyses."
 readme = "README.md"

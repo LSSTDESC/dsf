@@ -1,3 +1,4 @@
+
 /* ==========================================================================
    DSF — Furo theme customization
    ========================================================================== */
@@ -13,16 +14,30 @@
 
     --color-brand-primary: var(--dsf-orange);
     --color-brand-content: var(--dsf-orange);
+
+    --color-link: var(--dsf-orange);
+    --color-link--hover: var(--dsf-red);
+    --color-link--visited: var(--dsf-orange);
+
+    --color-sidebar-link-text: var(--dsf-orange);
+    --color-sidebar-link-text--top-level: var(--dsf-orange);
 }
 
 /* --- Furo theme colors -------------------------------------------------- */
 
-html[data-theme="light"],
-html[data-theme="dark"] {
+/* Furo sets theme variables on body, not html. */
+body[data-theme="light"],
+body[data-theme="dark"],
+body[data-theme="auto"] {
     --color-brand-primary: var(--dsf-orange);
     --color-brand-content: var(--dsf-orange);
+
     --color-link: var(--dsf-orange);
     --color-link--hover: var(--dsf-red);
+    --color-link--visited: var(--dsf-orange);
+
+    --color-sidebar-link-text: var(--dsf-orange);
+    --color-sidebar-link-text--top-level: var(--dsf-orange);
 }
 
 /* --- Headings ----------------------------------------------------------- */
@@ -43,13 +58,60 @@ article h6 {
 
 /* --- Links -------------------------------------------------------------- */
 
-article a:link,
-article a:visited {
-    color: var(--dsf-orange);
+/* Global links, matching the approach used in DerivKit. */
+a:link,
+a:visited,
+html[data-theme] a:link,
+html[data-theme] a:visited {
+    color: var(--dsf-orange) !important;
 }
 
-article a:hover {
-    color: var(--dsf-red);
+a:hover,
+html[data-theme] a:hover {
+    color: var(--dsf-red) !important;
+}
+
+a:active,
+html[data-theme] a:active {
+    color: var(--dsf-orange) !important;
+}
+
+a {
+    text-decoration-color: currentColor;
+}
+
+/* Furo content, sidebar, TOC, and navigation links. */
+:is(
+    .content,
+    .sidebar-container,
+    nav.toc,
+    .related,
+    .toc-tree,
+    .toctree-wrapper,
+    table.contentstable
+) a:link,
+:is(
+    .content,
+    .sidebar-container,
+    nav.toc,
+    .related,
+    .toc-tree,
+    .toctree-wrapper,
+    table.contentstable
+) a:visited {
+    color: var(--dsf-orange) !important;
+}
+
+:is(
+    .content,
+    .sidebar-container,
+    nav.toc,
+    .related,
+    .toc-tree,
+    .toctree-wrapper,
+    table.contentstable
+) a:hover {
+    color: var(--dsf-red) !important;
 }
 
 /* --- Homepage logo and title spacing ----------------------------------- */
@@ -97,13 +159,33 @@ article h1 {
 .sidebar-tree .current > a,
 .sidebar-tree a.current,
 .sidebar-tree a[aria-current="page"] {
-    color: var(--dsf-orange) !important;
+    color: var(--dsf-cyan) !important;
     font-weight: 700;
 }
 
 /* Sidebar section captions. */
 .sidebar-tree .caption-text {
+    color: var(--dsf-cyan) !important;
+}
+
+/* --- Furo sidebar dropdown arrows -------------------------------------- */
+
+/* Furo renders expanders as label elements containing .icon. */
+.sidebar-tree label .icon,
+.sidebar-tree .toctree-l1 > label .icon {
     color: var(--dsf-orange) !important;
+}
+
+/* Ensure SVG arrows inherit the orange color. */
+.sidebar-tree label .icon svg {
+    color: inherit !important;
+    stroke: currentColor !important;
+}
+
+/* Hover state. */
+.sidebar-tree label:hover .icon,
+.sidebar-tree .toctree-l1 > label:hover .icon {
+    color: var(--dsf-red) !important;
 }
 
 /* --- Inline heading logos ---------------------------------------------- */

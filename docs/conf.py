@@ -35,6 +35,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "api/modules.rst"]
 html_theme = "furo"
 html_static_path = ["_static"]
 html_logo = "_static/dsf_logo.svg"
+html_favicon = "_static/dsf_logo.svg"
 html_css_files = ["custom.css"]
 
 autodoc_typehints = "description"

@@ -138,8 +138,23 @@ article h1 {
     max-height: 80px;
 }
 
+/* --- Sidebar package title and subtitle -------------------------------- */
+
 .sidebar-brand-text {
+    color: var(--dsf-orange) !important;
     margin-top: 0 !important;
+    text-align: center;
+    font-weight: 700;
+}
+
+.sidebar-brand-text::after {
+    content: "Delta Sigma Forecast";
+    display: block;
+    color: var(--dsf-cyan);
+    font-size: 0.55em;
+    font-weight: 400;
+    margin-top: 0.25rem;
+    white-space: nowrap;
 }
 
 /* --- Sidebar navigation ------------------------------------------------- */

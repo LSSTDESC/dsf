@@ -63,13 +63,15 @@ The API reference documents the main DSF modules currently available. More
 installation notes and worked examples will be added as the package matures.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Documentation
 
    installation
    theory/index
    examples/index
    contributing
+   ecosystem
+   team
    api/index
 
 References
@@ -82,4 +84,3 @@ Indices and tables
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`

@@ -12,7 +12,7 @@ project = "DSF"
 author = "Niko Šarčević, Ben Levine"
 copyright = "2026, LSST Dark Energy Science Collaboration"
 
-html_title = "DSF Documentation"
+html_title = "DSF"
 html_baseurl = "https://lsstdesc.org/dsf/"
 root_doc = "index"
 

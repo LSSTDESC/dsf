@@ -19,5 +19,8 @@ Theory topics
 .. toctree::
    :maxdepth: 1
 
+   data_vector
+   covariance
    hankel
+   forecasting
    conventions

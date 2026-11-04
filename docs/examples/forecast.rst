@@ -1,3 +1,4 @@
+
 .. |dsflogo| image:: ../_static/dsf_logo.svg
    :alt: DSF logo
    :height: 40px
@@ -6,11 +7,11 @@
 |dsflogo| End-to-end forecast
 =============================
 
-This example demonstrates an end-to-end :math:`\Delta\Sigma(R)` forecast
-using ``DeltaSigmaForecastBuilder``.
+This example demonstrates an end-to-end :math:`\Delta\Sigma(R)`
+forecast using ``DeltaSigmaForecastBuilder``.
 
 DSF constructs the tomographic samples, data vector, and covariance,
-while DerivKit computes the Fisher matrix and DALI tensors.
+while DerivKit computes the Fisher matrix and third-order DALI forecast.
 
 We vary two halo occupation distribution (HOD) parameters,
 
@@ -20,254 +21,109 @@ We vary two halo occupation distribution (HOD) parameters,
    =
    (\log_{10}M_{\min}, \log_{10}M_1),
 
-and compare Fisher and third-order DALI forecasts with and without
-Gaussian priors corresponding to approximately 10% uncertainty in
-the physical halo masses.
+and compare forecasts with and without independent Gaussian priors
+on the logarithmic HOD mass parameters.
 
-
-Forecast-builder example
-------------------------
-
-The forecast results are precomputed and stored as numerical arrays.
-The Fisher forecasts are represented by analytic Gaussian distributions,
-while the DALI forecasts are represented by posterior samples.
-
-The numerical results were generated using DerivKit's
-``ForecastKit`` interface, including its GetDist utilities for
-Fisher and DALI forecasts.
-
-The cached results allow the documentation to display the contours
-without recomputing model derivatives or running MCMC.
-
-The first two figures illustrate the effect of Gaussian mass priors
-on Fisher and DALI-3 forecasts separately.
-The third figure compares the two forecasting methods without
-external priors.
-
-.. plot::
-   :include-source:
-   :context: close-figs
-
-   from pathlib import Path
-
-   import dsf
-   import numpy as np
-   from getdist import MCSamples, plots as getdist_plots
-   from getdist.gaussian_mixtures import GaussianND
-
-   from dsf import DSF_COLORS
-
-   data_dir = Path(dsf.__file__).resolve().parents[2] / "docs" / "examples" / "data"
-
-   parameter_names = ["log10Mmin_0", "log10M1_0"]
-   parameter_labels = [
-       r"\log_{10}(M_{\min}/[h^{-1}M_\odot])",
-       r"\log_{10}(M_1/[h^{-1}M_\odot])",
-   ]
-
-   results = {}
-
-   for label in ["No prior", "10% mass prior"]:
-       name = label.lower().replace(" ", "_").replace("%", "pct")
-
-       with np.load(data_dir / f"{name}_fisher.npz") as data:
-           fisher_mean = data["mean"]
-           fisher_cov = data["cov"]
-
-       gaussian = GaussianND(
-           mean=fisher_mean,
-           cov=fisher_cov,
-           names=parameter_names,
-           labels=parameter_labels,
-           label=f"Fisher: {label}",
-       )
-
-       with np.load(data_dir / f"{name}_dali.npz") as data:
-           samples = data["samples"]
-           weights = data["weights"]
-           loglikes = data["loglikes"]
-
-       dali_posterior = MCSamples(
-           samples=samples,
-           weights=weights,
-           loglikes=loglikes if len(loglikes) else None,
-           names=parameter_names,
-           labels=parameter_labels,
-           label=f"DALI-3: {label}",
-       )
-
-       results[label] = {
-           "fisher": gaussian,
-           "dali": dali_posterior,
-       }
-
-   def make_plotter():
-       plotter = getdist_plots.get_subplot_plotter(width_inch=5)
-       plotter.settings.linewidth_contour = 1.5
-       plotter.settings.linewidth = 1.5
-       plotter.settings.figure_legend_frame = False
-       plotter.settings.legend_rect_border = False
-       return plotter
-
-   def plot_prior_comparison(method, color):
-       plotter = make_plotter()
-
-       plotter.triangle_plot(
-           [
-               results["No prior"][method],
-               results["10% mass prior"][method],
-           ],
-           params=parameter_names,
-           filled=False,
-           contour_colors=[color, color],
-           contour_lws=[1.5, 1.5],
-           contour_ls=["--", "-"],
-           legend_labels=[
-               f"{method.upper()}: No prior",
-               f"{method.upper()}: 10% mass prior",
-           ],
-       )
-
-       return plotter
-
-   plot_prior_comparison("fisher", DSF_COLORS[1])
-
-   plot_prior_comparison("dali", DSF_COLORS[4])
-
-   plotter = make_plotter()
-
-   plotter.triangle_plot(
-       [
-           results["No prior"]["fisher"],
-           results["No prior"]["dali"],
-       ],
-       params=parameter_names,
-       filled=False,
-       contour_colors=[
-           DSF_COLORS[1],
-           DSF_COLORS[4],
-       ],
-       contour_lws=[1.5, 1.5],
-       legend_labels=[
-           "Fisher: No prior",
-           "DALI-3: No prior",
-       ],
-   )
-
-
-Fisher and DALI
----------------
-
-For a Gaussian likelihood with parameter-independent covariance,
-the Fisher information matrix is
+The fiducial values and prior standard deviations are
 
 .. math::
 
-   F_{\alpha\beta}
-   =
-   \frac{\partial\boldsymbol{\mu}^{\mathsf T}}
-        {\partial\theta_\alpha}
-   C^{-1}
-   \frac{\partial\boldsymbol{\mu}}
-        {\partial\theta_\beta},
+   \boldsymbol{\theta}_0 = (12.5, 13.5),
+   \qquad
+   \boldsymbol{\sigma}_{\mathrm{prior}} = (0.1, 0.2).
 
-where :math:`\boldsymbol{\mu}` is the stacked
-:math:`\Delta\Sigma` data vector.
 
-DALI retains higher-order model derivatives and can describe
-non-Gaussian posterior features.
+Forecast configuration
+----------------------
 
-Both forecasts are computed through DerivKit's ``ForecastKit``:
+The example uses LSST Year 1 lens and source samples, with two
+tomographic bins for each sample.
+
+The selected lens-source pairs are :math:`(0,1)` and :math:`(1,1)`.
+
+The forecast uses five projected radial bins between
+:math:`2` and :math:`25\,h^{-1}\mathrm{Mpc}`, a survey area of
+1000 square degrees, and an intrinsic ellipticity dispersion of 0.26.
+
+The HOD model is evaluated using ``pk2d_hod``.
+DSF computes the fiducial excess surface density data vector
+and its Gaussian covariance from the galaxy-matter and
+galaxy-galaxy power spectra.
+
+
+Forecast workflow
+-----------------
+
+The complete forecast is constructed using
+``DeltaSigmaForecastBuilder``.
+
+First, DSF prepares the tomographic samples, fiducial data
+vector, and covariance:
 
 .. code-block:: python
 
+   forecast = builder.prepare()
+   model, theta0, cov = builder.forecast_inputs()
    fk = builder.forecastkit()
 
-   fisher = fk.fisher()
+The Fisher matrix and third-order DALI tensors are then computed
+using DerivKit:
+
+.. code-block:: python
+
+   fisher = fk.fisher(
+       method="finite",
+       stepsize=1e-2,
+       num_points=3,
+   )
+
    dali = fk.dali(forecast_order=3)
 
-DerivKit also provides GetDist-compatible representations of the
-forecast distributions.
-
-For Fisher, ``getdist_fisher_gaussian`` constructs the analytic
-Gaussian approximation:
+DerivKit provides GetDist-compatible forecast distributions:
 
 .. code-block:: python
 
    fisher_gaussian = fk.getdist_fisher_gaussian(
        fisher=fisher,
-       names=parameter_names,
-       labels=parameter_labels,
+       names=names,
+       labels=labels,
        label="Fisher",
    )
 
-For DALI, ``getdist_dali_emcee`` samples the higher-order posterior
-using ``emcee`` and returns a GetDist ``MCSamples`` object:
-
-.. code-block:: python
-
    dali_samples = fk.getdist_dali_emcee(
        dali=dali,
-       names=parameter_names,
-       labels=parameter_labels,
-       label="DALI-3",
+       names=names,
+       labels=labels,
+       label="DALI",
    )
 
-These operations were performed when generating the cached
-forecast results and are not repeated during documentation builds.
 
+Running the example
+-------------------
 
-Gaussian mass priors
---------------------
+The complete executable example is available in
+:download:`forecast_hod.py <forecast_hod.py>`.
 
-We consider independent Gaussian priors on the two logarithmic
-HOD mass parameters.
+Run it from the DSF repository root:
 
-The prior standard deviation is
+.. code-block:: bash
 
-.. math::
+   python -u docs/examples/forecast_hod.py
 
-   \sigma_{\log_{10}M}
-   =
-   \log_{10}(1.10)
-   \simeq 0.0414.
+The script constructs the DSF data vector and covariance,
+computes the Fisher and DALI forecasts, samples the DALI
+distributions, and generates three comparison plots.
 
-For Fisher, the prior precision is added to the information matrix:
+The Fisher matrix and DALI tensors are cached in
+``forecast_hod_output/forecast_cache.npz``.
 
-.. math::
+When the cache exists, the script reuses the stored tensors.
+Otherwise, it computes and saves them.
 
-   F_{\mathrm{total}}
-   =
-   F_{\mathrm{data}} + C_{\mathrm{prior}}^{-1}.
+The full source code is included below.
 
-For DALI, the same Gaussian prior is included in the sampled posterior.
-
-In the figures, green denotes Fisher and cyan denotes DALI-3.
-Dashed contours correspond to forecasts without external priors,
-while solid contours include the 10% mass priors.
-
-The final figure compares the two methods without external priors.
-
-
-Forecast products
------------------
-
-The prepared data vector, covariance, and tomography products
-are accessible through
-
-.. code-block:: python
-
-   forecast = builder.prepare()
-
-The model and covariance can also be passed to external
-forecasting tools:
-
-.. code-block:: python
-
-   model, theta0, cov = builder.forecast_inputs()
-
-The covariance is evaluated at the fiducial parameters and
-held fixed throughout the forecast.
+.. literalinclude:: forecast_hod.py
+   :language: python
 
 
 Notes
@@ -276,13 +132,144 @@ Notes
 This example illustrates the DSF forecasting interface rather
 than a production LSST DESC analysis.
 
-The covariance is the ``gm`` block-diagonal covariance associated
-with the :math:`\Delta\Sigma` data vector.
+The covariance is evaluated at the fiducial parameters and
+held fixed throughout the forecast.
 Covariance derivatives are not included.
 
-The Gaussian priors are illustrative and are not derived from
-external HOD measurements.
+The Gaussian HOD parameter priors are illustrative and are not
+derived from external HOD measurements.
 
 Production configurations and survey-specific analyses are
 maintained in the companion
 `DSF analysis repository <https://github.com/LSSTDESC/dsf-analysis>`_.
+
+
+Forecast comparison
+-------------------
+
+The figures below compare Fisher and third-order DALI forecasts
+with and without Gaussian parameter priors.
+
+The first two figures show the effect of the priors on Fisher
+and DALI separately.
+The third compares Fisher and DALI without external priors.
+
+The Fisher matrix and DALI tensors are loaded from cached
+DSF results.
+Only GetDist sampling and plotting are performed during the
+documentation build.
+
+.. plot::
+   :context: close-figs
+
+   from pathlib import Path
+
+   import dsf
+   import numpy as np
+   from derivkit import ForecastKit
+   from getdist import plots
+
+   from dsf import DSF_COLORS
+
+   cache = (
+       Path(dsf.__file__).resolve().parents[2]
+       / "docs"
+       / "examples"
+       / "forecast_hod_output"
+       / "forecast_cache.npz"
+   )
+
+   with np.load(cache, allow_pickle=True) as data:
+       theta0 = data["theta0"]
+       cov = data["cov"]
+       fisher_like = data["fisher_like"]
+       dali = data["dali"].item()
+
+   names = ["log10Mmin_0", "log10M1_0"]
+   labels = [
+       r"\log_{10}(M_{\min}/[h^{-1}M_\odot])",
+       r"\log_{10}(M_1/[h^{-1}M_\odot])",
+   ]
+
+   sigma_prior = np.array([0.1, 0.2])
+   prior_cov = np.diag(sigma_prior**2)
+   fisher_prior = np.diag(1.0 / sigma_prior**2)
+   fisher_post = fisher_like + fisher_prior
+
+   # GetDist utilities use the precomputed DSF forecast tensors.
+   fk = ForecastKit(
+       function=lambda theta: np.zeros(cov.shape[0]),
+       theta0=theta0,
+       cov=cov,
+   )
+
+   g_fisher = fk.getdist_fisher_gaussian(
+       fisher=fisher_like,
+       names=names,
+       labels=labels,
+       label="Fisher",
+   )
+
+   g_fisher_prior = fk.getdist_fisher_gaussian(
+       fisher=fisher_post,
+       names=names,
+       labels=labels,
+       label="Fisher + prior",
+   )
+
+   g_dali = fk.getdist_dali_emcee(
+       dali=dali,
+       names=names,
+       labels=labels,
+       label="DALI",
+   )
+
+   g_dali_prior = fk.getdist_dali_emcee(
+       dali=dali,
+       names=names,
+       labels=labels,
+       label="DALI + prior",
+       prior_terms=[
+           ("gaussian", {"mean": theta0, "cov": prior_cov}),
+       ],
+   )
+
+   def make_plot(samples, colors, filled, legend):
+       plotter = plots.get_subplot_plotter(width_inch=5)
+       plotter.settings.linewidth_contour = 1.5
+       plotter.settings.linewidth = 1.5
+       plotter.settings.figure_legend_frame = False
+       plotter.settings.legend_rect_border = False
+
+       plotter.triangle_plot(
+           samples,
+           params=names,
+           filled=filled,
+           contour_colors=colors,
+           contour_lws=[1.5] * len(samples),
+           contour_ls=["-"] * len(samples),
+           legend_labels=legend,
+       )
+
+       return plotter
+
+   make_plot(
+       [g_fisher, g_fisher_prior],
+       [DSF_COLORS[1], DSF_COLORS[0]],
+       [False, True],
+       ["Fisher", "Fisher + prior"],
+   )
+
+   make_plot(
+       [g_dali, g_dali_prior],
+       [DSF_COLORS[4], DSF_COLORS[3]],
+       [False, True],
+       ["DALI", "DALI + prior"],
+   )
+
+   make_plot(
+       [g_fisher, g_dali],
+       [DSF_COLORS[1], DSF_COLORS[4]],
+       [False, False],
+       ["Fisher", "DALI"],
+   )

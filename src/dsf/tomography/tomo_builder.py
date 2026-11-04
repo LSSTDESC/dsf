@@ -150,6 +150,7 @@ class TomographyBuilder:
                 bins=result.bins,
                 tomo_meta={
                     **(result.tomo_meta or {}),
+                    **(config.get("tomo_meta") or {}),
                     "frac_per_bin": fractions,
                 },
                 survey_meta=result.survey_meta,

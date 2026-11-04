@@ -12,7 +12,7 @@ project = "DSF"
 author = "Niko Šarčević, Ben Levine"
 copyright = "2026, LSST Dark Energy Science Collaboration"
 
-html_title = "DSF Documentation"
+html_title = "DSF"
 html_baseurl = "https://lsstdesc.org/dsf/"
 root_doc = "index"
 
@@ -35,6 +35,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "api/modules.rst"]
 html_theme = "furo"
 html_static_path = ["_static"]
 html_logo = "_static/dsf_logo.svg"
+html_favicon = "_static/dsf_logo.svg"
 html_css_files = ["custom.css"]
 
 autodoc_typehints = "description"
@@ -60,7 +61,7 @@ plot_rcparams = {
     "xtick.labelsize": 13,
     "ytick.labelsize": 13,
     "legend.fontsize": 13,
-    "lines.linewidth": 1.8,
+    "lines.linewidth": 2,
     "patch.linewidth": 1.5,
     "axes.linewidth": 1.2,
 }

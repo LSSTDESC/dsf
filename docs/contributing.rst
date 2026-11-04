@@ -1,134 +1,163 @@
-Contributing
-============
+.. |dsf-logo| image:: _static/dsf_logo.svg
+   :alt: DSF logo
+   :height: 36px
+   :class: inline-dsf-logo
 
-Contributions to DSF are welcome. We appreciate code contributions, bug
-reports, feature requests, documentation improvements, tests, and scientific
-feedback.
+|dsf-logo| Contributing
+=======================
+
+Contributions to DSF are welcome, including code, bug reports, feature
+requests, documentation improvements, tests, and scientific feedback.
+
+DSF is developed within the
+`LSST Dark Energy Science Collaboration <https://lsstdesc.org/>`_,
+with contributions from the wider scientific community.
 
 Development takes place in the
 `DSF GitHub repository <https://github.com/LSSTDESC/dsf>`__.
 
-Before starting substantial development, please open an issue or contact the
-project maintainers so that the proposed work can be discussed and coordinated.
+Before starting substantial development, please open an issue or contact
+the project maintainers to discuss and coordinate the proposed work.
 
-Contributors
-------------
+Getting Involved
+----------------
 
-DSF is developed collaboratively within the `LSST Dark Energy Science
-Collaboration <https://lsstdesc.org/>`_ together with contributions from the wider community.
-
-Submitting issues and pull requests
------------------------------------
+Reporting issues
+~~~~~~~~~~~~~~~~
 
 Bug reports and feature requests can be submitted through the
 `GitHub issue tracker <https://github.com/LSSTDESC/dsf/issues>`__.
 
 Bug reports should include:
 
-- the expected behaviour,
-- the actual behaviour,
-- the DSF version or commit used,
-- any relevant environment details,
-- a minimal example where possible.
+- The expected behaviour.
+- The actual behaviour.
+- The DSF version or commit used.
+- Relevant environment details.
+- A minimal reproducible example, where possible.
+
+Submitting pull requests
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Code contributions can be submitted through a
 `GitHub pull request <https://github.com/LSSTDESC/dsf/compare>`__.
 
-Pull requests should explain what was changed, why the change is needed, and,
-where applicable, reference the corresponding issue. New functionality must
-include appropriate tests and documentation.
+Pull requests should explain what was changed, why the change is needed,
+and, where applicable, reference the corresponding issue.
 
-Development workflows
----------------------
+New functionality should include appropriate tests and documentation.
 
-DSF uses `tox <https://tox.wiki>`__ to manage its development workflows.
+Development
+-----------
 
-Install DSF together with the development dependencies from the repository
-root:
+Setting up the environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Install DSF together with its development dependencies from the
+repository root:
 
 .. code-block:: console
 
    pip install --group dev -e .
 
-List all available development environments with:
+DSF uses `tox <https://tox.wiki>`__ to manage development workflows.
+
+List the available environments:
 
 .. code-block:: console
 
    tox list
 
-Run a specific environment with:
+Run a specific environment:
 
 .. code-block:: console
 
    tox -e <environment>
 
 Testing
--------
+~~~~~~~
 
 Tests are located in the ``tests`` directory.
-New functionality and bug fixes must include tests covering the added or
-changed behaviour.
+New functionality and bug fixes should include tests covering the
+added or changed behaviour.
 
-Run the test suite for all supported Python versions with:
+Run tests for all supported Python versions:
 
 .. code-block:: console
 
    tox -m test
 
-Run the tests for a specific Python version with, for example:
+Run tests for a specific Python version:
 
 .. code-block:: console
 
    tox -e py312
 
-Arguments can be passed to ``pytest`` after ``--``. For example:
+Pass arguments directly to ``pytest`` after ``--``:
 
 .. code-block:: console
 
    tox -e py312 -- tests/test_example.py
 
-The coverage workflow can be run with:
+Run the coverage workflow:
 
 .. code-block:: console
 
    tox -e cov
 
 Linting
--------
+~~~~~~~
 
-DSF uses `Ruff <https://docs.astral.sh/ruff/>`__ for linting and code-quality
-checks.
+DSF uses `Ruff <https://docs.astral.sh/ruff/>`__ for linting and
+code-quality checks.
 
-Run the linting workflow with:
+Run the linting workflow:
 
 .. code-block:: console
 
    tox -e lint
 
-Automatically fix supported linting errors with:
+Automatically fix supported linting errors:
 
 .. code-block:: console
 
    tox -e lint -- --fix
 
 Code style
-----------
+~~~~~~~~~~
 
-Code must follow `PEP 8 <https://peps.python.org/pep-0008/>`_ and the general docstring conventions in `PEP 257 <https://peps.python.org/pep-0257/>`_.
+Code should follow `PEP 8 <https://peps.python.org/pep-0008/>`_
+and the general docstring conventions in
+`PEP 257 <https://peps.python.org/pep-0257/>`_.
 
-All Python modules must include a module-level docstring describing their
-purpose. Public classes, functions, and methods must include clear, concise
+All Python modules should include a module-level docstring describing
+their purpose.
+
+Public classes, functions, and methods should include clear, concise
 `Google-style docstrings <https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings>`_.
 
-Docstrings should describe the purpose and public interface of a module,
-class, or function, rather than its implementation details.
-They should document parameters, return values, raised exceptions, and any
-important scientific or numerical assumptions where applicable.
+Docstrings should describe the purpose and public interface rather
+than implementation details.
+
+They should document parameters, return values, raised exceptions,
+and relevant scientific or numerical assumptions.
 
 Documentation
 -------------
 
-The documentation is written in `reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_ and built with `Sphinx <https://www.sphinx-doc.org/en/master/index.html>`_.
+Writing documentation
+~~~~~~~~~~~~~~~~~~~~~
+
+DSF documentation is written in
+`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html>`_
+and built with
+`Sphinx <https://www.sphinx-doc.org/en/master/index.html>`_.
+
+New documentation pages should be added to the appropriate Sphinx
+``toctree``.
+
+Building documentation
+~~~~~~~~~~~~~~~~~~~~~~
 
 Build the documentation with:
 
@@ -136,20 +165,17 @@ Build the documentation with:
 
    tox -e docs
 
-On macOS, build the documentation, run doctests, and open the resulting pages
-in a browser with:
+On macOS, build the documentation, run doctests, and open the
+resulting pages in a browser:
 
 .. code-block:: console
 
    tox -e do
 
-Build the documentation for the main branch and release versions with:
+Build the documentation for the main branch and release versions:
 
 .. code-block:: console
 
    tox -e docs-releases
 
-Generated documentation is written to ``docs/_build``. New documentation pages
-should also be added to the appropriate Sphinx ``toctree``.
-
-
+Generated documentation is written to ``docs/_build``.

@@ -192,6 +192,28 @@ wheels = [
 ]
 
 [[package]]
+name = "camb"
+version = "2.0.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "packaging" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "sympy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e7/79/6c8bd6e12ee52f61a5cfe6521feb3a5cd30060a32fde55f57245c97eddc5/camb-2.0.5.tar.gz", hash = "sha256:9faae0e22d35f7b9e8cd93364ea238681a86e643bc68deb720a3745680e515a5", size = 930482, upload-time = "2026-10-14T09:14:41.028Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/af/02/9bc38aa80a3903ad5e4714362330f63014c29518c269dd82a35776a3fb5a/camb-2.0.5-py3-none-macosx_14_0_arm64.whl", hash = "sha256:344dd13429affd3adba4c3bed4f0390b318e5681d2c75c84c1f2349003ef3bfb", size = 1505703, upload-time = "2026-10-14T09:14:23.488Z" },
+    { url = "https://files.pythonhosted.org/packages/f9/05/fb87b538a76a2ca386c5a6fbc48c3786210789c451a702a1d2c3459e6a75/camb-2.0.5-py3-none-macosx_14_0_x86_64.whl", hash = "sha256:d66d4ab6d1decc6f111db1b2ceecdf3d2672b67b45ad689d499fa7c63bc8b6e9", size = 1557766, upload-time = "2026-10-14T09:14:25.522Z" },
+    { url = "https://files.pythonhosted.org/packages/2d/29/4642146e1bde5f3d95e590c34d693cca8279de0dcb7436334adc6d8aa2ab/camb-2.0.5-py3-none-macosx_15_0_arm64.whl", hash = "sha256:a667933a08ecede46e96fbc72af4f49050d03af39205e9c0608401889d80bfc3", size = 1505830, upload-time = "2026-10-14T09:14:27.17Z" },
+    { url = "https://files.pythonhosted.org/packages/2c/a4/332674318ab85aca5c15c4bd9276c295ea1363bdd6604186ef3c5df73c59/camb-2.0.5-py3-none-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:a43402c6206c779e206893f06b79c19d9ebe1e76e5f54f05b36ebc15e0a5c56f", size = 1771415, upload-time = "2026-10-14T09:14:28.98Z" },
+    { url = "https://files.pythonhosted.org/packages/45/cb/142f65708efde1a7b519ba41e7dfe2035b865daaee4a6ec1c8465493f627/camb-2.0.5-py3-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:17ae2f94dd17303fd29aa804e72558e02346ce44b8928aaae8642c10a7d985fe", size = 2413573, upload-time = "2026-10-14T09:14:30.992Z" },
+    { url = "https://files.pythonhosted.org/packages/4b/6a/3847b321a526f0a17c2517b238b2c851c8cd5b599fbe999daedafdb261a9/camb-2.0.5-py3-none-win_amd64.whl", hash = "sha256:22886f6c217c55cadeba30a81159f1e33bc3927f25534f54a6e31c88b2366c03", size = 1672978, upload-time = "2026-10-14T09:14:32.863Z" },
+]
+
+[[package]]
 name = "certifi"
 version = "2026.5.20"
 source = { registry = "https://pypi.org/simple" }
@@ -689,6 +711,7 @@ source = { editable = "." }
 dependencies = [
     { name = "astropy", version = "6.1.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "astropy", version = "7.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "camb" },
     { name = "cmasher" },
     { name = "derivkit" },
     { name = "getdist" },
@@ -735,6 +758,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "astropy" },
+    { name = "camb" },
     { name = "cmasher" },
     { name = "derivkit" },
     { name = "getdist" },
@@ -755,7 +779,7 @@ dev = [
 docs = [
     { name = "bump-my-version", specifier = ">=0.26" },
     { name = "furo" },
-    { name = "sphinx", extras = ["doctest"], specifier = "<9" },
+    { name = "sphinx", specifier = "<9" },
     { name = "sphinx-copybutton" },
     { name = "sphinx-design" },
     { name = "sphinx-multiversion" },
@@ -1288,6 +1312,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec958cb99bd3efefba235e65cdeb9c84d24a8293ba1d90/mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba", size = 8729, upload-time = "2022-08-14T12:40:10.846Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", size = 9979, upload-time = "2022-08-14T12:40:09.779Z" },
+]
+
+[[package]]
+name = "mpmath"
+version = "1.3.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e0/47/dd32fa426cc72114383ac549964eecb20ecfd886d1e5ccf5340b55b02f57/mpmath-1.3.0.tar.gz", hash = "sha256:7a28eb2a9774d00c7bc92411c19a89209d5da7c4c9a9e227be8330a23a25b91f", size = 508106, upload-time = "2023-03-07T16:47:11.061Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/43/e3/7d92a15f894aa0c9c4b49b8ee9ac9850d6e63b03c9c32c0367a13ae62209/mpmath-1.3.0-py3-none-any.whl", hash = "sha256:a0b2b9fe80bbcd81a6647ff13108738cfb482d481d826cc0e02f5b35e5c88d2c", size = 536198, upload-time = "2023-03-07T16:47:09.197Z" },
 ]
 
 [[package]]
@@ -2467,6 +2500,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/3b/44/6716b257b0aa6bfd51a1b31665d1c205fb12cb5ad56de752dfa15657de2f/sphinxcontrib_serializinghtml-2.0.0.tar.gz", hash = "sha256:e9d912827f872c029017a53f0ef2180b327c3f7fd23c87229f7a8e8b70031d4d", size = 16080, upload-time = "2024-07-29T01:10:09.332Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/52/a7/d2782e4e3f77c8450f727ba74a8f12756d5ba823d81b941f1b04da9d033a/sphinxcontrib_serializinghtml-2.0.0-py3-none-any.whl", hash = "sha256:6e2cb0eef194e10c27ec0023bfeb25badbbb5868244cf5bc5bdc04e4464bf331", size = 92072, upload-time = "2024-07-29T01:10:08.203Z" },
+]
+
+[[package]]
+name = "sympy"
+version = "1.14.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "mpmath" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/83/d3/803453b36afefb7c2bb238361cd4ae6125a569b4db67cd9e79846ba2d68c/sympy-1.14.0.tar.gz", hash = "sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517", size = 7793921, upload-time = "2025-04-27T18:05:01.611Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl", hash = "sha256:e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5", size = 6299353, upload-time = "2025-04-27T18:04:59.103Z" },
 ]
 
 [[package]]

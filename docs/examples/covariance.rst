@@ -1,5 +1,10 @@
-Analytical covariance
-=====================
+.. |dsflogo| image:: ../_static/dsf_logo.svg
+   :alt: DSF logo
+   :height: 40px
+   :class: inline-dsf-logo
+
+|dsflogo| Analytical covariance
+===============================
 
 This example shows how to compute a minimal DSF covariance matrix for the
 current :math:`\Delta\Sigma(R)` forecast data vector.

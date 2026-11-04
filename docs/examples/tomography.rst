@@ -1,6 +1,10 @@
+.. |dsflogo| image:: ../_static/dsf_logo.svg
+   :alt: DSF logo
+   :height: 40px
+   :class: inline-dsf-logo
 
-Tomography
-==========
+|dsflogo| Tomography
+====================
 
 DSF uses `Binny <https://binny-org.github.io/binny/main/index.html>`_ to
 construct lens and source tomography from survey presets, custom redshift

@@ -1,3 +1,4 @@
+
 .. |dsf-logo| image:: _static/dsf_logo.svg
    :alt: DSF logo
    :height: 36px
@@ -6,21 +7,11 @@
 |dsf-logo| Installation
 =======================
 
-This page describes how to install DSF from a local checkout,
-configure a Python environment, and verify the installation.
+This page describes how to install DSF, configure a Python environment,
+and verify the installation.
 
 Getting Started
 ---------------
-
-Clone the repository
-~~~~~~~~~~~~~~~~~~~~
-
-Clone the DSF repository and navigate to its root directory:
-
-.. code-block:: console
-
-   git clone https://github.com/LSSTDESC/dsf.git
-   cd dsf
 
 Set up your environment
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -35,14 +26,14 @@ work. For example, with conda:
 Install DSF
 ~~~~~~~~~~~
 
-Install DSF in editable mode:
+Install the latest released version of DSF from
+`PyPI <https://pypi.org/project/lsst-desc-dsf/>`_:
 
 .. code-block:: console
 
-   python -m pip install -e .
+   python -m pip install lsst-desc-dsf
 
-Editable installation allows changes made in ``src/dsf`` to take effect
-without reinstalling the package.
+DSF requires Python 3.10 or newer.
 
 Verify the installation
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -53,11 +44,33 @@ Verify that Python can import DSF:
 
    python -c "import dsf; print(dsf.__file__)"
 
-For an editable installation, the printed path should point to
-``src/dsf`` inside your local repository.
+The PyPI distribution is named ``lsst-desc-dsf``, while the Python
+package is imported as ``dsf``.
 
 Development
 -----------
+
+Clone the repository
+~~~~~~~~~~~~~~~~~~~~
+
+To work on DSF, clone the repository and navigate to its root directory:
+
+.. code-block:: console
+
+   git clone https://github.com/LSSTDESC/dsf.git
+   cd dsf
+
+Install in editable mode
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Install DSF in editable mode:
+
+.. code-block:: console
+
+   python -m pip install -e .
+
+Editable installation allows changes made in ``src/dsf`` to take effect
+without reinstalling the package.
 
 Install development dependencies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

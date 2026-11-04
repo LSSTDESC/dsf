@@ -1,0 +1,24 @@
+dsf.utils package
+=================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 2
+
+   dsf.utils.colors
+   dsf.utils.converters
+   dsf.utils.integrators
+   dsf.utils.interpolators
+   dsf.utils.thread_limits
+   dsf.utils.types
+   dsf.utils.validators
+
+Module contents
+---------------
+
+.. automodule:: dsf.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:

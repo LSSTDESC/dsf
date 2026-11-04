@@ -50,6 +50,7 @@ dependencies = [
   "cmasher",
   "getdist",
   "tqdm",
+  "camb",
 ]
 
 [dependency-groups]

@@ -1,4 +1,4 @@
-"""Cosmological and astrophysical power-spectrum models."""
+"""Cosmological and astrophysical models and corrections."""
 
 from dsf.modelling.baryons import pk2d_hod_baryonified
 from dsf.modelling.combinations import (
@@ -8,6 +8,11 @@ from dsf.modelling.combinations import (
 from dsf.modelling.cosmology import make_ccl_cosmology
 from dsf.modelling.hod import hod_galaxy_bias, pk2d_hod
 from dsf.modelling.nla import pk2d_nla
+from dsf.modelling.mag_bias import (
+    delta_sigma_lens_mag_correction,
+    get_lens_mag_integ_params,
+    set_lens_mag_integ_params,
+)
 
 __all__ = [
     "make_ccl_cosmology",
@@ -17,4 +22,7 @@ __all__ = [
     "pk2d_nla",
     "pk2d_hod_with_nla",
     "pk2d_hod_baryonified_with_nla",
+    "delta_sigma_lens_mag_correction",
+    "get_lens_mag_integ_params",
+    "set_lens_mag_integ_params",
 ]

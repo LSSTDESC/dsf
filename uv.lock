@@ -705,100 +705,6 @@ wheels = [
 ]
 
 [[package]]
-name = "dsf"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "astropy", version = "6.1.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "astropy", version = "7.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "camb" },
-    { name = "cmasher" },
-    { name = "derivkit" },
-    { name = "getdist" },
-    { name = "matplotlib" },
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "pybinny" },
-    { name = "pyccl" },
-    { name = "pyyaml" },
-    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "tqdm" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "bump-my-version" },
-    { name = "tox" },
-]
-docs = [
-    { name = "bump-my-version" },
-    { name = "furo" },
-    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "sphinx", version = "8.2.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "sphinx-copybutton" },
-    { name = "sphinx-design", version = "0.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "sphinx-design", version = "0.7.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-    { name = "sphinx-multiversion" },
-    { name = "sphinxcontrib-bibtex" },
-    { name = "tox" },
-]
-lint = [
-    { name = "bump-my-version" },
-    { name = "ruff" },
-    { name = "tox" },
-]
-test = [
-    { name = "bump-my-version" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "tox" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "astropy" },
-    { name = "camb" },
-    { name = "cmasher" },
-    { name = "derivkit" },
-    { name = "getdist" },
-    { name = "matplotlib" },
-    { name = "numpy" },
-    { name = "pybinny", specifier = ">=0.6.0" },
-    { name = "pyccl" },
-    { name = "pyyaml" },
-    { name = "scipy" },
-    { name = "tqdm" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "bump-my-version", specifier = ">=0.26" },
-    { name = "tox", specifier = ">=4.22" },
-]
-docs = [
-    { name = "bump-my-version", specifier = ">=0.26" },
-    { name = "furo" },
-    { name = "sphinx", specifier = "<9" },
-    { name = "sphinx-copybutton" },
-    { name = "sphinx-design" },
-    { name = "sphinx-multiversion" },
-    { name = "sphinxcontrib-bibtex" },
-    { name = "tox", specifier = ">=4.22" },
-]
-lint = [
-    { name = "bump-my-version", specifier = ">=0.26" },
-    { name = "ruff", specifier = ">=0.6" },
-    { name = "tox", specifier = ">=4.22" },
-]
-test = [
-    { name = "bump-my-version", specifier = ">=0.26" },
-    { name = "pytest", specifier = ">=8" },
-    { name = "pytest-cov", specifier = ">=5" },
-    { name = "tox", specifier = ">=4.22" },
-]
-
-[[package]]
 name = "emcee"
 version = "3.1.6"
 source = { registry = "https://pypi.org/simple" }
@@ -1131,6 +1037,100 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/27/dd/4270b2c5e2ee49316c3859e62293bd2ea8e382339d63ab7bbe9f39c0ec3b/latexcodec-3.0.1.tar.gz", hash = "sha256:e78a6911cd72f9dec35031c6ec23584de6842bfbc4610a9678868d14cdfb0357", size = 31222, upload-time = "2025-06-17T18:47:34.051Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b5/40/23569737873cc9637fd488606347e9dd92b9fa37ba4fcda1f98ee5219a97/latexcodec-3.0.1-py3-none-any.whl", hash = "sha256:a9eb8200bff693f0437a69581f7579eb6bca25c4193515c09900ce76451e452e", size = 18532, upload-time = "2025-06-17T18:47:30.726Z" },
+]
+
+[[package]]
+name = "lsst-desc-dsf"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "astropy", version = "6.1.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "astropy", version = "7.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "camb" },
+    { name = "cmasher" },
+    { name = "derivkit" },
+    { name = "getdist" },
+    { name = "matplotlib" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "pybinny" },
+    { name = "pyccl" },
+    { name = "pyyaml" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "tqdm" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "bump-my-version" },
+    { name = "tox" },
+]
+docs = [
+    { name = "bump-my-version" },
+    { name = "furo" },
+    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "sphinx", version = "8.2.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "sphinx-copybutton" },
+    { name = "sphinx-design", version = "0.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "sphinx-design", version = "0.7.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "sphinx-multiversion" },
+    { name = "sphinxcontrib-bibtex" },
+    { name = "tox" },
+]
+lint = [
+    { name = "bump-my-version" },
+    { name = "ruff" },
+    { name = "tox" },
+]
+test = [
+    { name = "bump-my-version" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "tox" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "astropy" },
+    { name = "camb" },
+    { name = "cmasher" },
+    { name = "derivkit" },
+    { name = "getdist" },
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "pybinny", specifier = ">=0.6.0" },
+    { name = "pyccl" },
+    { name = "pyyaml" },
+    { name = "scipy" },
+    { name = "tqdm" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "bump-my-version", specifier = ">=0.26" },
+    { name = "tox", specifier = ">=4.22" },
+]
+docs = [
+    { name = "bump-my-version", specifier = ">=0.26" },
+    { name = "furo" },
+    { name = "sphinx", specifier = "<9" },
+    { name = "sphinx-copybutton" },
+    { name = "sphinx-design" },
+    { name = "sphinx-multiversion" },
+    { name = "sphinxcontrib-bibtex" },
+    { name = "tox", specifier = ">=4.22" },
+]
+lint = [
+    { name = "bump-my-version", specifier = ">=0.26" },
+    { name = "ruff", specifier = ">=0.6" },
+    { name = "tox", specifier = ">=4.22" },
+]
+test = [
+    { name = "bump-my-version", specifier = ">=0.26" },
+    { name = "pytest", specifier = ">=8" },
+    { name = "pytest-cov", specifier = ">=5" },
+    { name = "tox", specifier = ">=4.22" },
 ]
 
 [[package]]

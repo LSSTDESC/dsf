@@ -60,7 +60,7 @@ plot_rcparams = {
     "xtick.labelsize": 13,
     "ytick.labelsize": 13,
     "legend.fontsize": 13,
-    "lines.linewidth": 1.8,
+    "lines.linewidth": 2,
     "patch.linewidth": 1.5,
     "axes.linewidth": 1.2,
 }

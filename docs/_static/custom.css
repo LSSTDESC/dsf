@@ -25,3 +25,8 @@ article h1 {
 .sidebar-brand-text {
     margin-top: 0 !important;
 }
+
+/* Align the DSF logo with section headings. */
+.inline-dsf-logo {
+    vertical-align: -0.15em;
+}

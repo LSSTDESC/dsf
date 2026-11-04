@@ -8,7 +8,7 @@ import pyccl as ccl
 from dsf.covariance.ingredients.geometry import gm_lensing_window
 
 
-DATA_DIR = Path(__file__).resolve().parent
+DATA_DIR = Path(__file__).resolve().parent / "data"
 
 
 def test_gm_lensing_window_against_original():

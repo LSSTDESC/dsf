@@ -62,7 +62,6 @@ builder = DeltaSigmaForecastBuilder(
         "overlap_threshold": 1.0,
         "source_behind_lens": True,
     },
-    verbose=True,
 )
 
 # Prepare the DSF model and covariance.

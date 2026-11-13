@@ -404,9 +404,7 @@ class DeltaSigmaForecastBuilder:
         pk2d_kwargs = dict(self.pk2d_kwargs)
 
         if self.theta_mapper is None:
-            pk2d_kwargs.update(
-                zip(self.parameter_names, map(float, theta), strict=True)
-            )
+            pk2d_kwargs.update(zip(self.parameter_names, map(float, theta), strict=True))
             return {"cosmo": self.cosmo, "pk2d_kwargs": pk2d_kwargs}
 
         mapped = dict(self.theta_mapper(theta, dict(context)))

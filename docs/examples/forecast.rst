@@ -1,4 +1,3 @@
-
 .. |dsflogo| image:: ../_static/dsf_logo.svg
    :alt: DSF logo
    :height: 40px
@@ -36,10 +35,13 @@ The fiducial values and prior standard deviations are
 Forecast configuration
 ----------------------
 
-The example uses LSST Year 1 lens and source samples, with two
-tomographic bins for each sample.
+The example uses DESI LRG lens galaxies and LSST Year 1 source
+galaxies. The lens sample has three redshift bins, while the source
+sample uses the default Binny survey tomography.
 
-The selected lens-source pairs are :math:`(0,1)` and :math:`(1,1)`.
+Lens-source pairs are selected by requiring the mean source redshift
+to exceed the mean lens redshift and applying an overlap threshold
+of 0.10.
 
 The forecast uses five projected radial bins between
 :math:`2` and :math:`25\,h^{-1}\mathrm{Mpc}`, a survey area of

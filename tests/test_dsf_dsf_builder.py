@@ -165,9 +165,7 @@ class DummyDeltaSigmaCalculator:
                 trim_edge_points=trim_edge_points,
             )
 
-        return np.concatenate(
-            [block_by_lens_bin[int(lens_bin)] for lens_bin, _ in bin_pairs]
-        )
+        return np.concatenate([block_by_lens_bin[int(lens_bin)] for lens_bin, _ in bin_pairs])
 
 
 @pytest.fixture

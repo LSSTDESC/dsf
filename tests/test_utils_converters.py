@@ -168,9 +168,7 @@ def test_resolve_omega_m_reads_value_from_cosmology():
     """Tests that missing Omega_m values are read from the cosmology."""
     cosmo = ccl.CosmologyVanillaLCDM()
 
-    assert resolve_omega_m(cosmo, None) == pytest.approx(
-        float(cosmo["Omega_m"])
-    )
+    assert resolve_omega_m(cosmo, None) == pytest.approx(float(cosmo["Omega_m"]))
 
 
 @pytest.mark.parametrize("bad_omega_m", [0.0, -0.1, np.nan])

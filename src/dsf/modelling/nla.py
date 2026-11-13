@@ -54,20 +54,12 @@ def pk2d_nla(
     )
 
     if pk_mm.shape != (a_arr.size, k_arr.size):
-        raise ValueError(
-            "Nonlinear matter power must have shape "
-            "(len(a_array), len(k_array))."
-        )
+        raise ValueError("Nonlinear matter power must have shape (len(a_array), len(k_array)).")
 
     if np.any(~np.isfinite(pk_mm)):
         raise ValueError("nonlinear matter power must contain only finite values.")
 
-    amplitude = (
-        float(A_IA)
-        * float(C1rhocrit)
-        * float(cosmo["Omega_m"])
-        / growth
-    )
+    amplitude = float(A_IA) * float(C1rhocrit) * float(cosmo["Omega_m"]) / growth
 
     pk_gi = -float(b_g) * amplitude[:, None] * pk_mm
 

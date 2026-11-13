@@ -497,7 +497,7 @@ def test_stacked_delta_sigma_builds_projection_once(patch_delta_sigma):
             0: np.array([1.0, 1.0, 1.0, 0.0, 0.0]),
             1: np.array([0.0, 0.0, 1.0, 1.0, 1.0]),
         },
-        tomo_meta={"bins": {"bin_edges": [0.0, 1.0, 2.0]}},
+        metadata={"bins": {"bin_edges": [0.0, 1.0, 2.0]}},
     )
 
     tomography = {
@@ -526,7 +526,7 @@ def test_stacked_delta_sigma_rebuilds_projection_between_calls(patch_delta_sigma
     lens_result = SimpleNamespace(
         z=np.array([0.0, 0.5, 1.0]),
         bins={0: np.ones(3)},
-        tomo_meta={"bins": {"bin_edges": [0.0, 1.0]}},
+        metadata={"bins": {"bin_edges": [0.0, 1.0]}},
     )
 
     tomography = {

@@ -681,7 +681,11 @@ def test_covariance_blocks_use_distinct_spectra(monkeypatch, hankel, block):
 
     if block == "gm":
         _, covariance = delta_sigma_gm_covariance(
-            hankel, k, pk_gg, pk_gm, pk_mm,
+            hankel,
+            k,
+            pk_gg,
+            pk_gm,
+            pk_mm,
             **kwargs,
             delta_pi_gm_squared_window=4.0,
             sigma_crit_squared_average=6.0,
@@ -696,7 +700,10 @@ def test_covariance_blocks_use_distinct_spectra(monkeypatch, hankel, block):
 
     else:
         _, covariance = delta_sigma_gm_gg_cross_covariance(
-            hankel, k, pk_gg, pk_gm,
+            hankel,
+            k,
+            pk_gg,
+            pk_gm,
             **kwargs,
             delta_pi_gm_gg=7.0,
         )

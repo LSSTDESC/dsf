@@ -33,9 +33,7 @@ def grids():
 @pytest.fixture
 def concentration():
     """Construct a custom CCL concentration model."""
-    return ccl.halos.ConcentrationConstant(
-        c=5.0, mass_def=ccl.halos.MassDef200c
-    )
+    return ccl.halos.ConcentrationConstant(c=5.0, mass_def=ccl.halos.MassDef200c)
 
 
 @pytest.fixture
@@ -95,18 +93,14 @@ def mock_models(monkeypatch):
 
 def test_hod_with_nla_returns_expected_keys(cosmo, grids, mock_models):
     """Tests that standard HOD with NLA preserves the HOD spectrum keys."""
-    result = combinations.pk2d_hod_with_nla(
-        cosmo, **grids, A_IA=1.0, b_g=1.5
-    )
+    result = combinations.pk2d_hod_with_nla(cosmo, **grids, A_IA=1.0, b_g=1.5)
 
     assert set(result) == {"pk_deltasigma", "pk_gm", "pk_gg"}
 
 
 def test_baryonified_with_nla_returns_expected_keys(cosmo, grids, mock_models):
     """Tests that baryonified HOD with NLA preserves the spectrum keys."""
-    result = combinations.pk2d_hod_baryonified_with_nla(
-        cosmo, **grids, A_IA=1.0, b_g=1.5
-    )
+    result = combinations.pk2d_hod_baryonified_with_nla(cosmo, **grids, A_IA=1.0, b_g=1.5)
 
     assert set(result) == {"pk_deltasigma", "pk_gm", "pk_gg"}
 
@@ -119,7 +113,11 @@ def test_baryonified_with_nla_returns_expected_keys(cosmo, grids, mock_models):
     ],
 )
 def test_combination_calls_correct_hod_model(
-    cosmo, grids, mock_models, function_name, model_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
+    model_name,
 ):
     """Tests that each public function calls the corresponding HOD model."""
     calls, _, _, _ = mock_models
@@ -139,7 +137,11 @@ def test_combination_calls_correct_hod_model(
     ],
 )
 def test_combination_forwards_cosmology(
-    cosmo, grids, mock_models, function_name, model_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
+    model_name,
 ):
     """Tests that the original cosmology is forwarded to the HOD model."""
     calls, _, _, _ = mock_models
@@ -158,7 +160,11 @@ def test_combination_forwards_cosmology(
     ],
 )
 def test_combination_forwards_grids(
-    cosmo, grids, mock_models, function_name, model_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
+    model_name,
 ):
     """Tests that wavenumber and scale-factor grids are forwarded unchanged."""
     calls, _, _, _ = mock_models
@@ -180,7 +186,12 @@ def test_combination_forwards_grids(
     ],
 )
 def test_combination_forwards_custom_concentration(
-    cosmo, grids, concentration, mock_models, function_name, model_name,
+    cosmo,
+    grids,
+    concentration,
+    mock_models,
+    function_name,
+    model_name,
 ):
     """Tests that custom concentration models are forwarded to the HOD model."""
     calls, _, _, _ = mock_models
@@ -199,7 +210,11 @@ def test_combination_forwards_custom_concentration(
     ],
 )
 def test_combination_default_concentration(
-    cosmo, grids, mock_models, function_name, model_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
+    model_name,
 ):
     """Tests that the default concentration argument is None."""
     calls, _, _, _ = mock_models
@@ -218,7 +233,11 @@ def test_combination_default_concentration(
     ],
 )
 def test_combination_forwards_hod_parameters(
-    cosmo, grids, mock_models, function_name, model_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
+    model_name,
 ):
     """Tests that HOD profile parameters are forwarded."""
     calls, _, _, _ = mock_models
@@ -241,9 +260,7 @@ def test_baryonified_with_nla_forwards_rescaling(cosmo, grids, mock_models):
     """Tests that baryonic concentration rescaling is forwarded."""
     calls, _, _, _ = mock_models
 
-    combinations.pk2d_hod_baryonified_with_nla(
-        cosmo, **grids, f_c=1.4
-    )
+    combinations.pk2d_hod_baryonified_with_nla(cosmo, **grids, f_c=1.4)
 
     assert calls["baryons"][0][1]["f_c"] == pytest.approx(1.4)
 
@@ -265,7 +282,11 @@ def test_baryonified_with_nla_default_rescaling(cosmo, grids, mock_models):
     ],
 )
 def test_combination_zero_ia_returns_original_spectra(
-    cosmo, grids, mock_models, function_name, model_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
+    model_name,
 ):
     """Tests that zero IA amplitude returns the original HOD dictionary."""
     _, pk_hod, pk_baryons, _ = mock_models
@@ -286,7 +307,10 @@ def test_combination_zero_ia_returns_original_spectra(
     ],
 )
 def test_combination_zero_ia_skips_nla_and_bias(
-    cosmo, grids, mock_models, function_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
 ):
     """Tests that zero IA amplitude skips NLA and galaxy-bias calculations."""
     calls, _, _, _ = mock_models
@@ -306,7 +330,10 @@ def test_combination_zero_ia_skips_nla_and_bias(
     ],
 )
 def test_combination_default_ia_is_zero(
-    cosmo, grids, mock_models, function_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
 ):
     """Tests that the default IA amplitude disables the NLA contribution."""
     calls, _, _, _ = mock_models
@@ -326,7 +353,10 @@ def test_combination_default_ia_is_zero(
     ],
 )
 def test_combination_adds_nla_to_deltasigma(
-    cosmo, grids, mock_models, function_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
 ):
     """Tests that NLA is added to the Delta Sigma power spectrum."""
     function = getattr(combinations, function_name)
@@ -345,7 +375,11 @@ def test_combination_adds_nla_to_deltasigma(
     ],
 )
 def test_combination_preserves_covariance_spectra(
-    cosmo, grids, mock_models, function_name, model_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
+    model_name,
 ):
     """Tests that adding NLA preserves the HOD covariance spectra."""
     _, pk_hod, pk_baryons, _ = mock_models
@@ -367,7 +401,11 @@ def test_combination_preserves_covariance_spectra(
     ],
 )
 def test_combination_does_not_modify_original_spectra(
-    cosmo, grids, mock_models, function_name, model_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
+    model_name,
 ):
     """Tests that adding NLA does not mutate the original HOD dictionary."""
     _, pk_hod, pk_baryons, _ = mock_models
@@ -389,7 +427,10 @@ def test_combination_does_not_modify_original_spectra(
     ],
 )
 def test_combination_explicit_bias_skips_hod_bias(
-    cosmo, grids, mock_models, function_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
 ):
     """Tests that explicit galaxy bias bypasses the HOD bias calculation."""
     calls, _, _, _ = mock_models
@@ -409,7 +450,10 @@ def test_combination_explicit_bias_skips_hod_bias(
     ],
 )
 def test_combination_automatic_bias(
-    cosmo, grids, mock_models, function_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
 ):
     """Tests that galaxy bias is computed from the HOD when omitted."""
     calls, _, _, _ = mock_models
@@ -429,7 +473,10 @@ def test_combination_automatic_bias(
     ],
 )
 def test_combination_automatic_bias_forwards_scale_factor(
-    cosmo, grids, mock_models, function_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
 ):
     """Tests that the bias calculation receives the requested scale factor."""
     calls, _, _, _ = mock_models
@@ -448,7 +495,10 @@ def test_combination_automatic_bias_forwards_scale_factor(
     ],
 )
 def test_combination_automatic_bias_default_scale_factor(
-    cosmo, grids, mock_models, function_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
 ):
     """Tests that galaxy bias is evaluated at unit scale factor by default."""
     calls, _, _, _ = mock_models
@@ -467,7 +517,11 @@ def test_combination_automatic_bias_default_scale_factor(
     ],
 )
 def test_combination_automatic_bias_forwards_concentration(
-    cosmo, grids, concentration, mock_models, function_name,
+    cosmo,
+    grids,
+    concentration,
+    mock_models,
+    function_name,
 ):
     """Tests that automatic galaxy bias receives the concentration model."""
     calls, _, _, _ = mock_models
@@ -491,7 +545,10 @@ def test_combination_automatic_bias_forwards_concentration(
     ],
 )
 def test_combination_automatic_bias_forwards_hod_parameters(
-    cosmo, grids, mock_models, function_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
 ):
     """Tests that automatic galaxy bias receives the HOD parameters."""
     calls, _, _, _ = mock_models
@@ -519,7 +576,10 @@ def test_combination_automatic_bias_forwards_hod_parameters(
     ],
 )
 def test_combination_nla_forwards_cosmology(
-    cosmo, grids, mock_models, function_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
 ):
     """Tests that the NLA calculation receives the original cosmology."""
     calls, _, _, _ = mock_models
@@ -538,7 +598,10 @@ def test_combination_nla_forwards_cosmology(
     ],
 )
 def test_combination_nla_forwards_grids(
-    cosmo, grids, mock_models, function_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
 ):
     """Tests that the NLA calculation receives the original grids."""
     calls, _, _, _ = mock_models
@@ -561,7 +624,11 @@ def test_combination_nla_forwards_grids(
     ],
 )
 def test_combination_nla_forwards_amplitude(
-    cosmo, grids, mock_models, function_name, A_IA,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
+    A_IA,
 ):
     """Tests that positive and negative IA amplitudes are forwarded."""
     calls, _, _, _ = mock_models
@@ -580,7 +647,10 @@ def test_combination_nla_forwards_amplitude(
     ],
 )
 def test_combination_nla_forwards_normalization(
-    cosmo, grids, mock_models, function_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
 ):
     """Tests that the NLA normalization is forwarded."""
     calls, _, _, _ = mock_models
@@ -599,7 +669,10 @@ def test_combination_nla_forwards_normalization(
     ],
 )
 def test_combination_nla_default_normalization(
-    cosmo, grids, mock_models, function_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
 ):
     """Tests that the default NLA normalization is 0.0134."""
     calls, _, _, _ = mock_models
@@ -618,7 +691,10 @@ def test_combination_nla_default_normalization(
     ],
 )
 def test_combination_automatic_bias_forwards_cosmology(
-    cosmo, grids, mock_models, function_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
 ):
     """Tests that the bias calculation receives the original cosmology."""
     calls, _, _, _ = mock_models
@@ -638,7 +714,11 @@ def test_combination_automatic_bias_forwards_cosmology(
 )
 @pytest.mark.parametrize("A_IA", [np.nan, np.inf, -np.inf])
 def test_combination_rejects_invalid_amplitude(
-    cosmo, grids, mock_models, function_name, A_IA,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
+    A_IA,
 ):
     """Tests that nonfinite IA amplitudes are rejected."""
     function = getattr(combinations, function_name)
@@ -655,7 +735,10 @@ def test_combination_rejects_invalid_amplitude(
     ],
 )
 def test_combination_invalid_amplitude_skips_nla(
-    cosmo, grids, mock_models, function_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
 ):
     """Tests that invalid IA amplitudes never reach the NLA calculation."""
     calls, _, _, _ = mock_models
@@ -677,7 +760,10 @@ def test_combination_invalid_amplitude_skips_nla(
     ],
 )
 def test_combination_nla_does_not_add_gi_key(
-    cosmo, grids, mock_models, function_name,
+    cosmo,
+    grids,
+    mock_models,
+    function_name,
 ):
     """Tests that the GI spectrum is not added to the HOD result dictionary."""
     function = getattr(combinations, function_name)
@@ -745,7 +831,9 @@ def test_add_nla_to_hod_automatic_bias(cosmo, grids, mock_models):
 
 
 def test_add_nla_to_hod_preserves_original_dictionary(
-    cosmo, grids, mock_models,
+    cosmo,
+    grids,
+    mock_models,
 ):
     """Tests that the internal helper does not mutate the HOD dictionary."""
     _, pk_hod, _, _ = mock_models
@@ -769,7 +857,10 @@ def test_add_nla_to_hod_preserves_original_dictionary(
 
 @pytest.mark.parametrize("A_IA", [np.nan, np.inf, -np.inf])
 def test_add_nla_to_hod_rejects_invalid_amplitude(
-    cosmo, grids, mock_models, A_IA,
+    cosmo,
+    grids,
+    mock_models,
+    A_IA,
 ):
     """Tests that the internal helper rejects nonfinite IA amplitudes."""
     _, pk_hod, _, _ = mock_models

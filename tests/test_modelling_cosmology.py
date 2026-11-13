@@ -108,10 +108,12 @@ def test_make_ccl_cosmology_preserves_omega_c_without_omega_m(monkeypatch):
 
     monkeypatch.setattr(cosmology.ccl, "Cosmology", fake_cosmology)
 
-    result = cosmology.make_ccl_cosmology({
-        "Omega_c": 0.26,
-        "Omega_b": 0.04,
-    })
+    result = cosmology.make_ccl_cosmology(
+        {
+            "Omega_c": 0.26,
+            "Omega_b": 0.04,
+        }
+    )
 
     assert result["Omega_c"] == 0.26
     assert result["Omega_b"] == 0.04
@@ -209,11 +211,13 @@ def test_make_ccl_cosmology_converts_s8_with_omega_m(monkeypatch):
 
     monkeypatch.setattr(cosmology.ccl, "Cosmology", fake_cosmology)
 
-    result = cosmology.make_ccl_cosmology({
-        "Omega_m": 0.25,
-        "Omega_b": 0.05,
-        "S8": 0.8,
-    })
+    result = cosmology.make_ccl_cosmology(
+        {
+            "Omega_m": 0.25,
+            "Omega_b": 0.05,
+            "S8": 0.8,
+        }
+    )
 
     assert result["sigma8"] == pytest.approx(0.8 * (0.3 / 0.25) ** 0.5)
     assert result["Omega_c"] == pytest.approx(0.20)
@@ -230,11 +234,13 @@ def test_make_ccl_cosmology_converts_s8_with_omega_c(monkeypatch):
 
     monkeypatch.setattr(cosmology.ccl, "Cosmology", fake_cosmology)
 
-    result = cosmology.make_ccl_cosmology({
-        "Omega_c": 0.20,
-        "Omega_b": 0.05,
-        "S8": 0.8,
-    })
+    result = cosmology.make_ccl_cosmology(
+        {
+            "Omega_c": 0.20,
+            "Omega_b": 0.05,
+            "S8": 0.8,
+        }
+    )
 
     assert result["sigma8"] == pytest.approx(0.8 * (0.3 / 0.25) ** 0.5)
     assert result["Omega_c"] == 0.20
@@ -251,11 +257,13 @@ def test_make_ccl_cosmology_converts_s8_at_fiducial_omega_m(monkeypatch):
 
     monkeypatch.setattr(cosmology.ccl, "Cosmology", fake_cosmology)
 
-    result = cosmology.make_ccl_cosmology({
-        "Omega_m": 0.3,
-        "Omega_b": 0.05,
-        "S8": 0.82,
-    })
+    result = cosmology.make_ccl_cosmology(
+        {
+            "Omega_m": 0.3,
+            "Omega_b": 0.05,
+            "S8": 0.82,
+        }
+    )
 
     assert result["sigma8"] == pytest.approx(0.82)
 
@@ -515,11 +523,13 @@ def test_make_ccl_cosmology_preserves_sigma8_without_s8(monkeypatch):
 
     monkeypatch.setattr(cosmology.ccl, "Cosmology", fake_cosmology)
 
-    result = cosmology.make_ccl_cosmology({
-        "Omega_m": 0.25,
-        "Omega_b": 0.05,
-        "sigma8": 0.82,
-    })
+    result = cosmology.make_ccl_cosmology(
+        {
+            "Omega_m": 0.25,
+            "Omega_b": 0.05,
+            "sigma8": 0.82,
+        }
+    )
 
     assert result["sigma8"] == 0.82
     assert result["Omega_c"] == pytest.approx(0.20)
@@ -557,11 +567,13 @@ def test_make_ccl_cosmology_rejects_conflicting_overrides(overrides):
 def test_make_ccl_cosmology_rejects_nonpositive_omega_m_for_s8(omega_m):
     """Tests that S8 conversion requires positive Omega_m."""
     with pytest.raises(ValueError, match="Omega_m must be positive"):
-        cosmology.make_ccl_cosmology({
-            "Omega_m": omega_m,
-            "Omega_b": 0.05,
-            "S8": 0.8,
-        })
+        cosmology.make_ccl_cosmology(
+            {
+                "Omega_m": omega_m,
+                "Omega_b": 0.05,
+                "S8": 0.8,
+            }
+        )
 
 
 def test_make_ccl_cosmology_constructs_real_ccl_object():
@@ -628,15 +640,13 @@ def test_make_ccl_cosmology_derivative_parameter_dependence():
     s8 = 0.8
     step = 1.0e-5
 
-    derivative_omega_m = (
-        sigma8_model(omega_m + step, s8)
-        - sigma8_model(omega_m - step, s8)
-    ) / (2.0 * step)
+    derivative_omega_m = (sigma8_model(omega_m + step, s8) - sigma8_model(omega_m - step, s8)) / (
+        2.0 * step
+    )
 
-    derivative_s8 = (
-        sigma8_model(omega_m, s8 + step)
-        - sigma8_model(omega_m, s8 - step)
-    ) / (2.0 * step)
+    derivative_s8 = (sigma8_model(omega_m, s8 + step) - sigma8_model(omega_m, s8 - step)) / (
+        2.0 * step
+    )
 
     expected_omega_m = -0.5 * s8 / omega_m
     expected_s8 = 1.0

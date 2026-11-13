@@ -186,12 +186,7 @@ def _sigma_crit_inverse_grid(
         where=chi_s > chi_l,
     )
 
-    return (
-        chi_l
-        * efficiency
-        * (1.0 + z_lens[:, None])
-        / _SIGMA_CRIT_PREFACTOR
-    )
+    return chi_l * efficiency * (1.0 + z_lens[:, None]) / _SIGMA_CRIT_PREFACTOR
 
 
 def effective_sigma_crit_squared(

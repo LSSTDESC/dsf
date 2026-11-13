@@ -143,9 +143,7 @@ def as_1d_float_array(
     array = np.asarray(values, dtype=float)
 
     if array.ndim != 1:
-        raise ValueError(
-            f"{name} must be one-dimensional. Got shape {array.shape}."
-        )
+        raise ValueError(f"{name} must be one-dimensional. Got shape {array.shape}.")
     if array.size < min_size:
         raise ValueError(f"{name} must contain at least {min_size} values.")
     if np.any(~np.isfinite(array)):
@@ -174,9 +172,7 @@ def as_2d_float_array(
     array = np.asarray(values, dtype=float)
 
     if array.ndim != 2:
-        raise ValueError(
-            f"{name} must be two-dimensional. Got shape {array.shape}."
-        )
+        raise ValueError(f"{name} must be two-dimensional. Got shape {array.shape}.")
     if np.any(~np.isfinite(array)):
         raise ValueError(f"{name} must contain only finite values.")
 
@@ -319,8 +315,7 @@ def validate_1d_pair(
 
     if x_arr.shape != y_arr.shape:
         raise ValueError(
-            f"{x_name} and {y_name} must have matching shapes. "
-            f"Got {x_arr.shape} and {y_arr.shape}."
+            f"{x_name} and {y_name} must have matching shapes. Got {x_arr.shape} and {y_arr.shape}."
         )
 
 
@@ -381,9 +376,7 @@ def normalize_axis(axis: int, ndim: int) -> int:
     if ndim <= 0:
         raise ValueError("ndim must be positive.")
     if not -ndim <= axis < ndim:
-        raise ValueError(
-            f"axis {axis} is out of bounds for an array with {ndim} dimensions."
-        )
+        raise ValueError(f"axis {axis} is out of bounds for an array with {ndim} dimensions.")
 
     return axis % ndim
 
@@ -502,8 +495,7 @@ def validate_redshift_distribution(
 
     if z_arr.shape != nz_arr.shape:
         raise ValueError(
-            f"z and {name} must have matching shapes. "
-            f"Got {z_arr.shape} and {nz_arr.shape}."
+            f"z and {name} must have matching shapes. Got {z_arr.shape} and {nz_arr.shape}."
         )
     if np.any(z_arr < 0.0):
         raise ValueError("z must be non-negative.")
@@ -584,9 +576,7 @@ def occupied_redshift_range_from_nz(
     occupied = nz_arr > threshold
 
     if np.count_nonzero(occupied) < 2:
-        raise ValueError(
-            f"{name} must be non-zero in at least two redshift cells."
-        )
+        raise ValueError(f"{name} must be non-zero in at least two redshift cells.")
 
     z_used = z_arr[occupied]
 
@@ -616,9 +606,7 @@ def validate_forecast_vector_and_covariance(
         ValueError: If the data vector or covariance is invalid, or if the
             covariance shape does not match the data-vector length.
     """
-    data_vector_arr = as_1d_float_array(
-        data_vector, data_vector_name, min_size=1
-    )
+    data_vector_arr = as_1d_float_array(data_vector, data_vector_name, min_size=1)
     covariance_arr = as_2d_float_array(covariance, covariance_name)
 
     expected_shape = (data_vector_arr.size, data_vector_arr.size)
@@ -775,16 +763,12 @@ def validate_hankel_1d_grid_spacing(
         input_values: k or ell grid for the Hankel transform.
         name: Name of the k or ell grid used in error messages.
     """
-    x_arr = validate_positive_strictly_increasing_1d_array(
-        input_values, name, min_size=2
-    )
+    x_arr = validate_positive_strictly_increasing_1d_array(input_values, name, min_size=2)
 
     lnx = np.log(x_arr)
     dlnx = np.diff(lnx)
     if not np.allclose(dlnx, dlnx[0]):
-        raise ValueError(
-            f"{name} must have uniform logarithmic spacing for Hankel transforms."
-        )
+        raise ValueError(f"{name} must have uniform logarithmic spacing for Hankel transforms.")
 
     return x_arr
 
@@ -810,13 +794,8 @@ def validate_interpolation_within_bounds(
     x_eval_arr = as_1d_float_array(x_eval, f"{name}_eval", min_size=1)
     x_data_arr = as_1d_float_array(x_data, f"{name}_data", min_size=2)
 
-    if not np.all(
-        (x_eval_arr >= x_data_arr[0]) & (x_eval_arr <= x_data_arr[-1])
-    ):
-        raise ValueError(
-            f"Requested interpolation values for {name} "
-            "lie outside the data grid."
-        )
+    if not np.all((x_eval_arr >= x_data_arr[0]) & (x_eval_arr <= x_data_arr[-1])):
+        raise ValueError(f"Requested interpolation values for {name} lie outside the data grid.")
 
     return x_eval_arr
 
@@ -858,12 +837,8 @@ def validate_pk2d_grids(
     Returns:
         Validated arrays.
     """
-    k_arr = validate_positive_strictly_increasing_1d_array(
-        k_array, "k_array", min_size=2
-    )
-    a_arr = validate_positive_strictly_increasing_1d_array(
-        a_array, "a_array", min_size=2
-    )
+    k_arr = validate_positive_strictly_increasing_1d_array(k_array, "k_array", min_size=2)
+    a_arr = validate_positive_strictly_increasing_1d_array(a_array, "a_array", min_size=2)
 
     for a in a_arr:
         validate_scale_factor(float(a))

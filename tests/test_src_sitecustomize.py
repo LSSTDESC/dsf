@@ -7,9 +7,7 @@ from pathlib import Path
 
 import pytest
 
-SITECUSTOMIZE_PATH = (
-    Path(__file__).resolve().parents[1] / "src" / "sitecustomize.py"
-)
+SITECUSTOMIZE_PATH = Path(__file__).resolve().parents[1] / "src" / "sitecustomize.py"
 
 
 def import_sitecustomize_from_path(monkeypatch, fake_limit):
@@ -88,8 +86,6 @@ def test_sitecustomize_rejects_non_integer_thread_count(monkeypatch):
     monkeypatch.setenv("DSF_NUM_THREADS", "many")
 
     with pytest.raises(ValueError):
-        import_sitecustomize_from_path(
-            monkeypatch, fake_limit_numerical_threads
-        )
+        import_sitecustomize_from_path(monkeypatch, fake_limit_numerical_threads)
 
     assert calls == []

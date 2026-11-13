@@ -17,9 +17,7 @@ def test_lens_averaged_power_spectrum_uses_weighted_redshift_average():
         z = 1.0 / scale_factor - 1.0
         return (1.0 + z) * k_mpc**2
 
-    result = lens_averaged_power_spectrum(
-        cosmo, fake_power, k, z_lens, nz_lens
-    )
+    result = lens_averaged_power_spectrum(cosmo, fake_power, k, z_lens, nz_lens)
 
     h = cosmo["h"]
     pk_z0 = (1.0 + z_lens[0]) * (k * h) ** 2 * h**3
@@ -45,9 +43,7 @@ def test_lens_averaged_power_spectrum_uses_cosmology_h():
         called_k_values.append(np.array(k_mpc, copy=True))
         return np.ones_like(k_mpc)
 
-    result = lens_averaged_power_spectrum(
-        cosmo, fake_power, k, z_lens, nz_lens
-    )
+    result = lens_averaged_power_spectrum(cosmo, fake_power, k, z_lens, nz_lens)
 
     h = cosmo["h"]
 
@@ -75,9 +71,7 @@ def test_lens_averaged_power_spectrum_converts_power_to_mpc_over_h_units():
     def fake_power(k_mpc, scale_factor, *, cosmo=None):
         return np.full_like(k_mpc, 2.0)
 
-    result = lens_averaged_power_spectrum(
-        cosmo, fake_power, k, z_lens, nz_lens
-    )
+    result = lens_averaged_power_spectrum(cosmo, fake_power, k, z_lens, nz_lens)
 
     expected = np.full_like(k, 2.0 * cosmo["h"] ** 3)
 
@@ -112,9 +106,7 @@ def test_lens_averaged_power_spectrum_returns_one_value_per_k_mode():
     def fake_power(k_mpc, scale_factor, *, cosmo=None):
         return np.ones_like(k_mpc)
 
-    result = lens_averaged_power_spectrum(
-        cosmo, fake_power, k, z_lens, nz_lens
-    )
+    result = lens_averaged_power_spectrum(cosmo, fake_power, k, z_lens, nz_lens)
 
     assert result.shape == k.shape
 
@@ -149,9 +141,7 @@ def test_lens_averaged_power_spectrum_does_not_renormalize_lens_weights():
     def fake_power(k_mpc, scale_factor, *, cosmo=None):
         return np.ones_like(k_mpc)
 
-    result = lens_averaged_power_spectrum(
-        cosmo, fake_power, k, z_lens, nz_lens
-    )
+    result = lens_averaged_power_spectrum(cosmo, fake_power, k, z_lens, nz_lens)
 
     expected = np.full_like(k, 2.0)
 
@@ -191,9 +181,7 @@ def test_lens_averaged_power_spectrum_rejects_invalid_k_grid(k):
         (np.array([0.0, 1.0]), np.array([1.0, -1.0])),
     ],
 )
-def test_lens_averaged_power_spectrum_rejects_invalid_lens_distribution(
-    z_lens, nz_lens
-):
+def test_lens_averaged_power_spectrum_rejects_invalid_lens_distribution(z_lens, nz_lens):
     """Test that invalid lens redshift distributions are rejected."""
     cosmo = {"h": 0.7}
     k = np.array([0.1, 1.0])

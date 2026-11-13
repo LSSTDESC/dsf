@@ -40,9 +40,7 @@ def capture_density_weighted(monkeypatch):
         calls.append((cosmo, power))
         return ("density_weighted", cosmo, power)
 
-    monkeypatch.setattr(
-        nla, "density_weighted_power_spectrum", fake_density_weighted
-    )
+    monkeypatch.setattr(nla, "density_weighted_power_spectrum", fake_density_weighted)
 
     return calls
 
@@ -62,16 +60,16 @@ def test_pk2d_nla_returns_pk2d(cosmo, grids, capture_density_weighted):
 
 
 def test_pk2d_nla_matches_analytic_model(
-    cosmo, grids, capture_density_weighted,
+    cosmo,
+    grids,
+    capture_density_weighted,
 ):
     """Tests numerical agreement with the nonlinear alignment model."""
     A_IA = 1.5
     C1rhocrit = 0.0134
     b_g = 1.8
 
-    result = nla.pk2d_nla(
-        cosmo, **grids, A_IA=A_IA, C1rhocrit=C1rhocrit, b_g=b_g
-    )
+    result = nla.pk2d_nla(cosmo, **grids, A_IA=A_IA, C1rhocrit=C1rhocrit, b_g=b_g)
 
     k_array = grids["k_array"]
     a_array = grids["a_array"]
@@ -89,7 +87,10 @@ def test_pk2d_nla_matches_analytic_model(
 
 @pytest.mark.parametrize("A_IA", [0.0, 0.5, 1.0, 2.0, -1.0])
 def test_pk2d_nla_amplitude_scaling(
-    cosmo, grids, capture_density_weighted, A_IA,
+    cosmo,
+    grids,
+    capture_density_weighted,
+    A_IA,
 ):
     """Tests linear scaling with intrinsic alignment amplitude."""
     reference = nla.pk2d_nla(cosmo, **grids, A_IA=1.0)
@@ -106,7 +107,10 @@ def test_pk2d_nla_amplitude_scaling(
 
 @pytest.mark.parametrize("b_g", [0.0, 0.5, 1.0, 2.0, -1.0])
 def test_pk2d_nla_galaxy_bias_scaling(
-    cosmo, grids, capture_density_weighted, b_g,
+    cosmo,
+    grids,
+    capture_density_weighted,
+    b_g,
 ):
     """Tests linear scaling with galaxy bias."""
     reference = nla.pk2d_nla(cosmo, **grids, A_IA=1.0, b_g=1.0)
@@ -123,22 +127,19 @@ def test_pk2d_nla_galaxy_bias_scaling(
 
 @pytest.mark.parametrize("C1rhocrit", [0.0, 0.005, 0.0134, 0.02, -0.01])
 def test_pk2d_nla_normalization_scaling(
-    cosmo, grids, capture_density_weighted, C1rhocrit,
+    cosmo,
+    grids,
+    capture_density_weighted,
+    C1rhocrit,
 ):
     """Tests linear scaling with the NLA normalization."""
-    reference = nla.pk2d_nla(
-        cosmo, **grids, A_IA=1.0, C1rhocrit=0.0134
-    )
-    result = nla.pk2d_nla(
-        cosmo, **grids, A_IA=1.0, C1rhocrit=C1rhocrit
-    )
+    reference = nla.pk2d_nla(cosmo, **grids, A_IA=1.0, C1rhocrit=0.0134)
+    result = nla.pk2d_nla(cosmo, **grids, A_IA=1.0, C1rhocrit=C1rhocrit)
 
     k = grids["k_array"]
     a = grids["a_array"]
 
-    expected = (
-        C1rhocrit / 0.0134
-    ) * reference["pk_gi"](k, a, cosmo=cosmo)
+    expected = (C1rhocrit / 0.0134) * reference["pk_gi"](k, a, cosmo=cosmo)
 
     actual = result["pk_gi"](k, a, cosmo=cosmo)
 
@@ -149,9 +150,7 @@ def test_pk2d_nla_negative_sign(cosmo, grids, capture_density_weighted):
     """Tests that positive IA amplitude produces negative GI power."""
     result = nla.pk2d_nla(cosmo, **grids, A_IA=1.0)
 
-    pk_gi = result["pk_gi"](
-        grids["k_array"], grids["a_array"], cosmo=cosmo
-    )
+    pk_gi = result["pk_gi"](grids["k_array"], grids["a_array"], cosmo=cosmo)
 
     assert np.all(pk_gi < 0.0)
 
@@ -160,9 +159,7 @@ def test_pk2d_nla_negative_amplitude(cosmo, grids, capture_density_weighted):
     """Tests that negative IA amplitude produces positive GI power."""
     result = nla.pk2d_nla(cosmo, **grids, A_IA=-1.0)
 
-    pk_gi = result["pk_gi"](
-        grids["k_array"], grids["a_array"], cosmo=cosmo
-    )
+    pk_gi = result["pk_gi"](grids["k_array"], grids["a_array"], cosmo=cosmo)
 
     assert np.all(pk_gi > 0.0)
 
@@ -171,21 +168,19 @@ def test_pk2d_nla_zero_amplitude(cosmo, grids, capture_density_weighted):
     """Tests that zero IA amplitude produces zero GI power."""
     result = nla.pk2d_nla(cosmo, **grids, A_IA=0.0)
 
-    pk_gi = result["pk_gi"](
-        grids["k_array"], grids["a_array"], cosmo=cosmo
-    )
+    pk_gi = result["pk_gi"](grids["k_array"], grids["a_array"], cosmo=cosmo)
 
     np.testing.assert_allclose(pk_gi, 0.0, atol=1.0e-12)
 
 
 def test_pk2d_nla_default_normalization(
-    cosmo, grids, capture_density_weighted,
+    cosmo,
+    grids,
+    capture_density_weighted,
 ):
     """Tests that the default NLA normalization is 0.0134."""
     default = nla.pk2d_nla(cosmo, **grids, A_IA=1.0)
-    explicit = nla.pk2d_nla(
-        cosmo, **grids, A_IA=1.0, C1rhocrit=0.0134
-    )
+    explicit = nla.pk2d_nla(cosmo, **grids, A_IA=1.0, C1rhocrit=0.0134)
 
     k = grids["k_array"]
     a = grids["a_array"]
@@ -197,7 +192,9 @@ def test_pk2d_nla_default_normalization(
 
 
 def test_pk2d_nla_default_galaxy_bias(
-    cosmo, grids, capture_density_weighted,
+    cosmo,
+    grids,
+    capture_density_weighted,
 ):
     """Tests that the default galaxy bias is unity."""
     default = nla.pk2d_nla(cosmo, **grids, A_IA=1.0)
@@ -213,7 +210,9 @@ def test_pk2d_nla_default_galaxy_bias(
 
 
 def test_pk2d_nla_density_weighted_called(
-    cosmo, grids, capture_density_weighted,
+    cosmo,
+    grids,
+    capture_density_weighted,
 ):
     """Tests that the density-weighted spectrum is constructed."""
     nla.pk2d_nla(cosmo, **grids, A_IA=1.0)
@@ -223,7 +222,9 @@ def test_pk2d_nla_density_weighted_called(
 
 
 def test_pk2d_nla_density_weighted_callback(
-    cosmo, grids, capture_density_weighted,
+    cosmo,
+    grids,
+    capture_density_weighted,
 ):
     """Tests that the callback evaluates the galaxy-intrinsic spectrum."""
     result = nla.pk2d_nla(cosmo, **grids, A_IA=1.0)
@@ -240,7 +241,9 @@ def test_pk2d_nla_density_weighted_callback(
 
 
 def test_pk2d_nla_density_weighted_return_value(
-    cosmo, grids, capture_density_weighted,
+    cosmo,
+    grids,
+    capture_density_weighted,
 ):
     """Tests that the density-weighted result is returned unchanged."""
     result = nla.pk2d_nla(cosmo, **grids, A_IA=1.0)
@@ -251,7 +254,10 @@ def test_pk2d_nla_density_weighted_return_value(
 
 @pytest.mark.parametrize("A_IA", [np.nan, np.inf, -np.inf])
 def test_pk2d_nla_rejects_invalid_amplitude(
-    cosmo, grids, capture_density_weighted, A_IA,
+    cosmo,
+    grids,
+    capture_density_weighted,
+    A_IA,
 ):
     """Tests that nonfinite IA amplitudes are rejected."""
     with pytest.raises(ValueError):
@@ -260,18 +266,22 @@ def test_pk2d_nla_rejects_invalid_amplitude(
 
 @pytest.mark.parametrize("C1rhocrit", [np.nan, np.inf, -np.inf])
 def test_pk2d_nla_rejects_invalid_normalization(
-    cosmo, grids, capture_density_weighted, C1rhocrit,
+    cosmo,
+    grids,
+    capture_density_weighted,
+    C1rhocrit,
 ):
     """Tests that nonfinite NLA normalizations are rejected."""
     with pytest.raises(ValueError):
-        nla.pk2d_nla(
-            cosmo, **grids, A_IA=1.0, C1rhocrit=C1rhocrit
-        )
+        nla.pk2d_nla(cosmo, **grids, A_IA=1.0, C1rhocrit=C1rhocrit)
 
 
 @pytest.mark.parametrize("b_g", [np.nan, np.inf, -np.inf])
 def test_pk2d_nla_rejects_invalid_galaxy_bias(
-    cosmo, grids, capture_density_weighted, b_g,
+    cosmo,
+    grids,
+    capture_density_weighted,
+    b_g,
 ):
     """Tests that nonfinite galaxy biases are rejected."""
     with pytest.raises(ValueError):
@@ -289,7 +299,10 @@ def test_pk2d_nla_rejects_invalid_galaxy_bias(
     ],
 )
 def test_pk2d_nla_rejects_invalid_wavenumbers(
-    cosmo, grids, capture_density_weighted, k_array,
+    cosmo,
+    grids,
+    capture_density_weighted,
+    k_array,
 ):
     """Tests that invalid wavenumber grids are rejected."""
     with pytest.raises((ValueError, TypeError)):
@@ -313,7 +326,10 @@ def test_pk2d_nla_rejects_invalid_wavenumbers(
     ],
 )
 def test_pk2d_nla_rejects_invalid_scale_factors(
-    cosmo, grids, capture_density_weighted, a_array,
+    cosmo,
+    grids,
+    capture_density_weighted,
+    a_array,
 ):
     """Tests that invalid scale-factor grids are rejected."""
     with pytest.raises((ValueError, TypeError)):

@@ -77,9 +77,7 @@ def capture_halomod(monkeypatch):
         return ("density_weighted", cosmo, power)
 
     monkeypatch.setattr(hod.ccl.halos, "halomod_Pk2D", fake_halomod)
-    monkeypatch.setattr(
-        hod, "density_weighted_power_spectrum", fake_density_weighted
-    )
+    monkeypatch.setattr(hod, "density_weighted_power_spectrum", fake_density_weighted)
 
     return calls, spectra
 
@@ -145,9 +143,7 @@ def test_pk2d_hod_uses_default_matter_profile(cosmo, grids, capture_pk2d):
 def test_pk2d_hod_accepts_custom_concentration(cosmo, grids, capture_pk2d):
     """Tests that a custom concentration model is forwarded."""
     calls, _ = capture_pk2d
-    concentration = ccl.halos.ConcentrationConstant(
-        c=5.0, mass_def=hod.MASS_DEF
-    )
+    concentration = ccl.halos.ConcentrationConstant(c=5.0, mass_def=hod.MASS_DEF)
 
     hod.pk2d_hod(cosmo, **grids, concentration=concentration)
 
@@ -155,13 +151,13 @@ def test_pk2d_hod_accepts_custom_concentration(cosmo, grids, capture_pk2d):
 
 
 def test_pk2d_hod_custom_concentration_rebuilds_matter_profile(
-    cosmo, grids, capture_pk2d,
+    cosmo,
+    grids,
+    capture_pk2d,
 ):
     """Tests that custom concentrations do not reuse the default matter profile."""
     calls, _ = capture_pk2d
-    concentration = ccl.halos.ConcentrationConstant(
-        c=5.0, mass_def=hod.MASS_DEF
-    )
+    concentration = ccl.halos.ConcentrationConstant(c=5.0, mass_def=hod.MASS_DEF)
 
     hod.pk2d_hod(cosmo, **grids, concentration=concentration)
 
@@ -201,9 +197,7 @@ def test_pk2d_hod_forwards_hod_kwargs(cosmo, grids, capture_pk2d):
     """Tests that HOD parameters are forwarded."""
     calls, _ = capture_pk2d
 
-    hod.pk2d_hod(
-        cosmo, **grids, log10Mmin_0=12.5, siglnM_0=0.4
-    )
+    hod.pk2d_hod(cosmo, **grids, log10Mmin_0=12.5, siglnM_0=0.4)
 
     assert calls[0][1]["log10Mmin_0"] == 12.5
     assert calls[0][1]["siglnM_0"] == 0.4
@@ -219,12 +213,12 @@ def test_pk2d_hod_returns_spectra(cosmo, grids, capture_pk2d):
 
 
 def test_pk2d_hod_custom_concentration_does_not_modify_default(
-    cosmo, grids, capture_pk2d,
+    cosmo,
+    grids,
+    capture_pk2d,
 ):
     """Tests that custom concentration models leave global defaults unchanged."""
-    concentration = ccl.halos.ConcentrationConstant(
-        c=5.0, mass_def=hod.MASS_DEF
-    )
+    concentration = ccl.halos.ConcentrationConstant(c=5.0, mass_def=hod.MASS_DEF)
 
     hod.pk2d_hod(cosmo, **grids, concentration=concentration)
 
@@ -248,13 +242,13 @@ def test_internal_hod_constructs_matter_profile(cosmo, grids, capture_halomod):
 
     hod._pk2d_hod(cosmo, **grids, concentration=hod.CONCENTRATION)
 
-    assert isinstance(
-        calls[0][3]["prof2"], ccl.halos.HaloProfileNFW
-    )
+    assert isinstance(calls[0][3]["prof2"], ccl.halos.HaloProfileNFW)
 
 
 def test_internal_hod_uses_supplied_matter_profile(
-    cosmo, grids, capture_halomod,
+    cosmo,
+    grids,
+    capture_halomod,
 ):
     """Tests that a supplied matter profile is forwarded unchanged."""
     calls, _ = capture_halomod
@@ -285,7 +279,9 @@ def test_internal_hod_forwards_cosmology(cosmo, grids, capture_halomod):
 
 
 def test_internal_hod_uses_halo_model_calculator(
-    cosmo, grids, capture_halomod,
+    cosmo,
+    grids,
+    capture_halomod,
 ):
     """Tests that both halo-model calculations use the configured calculator."""
     calls, _ = capture_halomod
@@ -296,7 +292,9 @@ def test_internal_hod_uses_halo_model_calculator(
 
 
 def test_internal_hod_uses_hod_two_point_profile(
-    cosmo, grids, capture_halomod,
+    cosmo,
+    grids,
+    capture_halomod,
 ):
     """Tests that galaxy-galaxy spectra use the HOD two-point profile."""
     calls, _ = capture_halomod
@@ -314,9 +312,7 @@ def test_internal_hod_uses_nonlinear_power(cosmo, grids, capture_halomod):
 
     nonlinear_power = cosmo.get_nonlin_power()
 
-    assert all(
-        call[3]["p_of_k_a"] is nonlinear_power for call in calls
-    )
+    assert all(call[3]["p_of_k_a"] is nonlinear_power for call in calls)
 
 
 def test_internal_hod_uses_log_wavenumbers(cosmo, grids, capture_halomod):
@@ -343,9 +339,7 @@ def test_internal_hod_uses_scale_factor_grid(cosmo, grids, capture_halomod):
 
 def test_internal_hod_returns_expected_keys(cosmo, grids, capture_halomod):
     """Tests that the internal HOD calculation returns all three spectra."""
-    hod_spectra = hod._pk2d_hod(
-        cosmo, **grids, concentration=hod.CONCENTRATION
-    )
+    hod_spectra = hod._pk2d_hod(cosmo, **grids, concentration=hod.CONCENTRATION)
 
     assert set(hod_spectra) == {"pk_deltasigma", "pk_gm", "pk_gg"}
 
@@ -354,33 +348,31 @@ def test_internal_hod_returns_correct_spectra(cosmo, grids, capture_halomod):
     """Tests that the returned spectra match the halo-model calculations."""
     _, spectra = capture_halomod
 
-    result = hod._pk2d_hod(
-        cosmo, **grids, concentration=hod.CONCENTRATION
-    )
+    result = hod._pk2d_hod(cosmo, **grids, concentration=hod.CONCENTRATION)
 
     assert result["pk_gm"] is spectra[0]
     assert result["pk_gg"] is spectra[1]
 
 
 def test_internal_hod_constructs_density_weighted_spectrum(
-    cosmo, grids, capture_halomod,
+    cosmo,
+    grids,
+    capture_halomod,
 ):
     """Tests that the density-weighted spectrum is constructed."""
-    result = hod._pk2d_hod(
-        cosmo, **grids, concentration=hod.CONCENTRATION
-    )
+    result = hod._pk2d_hod(cosmo, **grids, concentration=hod.CONCENTRATION)
 
     assert result["pk_deltasigma"][0] == "density_weighted"
     assert result["pk_deltasigma"][1] is cosmo
 
 
 def test_internal_hod_density_weighted_callback(
-    cosmo, grids, capture_halomod,
+    cosmo,
+    grids,
+    capture_halomod,
 ):
     """Tests that the density-weighted callback evaluates galaxy-matter power."""
-    result = hod._pk2d_hod(
-        cosmo, **grids, concentration=hod.CONCENTRATION
-    )
+    result = hod._pk2d_hod(cosmo, **grids, concentration=hod.CONCENTRATION)
 
     callback = result["pk_deltasigma"][2]
     masses = np.array([0.1, 1.0, 10.0])
@@ -443,7 +435,9 @@ def test_internal_hod_rejects_invalid_wavenumbers(cosmo, grids, k_array):
     ],
 )
 def test_internal_hod_rejects_invalid_scale_factor_grids(
-    cosmo, grids, a_array,
+    cosmo,
+    grids,
+    a_array,
 ):
     """Tests that invalid scale-factor grids are rejected."""
     with pytest.raises((ValueError, TypeError)):
@@ -496,9 +490,7 @@ def test_hod_galaxy_bias_uses_default_concentration(monkeypatch, cosmo):
 def test_hod_galaxy_bias_accepts_custom_concentration(monkeypatch, cosmo):
     """Tests that galaxy bias accepts a custom concentration model."""
     captured = {}
-    concentration = ccl.halos.ConcentrationConstant(
-        c=5.0, mass_def=hod.MASS_DEF
-    )
+    concentration = ccl.halos.ConcentrationConstant(c=5.0, mass_def=hod.MASS_DEF)
 
     class FakeHOD:
         """Represent an HOD profile with fixed occupations."""
@@ -522,16 +514,16 @@ def test_hod_galaxy_bias_accepts_custom_concentration(monkeypatch, cosmo):
         lambda func, cosmo, a: 4.0,
     )
 
-    hod.hod_galaxy_bias(
-        cosmo, a=0.8, concentration=concentration
-    )
+    hod.hod_galaxy_bias(cosmo, a=0.8, concentration=concentration)
 
     assert captured["concentration"] is concentration
 
 
 @pytest.mark.parametrize("normalization", [0.0, -1.0, np.nan, np.inf])
 def test_hod_galaxy_bias_rejects_invalid_normalization(
-    monkeypatch, cosmo, normalization,
+    monkeypatch,
+    cosmo,
+    normalization,
 ):
     """Tests that invalid galaxy normalizations are rejected."""
 

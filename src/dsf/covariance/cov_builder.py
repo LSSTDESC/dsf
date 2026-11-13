@@ -132,11 +132,11 @@ class DeltaSigmaCovarianceBuilder:
             (int(lens_bin), int(source_bin)) for lens_bin, source_bin in tomography["bin_pairs"]
         ]
 
-        self.lens_meta = self.lens_result.tomo_meta
-        self.source_meta = self.source_result.tomo_meta
+        self.lens_meta = self.lens_result.metadata
+        self.source_meta = self.source_result.metadata
 
         self.lens_edges = np.asarray(
-            self.lens_result.tomo_meta["bins"]["bin_edges"],
+            self.lens_result.metadata["bins"]["bin_edges"],
             dtype=float,
         )
 
@@ -192,8 +192,8 @@ class DeltaSigmaCovarianceBuilder:
         self.pi = None if pi is None else np.asarray(pi, dtype=float)
         self.gm_window = None if gm_window is None else np.asarray(gm_window, dtype=float)
 
-        hankel_config = {} if isinstance(hankel, HankelTransform) else (
-            {} if hankel is None else dict(hankel)
+        hankel_config = (
+            {} if isinstance(hankel, HankelTransform) else ({} if hankel is None else dict(hankel))
         )
 
         self.taper = bool(hankel_config.pop("taper", True))
@@ -210,9 +210,7 @@ class DeltaSigmaCovarianceBuilder:
         self._source_ingredient_cache: dict[int, dict[str, Any]] = {}
 
         self.hankel = (
-            hankel
-            if isinstance(hankel, HankelTransform)
-            else self.hankel_transform(hankel_config)
+            hankel if isinstance(hankel, HankelTransform) else self.hankel_transform(hankel_config)
         )
 
         if isinstance(self.hankel, HankelTransform):
@@ -647,7 +645,7 @@ class DeltaSigmaCovarianceBuilder:
             if galaxy_bias is None:
                 raise ValueError("Galaxy bias is required when custom power spectra are absent.")
 
-            pk_gg = galaxy_bias ** 2 * pk_mm
+            pk_gg = galaxy_bias**2 * pk_mm
             pk_gm = galaxy_bias * pk_mm
 
         lens_shot_noise = shot_noise(n_lens_3d)

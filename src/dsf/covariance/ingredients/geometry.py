@@ -423,22 +423,13 @@ def gm_lensing_window(
             where=chi_s > chi_l,
         )
 
-        sigma_crit_inv = (
-            chi_l
-            * efficiency
-            * (1.0 + displaced_z[:, None])
-            / sigma_crit_prefactor
-        )
+        sigma_crit_inv = chi_l * efficiency * (1.0 + displaced_z[:, None]) / sigma_crit_prefactor
 
         source_averaged_sigma_crit_inv = np.zeros_like(z_lens_arr)
 
-        source_averaged_sigma_crit_inv[valid] = (
-                sigma_crit_inv @ source_weights
-        )
+        source_averaged_sigma_crit_inv[valid] = sigma_crit_inv @ source_weights
 
-        lens_averaged_sigma_crit_inv = (
-                source_averaged_sigma_crit_inv @ lens_weights
-        )
+        lens_averaged_sigma_crit_inv = source_averaged_sigma_crit_inv @ lens_weights
 
         window[pi_index] = lens_averaged_sigma_crit_inv * sigma_crit_average
 
@@ -484,9 +475,7 @@ def delta_pi_gm_factors(
             nz_source=nz_source,
         )
     elif pi is None or gm_window is None:
-        raise ValueError(
-            "pi and gm_window must either both be supplied or both be None."
-        )
+        raise ValueError("pi and gm_window must either both be supplied or both be None.")
     else:
         pi_arr = np.asarray(pi, dtype=float)
         gm_window_arr = np.asarray(gm_window, dtype=float)

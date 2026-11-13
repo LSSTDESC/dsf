@@ -99,9 +99,7 @@ def _lens_mag_distance_kernel(
         Distance kernel evaluated on the foreground scale-factor grid.
     """
     distance_observer_to_lens = ccl.angular_diameter_distance(cosmo, a_lens)
-    distance_observer_to_source = ccl.angular_diameter_distance(
-        cosmo, a_source
-    )
+    distance_observer_to_source = ccl.angular_diameter_distance(cosmo, a_source)
     distance_inner_to_lens = ccl.angular_diameter_distance(
         cosmo,
         a_inner,
@@ -154,9 +152,7 @@ def _inner_redshift_integrand(
     ell_arr = validate_positive_1d_array(ell, "ell")
 
     a_inner = np.atleast_1d(redshift_to_scale_factor(z_arr))
-    a_lens = np.broadcast_to(
-        redshift_to_scale_factor(z_lens), np.shape(a_inner)
-    )
+    a_lens = np.broadcast_to(redshift_to_scale_factor(z_lens), np.shape(a_inner))
     a_source = np.broadcast_to(
         redshift_to_scale_factor(z_source),
         np.shape(a_inner),
@@ -174,9 +170,7 @@ def _inner_redshift_integrand(
 
     d_a = ccl.angular_diameter_distance(cosmo, a_inner)
     ell_plus = (ell_arr + 0.5).reshape((1, -1))
-    lk_grid = np.log(
-        a_inner.reshape((-1, 1)) * ell_plus / d_a.reshape((-1, 1))
-    )
+    lk_grid = np.log(a_inner.reshape((-1, 1)) * ell_plus / d_a.reshape((-1, 1)))
 
     pk2d_m = cosmo.get_nonlin_power()
     matter_power = np.array(
@@ -252,12 +246,7 @@ def _lens_mag_lss_shear(
         use_offset=bool(_LENS_MAG_INTEG_PARAMS["use_hankel_offset"]),
     )
 
-    prefactor = (
-        9.0
-        * hubble_over_c_cubed(float(cosmo["h"]))
-        * float(cosmo["Omega_m"]) ** 2
-        / 4
-    )
+    prefactor = 9.0 * hubble_over_c_cubed(float(cosmo["h"])) * float(cosmo["Omega_m"]) ** 2 / 4
 
     return prefactor * gamma_t
 

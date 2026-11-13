@@ -2,7 +2,7 @@
 
 All notable changes to DSF are documented here.
 
-## [Unreleased]
+## [0.2.0] - 2026-11-12
 
 ### Added
 - Package import regression tests.

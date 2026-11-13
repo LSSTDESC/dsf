@@ -117,9 +117,7 @@ def test_validate_bin_pair_rejects_empty_selection():
 
 def test_validate_redshift_pair_rejects_source_not_behind_lens():
     """Tests that source redshifts must be greater than lens redshifts."""
-    with pytest.raises(
-        ValueError, match="z_source must be greater than z_lens"
-    ):
+    with pytest.raises(ValueError, match="z_source must be greater than z_lens"):
         validate_redshift_pair(0.5, 0.5)
 
 
@@ -138,17 +136,13 @@ def test_as_1d_float_array_rejects_multidimensional_inputs():
 
 def test_as_1d_float_array_rejects_short_inputs():
     """Tests that arrays shorter than the minimum size are rejected."""
-    with pytest.raises(
-        ValueError, match="values must contain at least 2 values"
-    ):
+    with pytest.raises(ValueError, match="values must contain at least 2 values"):
         as_1d_float_array([1.0], "values", min_size=2)
 
 
 def test_as_1d_float_array_rejects_non_finite_values():
     """Tests that non-finite array values are rejected."""
-    with pytest.raises(
-        ValueError, match="values must contain only finite values"
-    ):
+    with pytest.raises(ValueError, match="values must contain only finite values"):
         as_1d_float_array([1.0, np.nan], "values")
 
 
@@ -174,9 +168,7 @@ def test_validate_positive_1d_array_accepts_positive_values():
 
 def test_validate_positive_1d_array_rejects_non_positive_values():
     """Tests that non-positive array values are rejected."""
-    with pytest.raises(
-        ValueError, match="values must contain only positive values"
-    ):
+    with pytest.raises(ValueError, match="values must contain only positive values"):
         validate_positive_1d_array([1.0, 0.0], "values")
 
 
@@ -208,18 +200,14 @@ def test_validate_strictly_increasing_rejects_repeated_values():
 
 def test_validate_positive_strictly_increasing_1d_array_accepts_valid_grid():
     """Tests that positive strictly increasing grids are accepted."""
-    actual = validate_positive_strictly_increasing_1d_array(
-        [0.1, 1.0, 2.0], "k"
-    )
+    actual = validate_positive_strictly_increasing_1d_array([0.1, 1.0, 2.0], "k")
 
     np.testing.assert_allclose(actual, np.array([0.1, 1.0, 2.0]))
 
 
 def test_validate_positive_strictly_increasing_1d_array_rejects_zero():
     """Tests that non-positive grid values are rejected."""
-    with pytest.raises(
-        ValueError, match="k must contain only positive values"
-    ):
+    with pytest.raises(ValueError, match="k must contain only positive values"):
         validate_positive_strictly_increasing_1d_array([0.0, 1.0], "k")
 
 
@@ -250,17 +238,13 @@ def test_validate_joint_covariance_blocks_accepts_compatible_blocks():
 def test_validate_joint_covariance_blocks_rejects_non_square_auto_block():
     """Tests that auto-covariance blocks must be square."""
     with pytest.raises(ValueError, match="cov_gm_gm must be square"):
-        validate_joint_covariance_blocks(
-            np.ones((2, 3)), np.eye(2), np.ones((2, 2))
-        )
+        validate_joint_covariance_blocks(np.ones((2, 3)), np.eye(2), np.ones((2, 2)))
 
 
 def test_validate_joint_covariance_blocks_rejects_bad_cross_shape():
     """Tests that cross-covariance blocks must have compatible shape."""
     with pytest.raises(ValueError, match="cov_gm_gg has incompatible shape"):
-        validate_joint_covariance_blocks(
-            np.eye(2), np.eye(3), np.ones((3, 2))
-        )
+        validate_joint_covariance_blocks(np.eye(2), np.eye(3), np.ones((3, 2)))
 
 
 def test_normalize_axis_converts_negative_axis():
@@ -276,16 +260,12 @@ def test_normalize_axis_rejects_out_of_bounds_axis():
 
 def test_validate_integration_axis_accepts_matching_axis_length():
     """Tests that integration coordinates matching an axis are accepted."""
-    validate_integration_axis(
-        np.ones((2, 3)), np.array([0.0, 1.0, 2.0]), axis=1
-    )
+    validate_integration_axis(np.ones((2, 3)), np.array([0.0, 1.0, 2.0]), axis=1)
 
 
 def test_validate_integration_axis_rejects_scalar_values():
     """Tests that scalar integration values are rejected."""
-    with pytest.raises(
-        ValueError, match="values must have at least one dimension"
-    ):
+    with pytest.raises(ValueError, match="values must have at least one dimension"):
         validate_integration_axis(1.0, np.array([0.0, 1.0]))
 
 
@@ -296,9 +276,7 @@ def test_validate_power_spectrum_inputs_accepts_matching_arrays():
 
 def test_validate_power_spectrum_inputs_rejects_mismatched_arrays():
     """Tests that power-spectrum arrays must have matching shapes."""
-    with pytest.raises(
-        ValueError, match="k and pk must have matching shapes"
-    ):
+    with pytest.raises(ValueError, match="k and pk must have matching shapes"):
         validate_power_spectrum_inputs([0.1, 1.0], [2.0, 3.0, 4.0])
 
 
@@ -340,9 +318,7 @@ def test_validate_hankel_1d_grid_spacing_rejects_negative_k():
 
 def test_validate_hankel_1d_grid_spacing_rejects_invalid_k_spacing():
     """Tests that non-logspaced array values are rejected."""
-    with pytest.raises(
-        ValueError, match="must have uniform logarithmic spacing"
-    ):
+    with pytest.raises(ValueError, match="must have uniform logarithmic spacing"):
         validate_hankel_1d_grid_spacing([1, 2, 3], "k")
 
 
@@ -373,9 +349,7 @@ def test_validate_integration_params_accepts_valid_settings():
 
 def test_validate_integration_params_rejects_invalid_ell_range():
     """Tests that ell_max must be greater than ell_min."""
-    with pytest.raises(
-        ValueError, match="ell_max must be greater than ell_min"
-    ):
+    with pytest.raises(ValueError, match="ell_max must be greater than ell_min"):
         validate_integration_params(
             {
                 "n_ell": 10,
@@ -390,9 +364,7 @@ def test_validate_integration_params_rejects_invalid_ell_range():
 
 def test_validate_integration_params_rejects_invalid_use_hankel_offset():
     """Tests that use_hankel_offset must be a boolean."""
-    with pytest.raises(
-        ValueError, match="use_hankel_offset must be a boolean"
-    ):
+    with pytest.raises(ValueError, match="use_hankel_offset must be a boolean"):
         validate_integration_params(
             {
                 "n_ell": 10,
@@ -428,9 +400,7 @@ def test_occupied_redshift_range_from_nz_returns_thresholded_range():
 
 def test_occupied_redshift_range_from_nz_rejects_insufficient_support():
     """Tests that occupied redshift ranges need at least two cells."""
-    with pytest.raises(
-        ValueError, match="nz must be non-zero in at least two redshift cells"
-    ):
+    with pytest.raises(ValueError, match="nz must be non-zero in at least two redshift cells"):
         occupied_redshift_range_from_nz([0.0, 0.5, 1.0], [0.0, 1.0, 0.0])
 
 
@@ -447,9 +417,7 @@ def test_validate_forecast_vector_and_covariance_accepts_matching_inputs():
 
 def test_validate_forecast_vector_and_covariance_rejects_bad_cov_shape():
     """Tests that covariance shape must match the data-vector length."""
-    with pytest.raises(
-        ValueError, match="covariance shape does not match data_vector"
-    ):
+    with pytest.raises(ValueError, match="covariance shape does not match data_vector"):
         validate_forecast_vector_and_covariance([1.0, 2.0], np.eye(3))
 
 
@@ -465,17 +433,13 @@ def test_validate_parameter_names_allows_missing_names():
 
 def test_validate_parameter_names_rejects_non_string_names():
     """Tests that parameter names must be strings."""
-    with pytest.raises(
-        TypeError, match="parameter_names must contain only strings"
-    ):
+    with pytest.raises(TypeError, match="parameter_names must contain only strings"):
         validate_parameter_names(["a", 1], [1.0, 2.0])
 
 
 def test_redshift_window_mask_selects_closed_window():
     """Tests that redshift masks include both window edges."""
-    actual = redshift_window_mask(
-        np.array([0.0, 0.5, 1.0]), z_min=0.5, z_max=1.0
-    )
+    actual = redshift_window_mask(np.array([0.0, 0.5, 1.0]), z_min=0.5, z_max=1.0)
 
     np.testing.assert_array_equal(actual, np.array([False, True, True]))
 
@@ -507,7 +471,5 @@ def test_validate_redshift_distribution_support_trims_edge_points():
 
 def test_validate_redshift_distribution_support_rejects_zero_support():
     """Tests that empty positive redshift support is rejected."""
-    with pytest.raises(
-        ValueError, match="normalization must be finite and positive"
-    ):
+    with pytest.raises(ValueError, match="normalization must be finite and positive"):
         validate_redshift_distribution_support([0.0, 0.5], [0.0, 0.0])

@@ -62,9 +62,7 @@ def test_normalize_distribution_rejects_non_positive_integral():
     x = np.array([0.0, 1.0, 2.0])
     y = np.array([0.0, 0.0, 0.0])
 
-    with pytest.raises(
-        ValueError, match="Distribution integral must be positive"
-    ):
+    with pytest.raises(ValueError, match="Distribution integral must be positive"):
         normalize_distribution(x, y)
 
 

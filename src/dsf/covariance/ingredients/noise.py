@@ -98,4 +98,4 @@ def projected_shape_noise(
 
     n_eff_sr = n_eff_arcmin2 * arcmin2_per_steradian()
 
-    return sigma_e ** 2 * chi_eff ** 2 / n_eff_sr
+    return sigma_e**2 * chi_eff**2 / n_eff_sr

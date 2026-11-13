@@ -50,10 +50,7 @@ def lens_averaged_power_spectrum(
     k_physical = k_arr * h
     a_lens = redshift_to_scale_factor(z_arr)
 
-    pk_values = np.stack([
-        np.asarray(pk(k_physical, a, cosmo=cosmo), dtype=float)
-        for a in a_lens
-    ])
+    pk_values = np.stack([np.asarray(pk(k_physical, a, cosmo=cosmo), dtype=float) for a in a_lens])
 
     pk_avg = np.trapezoid(pk_values * nz_arr[:, None], x=z_arr, axis=0)
 

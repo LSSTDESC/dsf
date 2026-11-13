@@ -324,7 +324,7 @@ def covariance_builder_inputs(monkeypatch):
             "truez_summary": {0: {"z_mean": 0.2}},
         },
     }
-    result = SimpleNamespace(tomo_meta=metadata, z=np.array([0.1, 0.3]))
+    result = SimpleNamespace(metadata=metadata, z=np.array([0.1, 0.3]))
     return {
         "cosmo": ccl.CosmologyVanillaLCDM(transfer_function="bbks"),
         "tomography": {
@@ -350,9 +350,7 @@ def test_builder_selects_spectra_and_bias(
     spectra = {"pk_gg": pk_gg, "pk_gm": pk_gm} if supply_galaxy_spectra else {}
     bias = {} if supply_galaxy_spectra else {"galaxy_bias": 2.3}
 
-    builder = DeltaSigmaCovarianceBuilder(
-        **covariance_builder_inputs, **spectra, **bias
-    )
+    builder = DeltaSigmaCovarianceBuilder(**covariance_builder_inputs, **spectra, **bias)
 
     assert builder.galaxy_bias == (None if supply_galaxy_spectra else 2.3)
     assert builder.pk_gg is (pk_gg if supply_galaxy_spectra else None)
@@ -361,8 +359,9 @@ def test_builder_selects_spectra_and_bias(
 
 def test_builder_rejects_supplied_spectra_with_galaxy_bias(covariance_builder_inputs):
     """Explicit galaxy spectra cannot also have a separate bias applied."""
-    with pytest.raises(ValueError, match="galaxy_bias cannot be combined"
-                                         " with custom power spectra"):
+    with pytest.raises(
+        ValueError, match="galaxy_bias cannot be combined with custom power spectra"
+    ):
         DeltaSigmaCovarianceBuilder(
             **covariance_builder_inputs,
             pk_gg=object(),
@@ -372,9 +371,7 @@ def test_builder_rejects_supplied_spectra_with_galaxy_bias(covariance_builder_in
 
 
 @pytest.mark.parametrize("galaxy_bias", [1.0, 2.3])
-def test_default_lens_spectra_match_nonlinear_matter_power(
-    covariance_builder_inputs, galaxy_bias
-):
+def test_default_lens_spectra_match_nonlinear_matter_power(covariance_builder_inputs, galaxy_bias):
     """Test that default spectra apply galaxy bias exactly once."""
     cosmo = ccl.CosmologyVanillaLCDM(transfer_function="bbks")
     inputs = dict(covariance_builder_inputs, cosmo=cosmo)
@@ -389,19 +386,14 @@ def test_default_lens_spectra_match_nonlinear_matter_power(
     }
 
     k = np.array([0.05, 0.2, 1.0])
-    builder = DeltaSigmaCovarianceBuilder(
-        **inputs, galaxy_bias=galaxy_bias, k=k
-    )
+    builder = DeltaSigmaCovarianceBuilder(**inputs, galaxy_bias=galaxy_bias, k=k)
 
     ingredients = builder.lens_ingredients(0)
 
     z = lens_result.z
     h = cosmo["h"]
     power_at_redshifts = np.array(
-        [
-            ccl.nonlin_matter_power(cosmo, k * h, 1.0 / (1.0 + redshift)) * h**3
-            for redshift in z
-        ]
+        [ccl.nonlin_matter_power(cosmo, k * h, 1.0 / (1.0 + redshift)) * h**3 for redshift in z]
     )
     expected_mm = np.trapezoid(
         power_at_redshifts * lens_result.bins[0][:, None],
@@ -410,12 +402,8 @@ def test_default_lens_spectra_match_nonlinear_matter_power(
     )
 
     np.testing.assert_allclose(ingredients["pk_mm"], expected_mm, rtol=1e-12)
-    np.testing.assert_allclose(
-        ingredients["pk_gm"], galaxy_bias * expected_mm, rtol=1e-12
-    )
-    np.testing.assert_allclose(
-        ingredients["pk_gg"], galaxy_bias**2 * expected_mm, rtol=1e-12
-    )
+    np.testing.assert_allclose(ingredients["pk_gm"], galaxy_bias * expected_mm, rtol=1e-12)
+    np.testing.assert_allclose(ingredients["pk_gg"], galaxy_bias**2 * expected_mm, rtol=1e-12)
 
 
 def test_custom_lens_spectra_are_used_without_additional_galaxy_bias(
@@ -453,9 +441,7 @@ def test_custom_lens_spectra_are_used_without_additional_galaxy_bias(
         is_logp=False,
     )
 
-    builder = DeltaSigmaCovarianceBuilder(
-        **inputs, pk_gg=pk_gg, pk_gm=pk_gm, k=k
-    )
+    builder = DeltaSigmaCovarianceBuilder(**inputs, pk_gg=pk_gg, pk_gm=pk_gm, k=k)
     ingredients = builder.lens_ingredients(0)
 
     z = lens_result.z
@@ -467,10 +453,7 @@ def test_custom_lens_spectra_are_used_without_additional_galaxy_bias(
     expected_gm = np.full_like(k, 3.0 * h**3 * weight_integral)
 
     power_at_redshifts = np.array(
-        [
-            pk_mm(k * h, 1.0 / (1.0 + redshift), cosmo=cosmo) * h**3
-            for redshift in z
-        ]
+        [pk_mm(k * h, 1.0 / (1.0 + redshift), cosmo=cosmo) * h**3 for redshift in z]
     )
     expected_mm = np.trapezoid(
         power_at_redshifts * lens_weights[:, None],
@@ -485,9 +468,7 @@ def test_custom_lens_spectra_are_used_without_additional_galaxy_bias(
 
 
 @pytest.mark.parametrize("spectrum_name", ["pk_gg", "pk_gm"])
-def test_builder_rejects_incomplete_custom_spectra(
-    covariance_builder_inputs, spectrum_name
-):
+def test_builder_rejects_incomplete_custom_spectra(covariance_builder_inputs, spectrum_name):
     """Test that custom galaxy spectra must be supplied together."""
     with pytest.raises(ValueError):
         DeltaSigmaCovarianceBuilder(
@@ -517,20 +498,14 @@ def test_custom_spectra_match_equivalent_galaxy_bias(covariance_builder_inputs):
     pk_gg = galaxy_bias**2 * pk_mm
     pk_gm = galaxy_bias * pk_mm
 
-    default_builder = DeltaSigmaCovarianceBuilder(
-        **inputs, galaxy_bias=galaxy_bias, k=k
-    )
-    custom_builder = DeltaSigmaCovarianceBuilder(
-        **inputs, pk_gg=pk_gg, pk_gm=pk_gm, k=k
-    )
+    default_builder = DeltaSigmaCovarianceBuilder(**inputs, galaxy_bias=galaxy_bias, k=k)
+    custom_builder = DeltaSigmaCovarianceBuilder(**inputs, pk_gg=pk_gg, pk_gm=pk_gm, k=k)
 
     default = default_builder.lens_ingredients(0)
     custom = custom_builder.lens_ingredients(0)
 
     for spectrum in ("pk_gg", "pk_gm", "pk_mm"):
-        np.testing.assert_allclose(
-            custom[spectrum], default[spectrum], rtol=1e-12
-        )
+        np.testing.assert_allclose(custom[spectrum], default[spectrum], rtol=1e-12)
 
 
 def test_custom_lens_spectra_preserve_scale_dependence(covariance_builder_inputs):
@@ -570,9 +545,7 @@ def test_custom_lens_spectra_preserve_scale_dependence(covariance_builder_inputs
         is_logp=False,
     )
 
-    builder = DeltaSigmaCovarianceBuilder(
-        **inputs, pk_gg=pk_gg, pk_gm=pk_gm, k=k
-    )
+    builder = DeltaSigmaCovarianceBuilder(**inputs, pk_gg=pk_gg, pk_gm=pk_gm, k=k)
     ingredients = builder.lens_ingredients(0)
 
     z = lens_result.z
@@ -620,12 +593,8 @@ def test_custom_galaxy_spectra_change_lens_ingredients(covariance_builder_inputs
 
     pk_gm = make_pk(3.0)
 
-    builder_low = DeltaSigmaCovarianceBuilder(
-        **inputs, pk_gg=make_pk(5.0), pk_gm=pk_gm, k=k
-    )
-    builder_high = DeltaSigmaCovarianceBuilder(
-        **inputs, pk_gg=make_pk(10.0), pk_gm=pk_gm, k=k
-    )
+    builder_low = DeltaSigmaCovarianceBuilder(**inputs, pk_gg=make_pk(5.0), pk_gm=pk_gm, k=k)
+    builder_high = DeltaSigmaCovarianceBuilder(**inputs, pk_gg=make_pk(10.0), pk_gm=pk_gm, k=k)
 
     low = builder_low.lens_ingredients(0)
     high = builder_high.lens_ingredients(0)

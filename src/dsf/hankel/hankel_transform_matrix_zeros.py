@@ -215,7 +215,7 @@ class HankelTransformMatrixZeros(HankelTransformBase):
         self.r[order] = r_selected
         self.j[order] = j_matrix
         self.j_next_at_zeros[order] = j_next
-        self.inverse_j_next_squared[order] = 1.0 / j_next ** 2
+        self.inverse_j_next_squared[order] = 1.0 / j_next**2
         self.zeros[order] = zeros
         self.normalization[order] = float(norm)
 

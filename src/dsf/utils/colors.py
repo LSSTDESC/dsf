@@ -43,10 +43,7 @@ def pastelize(color: str, amount: float) -> str:
     return to_hex(pastel)
 
 
-DSF_COLORS = [
-    pastelize(color, PASTEL_AMOUNT)
-    for color in _BASE_COLORS
-]
+DSF_COLORS = [pastelize(color, PASTEL_AMOUNT) for color in _BASE_COLORS]
 
 DSF_CMAP = LinearSegmentedColormap.from_list(
     "dsf_colors",

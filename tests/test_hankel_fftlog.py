@@ -178,15 +178,11 @@ def test_projected_correlation_interpolated_output_exists_and_correct_length(
     "transform_func",
     [
         param(
-            HankelTransform(
-                backend="fftlog"
-            ).spherical_correlation_interpolated,
+            HankelTransform(backend="fftlog").spherical_correlation_interpolated,
             id="invalid_spacing_k_hankel_spherical",
         ),
         param(
-            HankelTransform(
-                backend="fftlog"
-            ).projected_correlation_interpolated,
+            HankelTransform(backend="fftlog").projected_correlation_interpolated,
             id="invalid_spacing_ell_hankel_projected",
         ),
     ],
@@ -297,7 +293,5 @@ def test_projected_covariance_returns_not_implemented():
     """Test that the FFTLog backend does not support projected_covariance."""
     transform = HankelTransformFFTLog()
 
-    with pytest.raises(
-        NotImplementedError, match="does not support projected_covariance"
-    ):
+    with pytest.raises(NotImplementedError, match="does not support projected_covariance"):
         transform.projected_covariance(order=2)

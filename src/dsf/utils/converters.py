@@ -151,9 +151,7 @@ def comoving_delta_sigma_to_proper(
     return wrapper
 
 
-def rho_critical_comoving_msun_mpc3(
-    cosmo: ccl.Cosmology, *, h: float | None = None
-) -> float:
+def rho_critical_comoving_msun_mpc3(cosmo: ccl.Cosmology, *, h: float | None = None) -> float:
     """Return critical density in comoving Msun / Mpc^3.
 
     Args:

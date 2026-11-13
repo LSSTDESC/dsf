@@ -660,7 +660,7 @@ wheels = [
 
 [[package]]
 name = "derivkit"
-version = "1.2.1"
+version = "1.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "emcee" },
@@ -672,9 +672,9 @@ dependencies = [
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/55/57/ea1a523fa36be7561dc97fc4f1fd01ff0aeac8849a76434bdc041e546195/derivkit-1.2.1.tar.gz", hash = "sha256:caed3df852d206263d944134f6a2a88c28762e09b022de0187a58c8a207dbedc", size = 1770258, upload-time = "2026-04-12T18:37:41.29Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f4/3e/bbefe966b253b167371651df202cc3c67af207fc419a465778d421026788/derivkit-1.5.0.tar.gz", hash = "sha256:ef693435942e4c921fc9abb0781f40606b47d07c37cf0d8a3bd55d227107d1d7", size = 1820240, upload-time = "2026-11-07T21:52:42.473Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/89/32/1816b80bdab94383a8aa93ab9350fabf3e7650ab8650b7c502314e4c0c85/derivkit-1.2.1-py3-none-any.whl", hash = "sha256:643a584413fa92588ff85aa13e916b86dab71af6273ec7bf775eb8b5937de386", size = 160819, upload-time = "2026-04-12T18:37:42.866Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/0c/b1c53af232635520c787b1ef1e754b080179af95733b33d3241a2b481d18/derivkit-1.5.0-py3-none-any.whl", hash = "sha256:467894ad2da70b48758ef490512e996a976c730228d4dbc2115438904b771efe", size = 179289, upload-time = "2026-11-07T21:52:41.045Z" },
 ]
 
 [[package]]
@@ -1095,11 +1095,11 @@ requires-dist = [
     { name = "astropy" },
     { name = "camb" },
     { name = "cmasher" },
-    { name = "derivkit" },
+    { name = "derivkit", specifier = ">=1.5.0" },
     { name = "getdist" },
     { name = "matplotlib" },
     { name = "numpy" },
-    { name = "pybinny", specifier = ">=0.6.0" },
+    { name = "pybinny", specifier = ">=1.2.0" },
     { name = "pyccl" },
     { name = "pyyaml" },
     { name = "scipy" },
@@ -1647,19 +1647,21 @@ wheels = [
 
 [[package]]
 name = "pybinny"
-version = "0.6.0"
+version = "1.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cmasher" },
+    { name = "derivkit" },
+    { name = "matplotlib" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pyyaml" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bf/dd/97d8649e783f3095e469978507b9e712e2fde32d6039f3c2e9058ca9fe1b/pybinny-0.6.0.tar.gz", hash = "sha256:3a77bb8bfedd4e92e732156309eab0ba49cac04e79002c20f56e8a6ec7740c36", size = 265773, upload-time = "2026-11-02T19:39:57.687Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0e/ec/2200da821d9c38d3093740f52a4391dbc9511ff23277a44ce1da66f49bff/pybinny-1.2.0.tar.gz", hash = "sha256:21937931b846b4d49a37037a8e823cfb880c234ac2ad679cc2b3c5d53a5ff470", size = 283601, upload-time = "2026-11-13T01:18:03.101Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4a/83/79651004c8e5a4a35eeba9e9ef55a9fc26798c367d484f0d22cab29112ff/pybinny-0.6.0-py3-none-any.whl", hash = "sha256:62be236833153f088495bc2f5ee33a7914d54dd8439221932db5be3a96edf969", size = 197743, upload-time = "2026-11-02T19:39:56.295Z" },
+    { url = "https://files.pythonhosted.org/packages/58/d7/ee1e7a4c06eba38c2f3cff7318eb0b56e6c57c57974e65e5f168ff46c20d/pybinny-1.2.0-py3-none-any.whl", hash = "sha256:d13c018b189b80b2b27ce41a26a6011eba6e920012e1ba3559208016433d1ad8", size = 201238, upload-time = "2026-11-13T01:18:01.514Z" },
 ]
 
 [[package]]

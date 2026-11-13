@@ -97,7 +97,9 @@ def test_pk2d_hod_baryonified_forwards_grids(cosmo, grids, capture_hod):
 
 
 def test_pk2d_hod_baryonified_forwards_hod_kwargs(
-    cosmo, grids, capture_hod,
+    cosmo,
+    grids,
+    capture_hod,
 ):
     """Tests that additional HOD parameters are forwarded."""
     baryons.pk2d_hod_baryonified(
@@ -126,7 +128,12 @@ def test_pk2d_hod_baryonified_returns_hod_spectra(cosmo, grids, capture_hod):
     CONCENTRATION_MODELS,
 )
 def test_pk2d_hod_baryonified_accepts_all_ccl_models(
-    cosmo, grids, capture_hod, model, mass_def, parameters,
+    cosmo,
+    grids,
+    capture_hod,
+    model,
+    mass_def,
+    parameters,
 ):
     """Tests that every available CCL concentration model is accepted."""
     concentration = model(mass_def=mass_def, **parameters)
@@ -148,7 +155,12 @@ def test_pk2d_hod_baryonified_accepts_all_ccl_models(
     CONCENTRATION_MODELS,
 )
 def test_pk2d_hod_baryonified_rescales_all_ccl_models(
-    cosmo, grids, capture_hod, model, mass_def, parameters,
+    cosmo,
+    grids,
+    capture_hod,
+    model,
+    mass_def,
+    parameters,
 ):
     """Tests that every CCL concentration model supports rescaling."""
     concentration = model(mass_def=mass_def, **parameters)
@@ -173,7 +185,10 @@ def test_pk2d_hod_baryonified_rescales_all_ccl_models(
     CONCENTRATION_MODELS,
 )
 def test_rescaled_concentration_matches_ccl(
-    cosmo, model, mass_def, parameters,
+    cosmo,
+    model,
+    mass_def,
+    parameters,
 ):
     """Tests numerical rescaling against the original CCL concentration."""
     concentration = model(mass_def=mass_def, **parameters)
@@ -193,7 +208,10 @@ def test_rescaled_concentration_matches_ccl(
     CONCENTRATION_MODELS,
 )
 def test_rescaled_concentration_identity(
-    cosmo, model, mass_def, parameters,
+    cosmo,
+    model,
+    mass_def,
+    parameters,
 ):
     """Tests that unit rescaling preserves the original concentration."""
     concentration = model(mass_def=mass_def, **parameters)
@@ -315,9 +333,7 @@ def test_rescaled_concentration_derivative(cosmo):
         model = baryons._RescaledConcentration(concentration, f_c)
         return model(cosmo, masses, scale_factor)
 
-    derivative = (
-        evaluate(1.0 + step) - evaluate(1.0 - step)
-    ) / (2.0 * step)
+    derivative = (evaluate(1.0 + step) - evaluate(1.0 - step)) / (2.0 * step)
 
     expected = concentration(cosmo, masses, scale_factor)
 
@@ -325,7 +341,9 @@ def test_rescaled_concentration_derivative(cosmo):
 
 
 def test_pk2d_hod_baryonified_f_c_changes_concentration(
-    cosmo, grids, capture_hod,
+    cosmo,
+    grids,
+    capture_hod,
 ):
     """Tests that varying f_c changes the concentration passed to HOD."""
     baryons.pk2d_hod_baryonified(cosmo, **grids, f_c=0.8)
@@ -351,7 +369,10 @@ def test_pk2d_hod_baryonified_f_c_changes_concentration(
     CONCENTRATION_MODELS,
 )
 def test_rescaled_concentration_scalar_mass(
-    cosmo, model, mass_def, parameters,
+    cosmo,
+    model,
+    mass_def,
+    parameters,
 ):
     """Tests concentration rescaling for scalar halo masses."""
     concentration = model(mass_def=mass_def, **parameters)
@@ -371,7 +392,10 @@ def test_rescaled_concentration_scalar_mass(
     CONCENTRATION_MODELS,
 )
 def test_rescaled_concentration_scale_factor_dependence(
-    cosmo, model, mass_def, parameters,
+    cosmo,
+    model,
+    mass_def,
+    parameters,
 ):
     """Tests concentration rescaling at different scale factors."""
     concentration = model(mass_def=mass_def, **parameters)
@@ -391,7 +415,9 @@ def test_rescaled_concentration_scale_factor_dependence(
     CONCENTRATION_MODELS,
 )
 def test_rescaled_concentration_mass_definition_validation(
-    model, mass_def, parameters,
+    model,
+    mass_def,
+    parameters,
 ):
     """Tests that the wrapper preserves CCL mass-definition restrictions."""
     concentration = model(mass_def=mass_def, **parameters)
@@ -402,10 +428,9 @@ def test_rescaled_concentration_mass_definition_validation(
     for candidate in ("200c", "200m", "500c", "vir"):
         mass_definition = ccl.halos.MassDef.from_name(candidate)
 
-        assert (
-            rescaled._check_mass_def_strict(mass_definition)
-            == concentration._check_mass_def_strict(mass_definition)
-        )
+        assert rescaled._check_mass_def_strict(
+            mass_definition
+        ) == concentration._check_mass_def_strict(mass_definition)
 
 
 def test_rescaled_concentration_matches_native_duffy_fc_bar(cosmo):
@@ -427,7 +452,9 @@ def test_rescaled_concentration_matches_native_duffy_fc_bar(cosmo):
 
 
 def test_pk2d_hod_baryonified_default_matches_explicit_duffy(
-    cosmo, grids, capture_hod,
+    cosmo,
+    grids,
+    capture_hod,
 ):
     """Tests equivalence between default and explicit Duffy08 models."""
     baryons.pk2d_hod_baryonified(cosmo, **grids, f_c=1.2)

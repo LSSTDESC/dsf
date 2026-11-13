@@ -41,16 +41,17 @@ Minimal gm covariance example
 
    tomography = TomographyBuilder(
        lens={
-           "survey": "lsst",
-           "year": "1",
+           "survey": "desi",
+           "sample": "lrg",
            "role": "lens",
-           "overrides": {"bins": {"count": 2}},
+           "overrides": {
+               "bins": {"edges": [0.4, 0.6, 0.8, 1.0]},
+           },
        },
        source={
            "survey": "lsst",
            "year": "1",
            "role": "source",
-           "overrides": {"bins": {"count": 2}},
        },
        overlap_threshold=0.10,
        source_behind_lens=True,

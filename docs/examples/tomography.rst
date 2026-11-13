@@ -32,23 +32,22 @@ number-density metadata.
 
    import matplotlib.pyplot as plt
    import numpy as np
-   from binny import NZTomography
+   from binny import build_tomography_from_spec
 
    from dsf import DSF_COLORS
    from dsf.tomography.tomo_builder import TomographyBuilder
 
-   binny = NZTomography()
    z_lens = np.linspace(0.1, 1.5, 500)
    z_source = np.linspace(0.0, 4.0, 500)
 
-   nz_lens = NZTomography.nz_model(
-       "smail", z_lens, z0=0.18, alpha=2.0, beta=1.5,
-   )
-   nz_source = NZTomography.nz_model(
-       "smail", z_source, z0=0.5, alpha=2.0, beta=1.0,
-   )
+   def smail_nz(z, z0, alpha, beta):
+       nz = z**alpha * np.exp(-(z / z0)**beta)
+       return nz / np.trapezoid(nz, z)
 
-   lens_result = binny.build_bins(
+   nz_lens = smail_nz(z_lens, z0=0.18, alpha=2.0, beta=1.5)
+   nz_source = smail_nz(z_source, z0=0.5, alpha=2.0, beta=1.0)
+
+   lens_result = build_tomography_from_spec(
        z=z_lens,
        nz=nz_lens,
        tomo_spec={
@@ -63,7 +62,7 @@ number-density metadata.
        },
    )
 
-   source_result = binny.build_bins(
+   source_result = build_tomography_from_spec(
        z=z_source,
        nz=nz_source,
        tomo_spec={
@@ -115,7 +114,6 @@ number-density metadata.
 
    fig, ax = plt.subplots()
 
-   # Filled lens distributions.
    for (key, nz), color in zip(
        sorted(lens.bins.items()), cycle(DSF_COLORS)
    ):
@@ -131,7 +129,6 @@ number-density metadata.
            label=f"Lens bin {key + 1}",
        )
 
-   # Unfilled source distributions.
    for (key, nz), color in zip(
        sorted(source.bins.items()), cycle(DSF_COLORS)
    ):
@@ -208,7 +205,6 @@ unfilled colored outlines.
 
    fig, ax = plt.subplots()
 
-   # Filled lens distributions.
    for (key, nz), color in zip(
        sorted(lens.bins.items()), cycle(DSF_COLORS)
    ):
@@ -224,7 +220,6 @@ unfilled colored outlines.
            label=f"Lens bin {key + 1}",
        )
 
-   # Unfilled source distributions.
    for (key, nz), color in zip(
        sorted(source.bins.items()), cycle(DSF_COLORS)
    ):
@@ -270,6 +265,15 @@ For survey presets, the supported entries include:
 When omitted, the lens and source configurations default to DESI LRG
 and LSST, respectively.
 
+For custom redshift distributions, provide:
+
+* ``z``: Redshift grid.
+* ``nz``: Parent redshift distribution.
+* ``config``: Binny tomography specification containing the binning
+  scheme and optional uncertainty parameters.
+
+For predefined bins, provide ``z``, ``bins``, and ``config`` instead.
+
 Lens-source pair selection is controlled by:
 
 * ``overlap_threshold``: Maximum fractional redshift-distribution overlap
@@ -285,14 +289,17 @@ Tomography products
 
 ``prepare_bins()`` returns a dictionary with the following entries:
 
-* ``lens_result``, ``source_result``: Binny tomography results.
+* ``lens_result``, ``source_result``: Binny ``Tomography`` objects.
 * ``lens_bin_centers``, ``source_bin_centers``: Mean bin redshifts.
 * ``lens_population_stats``, ``source_population_stats``: Population
   statistics, including number densities.
 * ``lens_shape_stats``, ``source_shape_stats``: Shape statistics.
 * ``lens_metadata``, ``source_metadata``: Tomographic metadata.
 * ``bin_pairs``: Selected lens-source index pairs.
-* ``lens_builder``, ``source_builder``: Binny ``NZTomography`` instances.
+
+Each Binny ``Tomography`` result provides ``z``, ``nz``, ``bins``,
+``metadata``, ``spec``, and ``survey_metadata`` attributes. The
+``metadata`` attribute replaces the old ``tomo_meta`` interface.
 
 For example:
 
@@ -302,6 +309,7 @@ For example:
 
    bin_pairs = inputs["bin_pairs"]
    lens_density = inputs["lens_population_stats"]["density_per_bin"]
+   lens_metadata = inputs["lens_result"].metadata
 
 Bin indices are zero-based and correspond to the Binny bin dictionary keys.
 
@@ -316,7 +324,7 @@ Precomputed tomography, as in the synthetic example, requires:
 * ``config``: Binny metadata containing ``sample_properties`` and
   ``population_fractions``.
 
-The sample properties must provide number density information. Population
+The sample properties must provide number-density information. Population
 fractions must be nonnegative and sum to one.
 
 See the `Binny documentation

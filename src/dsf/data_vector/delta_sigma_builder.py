@@ -289,7 +289,10 @@ class DeltaSigmaCalculator:
         lens_result = tomography["lens_result"]
         bin_pairs = tomography["bin_pairs"]
 
-        lens_edges = np.asarray(lens_result.tomo_meta["bins"]["bin_edges"], dtype=float)
+        lens_edges = np.asarray(
+            lens_result.metadata["bins"]["bin_edges"],
+            dtype=float,
+        )
         lens_z = np.asarray(lens_result.z, dtype=float)
 
         unique_lens_bins = sorted({int(lens_bin) for lens_bin, _ in bin_pairs})

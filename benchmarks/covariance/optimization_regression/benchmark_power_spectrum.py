@@ -66,13 +66,16 @@ def main():
             "survey": "desi",
             "sample": "lrg",
             "role": "lens",
-            "overrides": {"bins": {"count": 5}},
+            "overrides": {
+                "bins": {
+                    "edges": np.linspace(0.4, 1.0, 6).tolist(),
+                },
+            },
         },
         source={
             "survey": "lsst",
             "year": "1",
             "role": "source",
-            "overrides": {"bins": {"count": 5}},
         },
         overlap_threshold=0.1,
         source_behind_lens=True,

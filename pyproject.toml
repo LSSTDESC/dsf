@@ -46,7 +46,7 @@ dependencies = [
   "pyccl",
   "astropy",
   "pybinny>=1.2.0",
-  "derivkit",
+  "derivkit>=1.5.0",
   "cmasher",
   "getdist",
   "tqdm",

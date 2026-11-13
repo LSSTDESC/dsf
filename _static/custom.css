@@ -1,0 +1,235 @@
+
+/* ==========================================================================
+   DSF — Furo theme customization
+   ========================================================================== */
+
+/* --- DSF color palette -------------------------------------------------- */
+
+:root {
+    --dsf-red:    #E14536;
+    --dsf-orange: #FD7A03;
+    --dsf-yellow: #FAE403;
+    --dsf-green:  #B3DD30;
+    --dsf-cyan:   #11B5C2;
+
+    --color-brand-primary: var(--dsf-orange);
+    --color-brand-content: var(--dsf-orange);
+
+    --color-link: var(--dsf-orange);
+    --color-link--hover: var(--dsf-red);
+    --color-link--visited: var(--dsf-orange);
+
+    --color-sidebar-link-text: var(--dsf-orange);
+    --color-sidebar-link-text--top-level: var(--dsf-orange);
+}
+
+/* --- Furo theme colors -------------------------------------------------- */
+
+/* Furo sets theme variables on body, not html. */
+body[data-theme="light"],
+body[data-theme="dark"],
+body[data-theme="auto"] {
+    --color-brand-primary: var(--dsf-orange);
+    --color-brand-content: var(--dsf-orange);
+
+    --color-link: var(--dsf-orange);
+    --color-link--hover: var(--dsf-red);
+    --color-link--visited: var(--dsf-orange);
+
+    --color-sidebar-link-text: var(--dsf-orange);
+    --color-sidebar-link-text--top-level: var(--dsf-orange);
+}
+
+/* --- Headings ----------------------------------------------------------- */
+
+/* Page titles: DSF orange. */
+article h1 {
+    color: var(--dsf-orange) !important;
+}
+
+/* Section headings: DSF cyan. */
+article h2,
+article h3,
+article h4,
+article h5,
+article h6 {
+    color: var(--dsf-cyan) !important;
+}
+
+/* --- Links -------------------------------------------------------------- */
+
+/* Global links, matching the approach used in DerivKit. */
+a:link,
+a:visited,
+html[data-theme] a:link,
+html[data-theme] a:visited {
+    color: var(--dsf-orange) !important;
+}
+
+a:hover,
+html[data-theme] a:hover {
+    color: var(--dsf-red) !important;
+}
+
+a:active,
+html[data-theme] a:active {
+    color: var(--dsf-orange) !important;
+}
+
+a {
+    text-decoration-color: currentColor;
+}
+
+/* Furo content, sidebar, TOC, and navigation links. */
+:is(
+    .content,
+    .sidebar-container,
+    nav.toc,
+    .related,
+    .toc-tree,
+    .toctree-wrapper,
+    table.contentstable
+) a:link,
+:is(
+    .content,
+    .sidebar-container,
+    nav.toc,
+    .related,
+    .toc-tree,
+    .toctree-wrapper,
+    table.contentstable
+) a:visited {
+    color: var(--dsf-orange) !important;
+}
+
+:is(
+    .content,
+    .sidebar-container,
+    nav.toc,
+    .related,
+    .toc-tree,
+    .toctree-wrapper,
+    table.contentstable
+) a:hover {
+    color: var(--dsf-red) !important;
+}
+
+/* --- Homepage logo and title spacing ----------------------------------- */
+
+article .align-center {
+    margin-bottom: 0 !important;
+}
+
+article h1 {
+    margin-top: 0 !important;
+}
+
+/* --- Sidebar logo ------------------------------------------------------- */
+
+.sidebar-brand {
+    padding-bottom: 0 !important;
+}
+
+.sidebar-logo-container {
+    margin-bottom: 0 !important;
+}
+
+.sidebar-logo {
+    max-height: 80px;
+}
+
+/* --- Sidebar package title and subtitle -------------------------------- */
+
+.sidebar-brand-text {
+    color: var(--dsf-orange) !important;
+    margin-top: 0 !important;
+    text-align: center;
+    font-weight: 700;
+}
+
+.sidebar-brand-text::after {
+    content: "Delta Sigma Forecast";
+    display: block;
+    color: var(--dsf-cyan);
+    font-size: 0.55em;
+    font-weight: 400;
+    margin-top: 0.25rem;
+    white-space: nowrap;
+}
+
+/* --- Sidebar navigation ------------------------------------------------- */
+
+/* Navigation links. */
+.sidebar-tree a,
+.sidebar-tree a:visited {
+    color: var(--dsf-orange) !important;
+}
+
+/* Hover state. */
+.sidebar-tree a:hover {
+    color: var(--dsf-red) !important;
+}
+
+/* Current page and active navigation entries. */
+.sidebar-tree .current > a,
+.sidebar-tree a.current,
+.sidebar-tree a[aria-current="page"] {
+    color: var(--dsf-cyan) !important;
+    font-weight: 700;
+}
+
+/* Sidebar section captions. */
+.sidebar-tree .caption-text {
+    color: var(--dsf-cyan) !important;
+}
+
+/* --- Furo sidebar dropdown arrows -------------------------------------- */
+
+/* Furo renders expanders as label elements containing .icon. */
+.sidebar-tree label .icon,
+.sidebar-tree .toctree-l1 > label .icon {
+    color: var(--dsf-orange) !important;
+}
+
+/* Ensure SVG arrows inherit the orange color. */
+.sidebar-tree label .icon svg {
+    color: inherit !important;
+    stroke: currentColor !important;
+}
+
+/* Hover state. */
+.sidebar-tree label:hover .icon,
+.sidebar-tree .toctree-l1 > label:hover .icon {
+    color: var(--dsf-red) !important;
+}
+
+/* --- Inline heading logos ---------------------------------------------- */
+
+.inline-dsf-logo {
+    vertical-align: -0.15em;
+}
+
+/* --- Admonitions -------------------------------------------------------- */
+
+.admonition.note,
+.admonition.tip,
+.admonition.hint,
+.admonition.important {
+    border-left: 0.25rem solid var(--dsf-orange);
+}
+
+.admonition.warning,
+.admonition.caution,
+.admonition.attention,
+.admonition.danger,
+.admonition.error {
+    border-left: 0.25rem solid var(--dsf-red);
+}
+
+/* --- Documentation plots ------------------------------------------------ */
+
+div.plot-directive img,
+div.figure img {
+    max-width: 520px;
+    height: auto;
+}

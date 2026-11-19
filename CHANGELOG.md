@@ -2,7 +2,7 @@
 
 All notable changes to DSF are documented here.
 
-## [Unreleased]
+## [0.3.0] - 2026-11-19
 
 ### Added
 - Dedicated `tox -e benchmarks` environment for running scientific benchmarks and regenerating benchmark figures.

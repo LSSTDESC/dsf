@@ -243,7 +243,7 @@ def test_prepare_bins_output_structure(monkeypatch):
         z=np.array([0.0, 0.5, 1.0]),
         bins={0: np.array([0.0, 1.0, 0.0])},
         number_density={"n_gal_arcmin2": 1.0},
-        metadata={"frac_per_bin": {0: 1.0}},
+        metadata={"bins": {"frac_per_bin": {0: 1.0}}},
     )
 
     monkeypatch.setattr(
@@ -311,13 +311,13 @@ def test_predefined_tomography_preserves_population_fractions(monkeypatch):
 
     assert len(calls) == 1
     np.testing.assert_array_equal(calls[0]["z"], z)
-    assert calls[0]["normalize"] is False
+    assert calls[0]["normalize_bins"] is False
 
     for key in bins:
         np.testing.assert_array_equal(calls[0]["bins"][key], bins[key])
         np.testing.assert_array_equal(sample.bins[key], bins[key])
 
-    assert sample.metadata["frac_per_bin"] == fractions
+    assert sample.metadata["bins"]["frac_per_bin"] == fractions
     assert sample.spec["sample_properties"]["number_density"] == {"n_gal_arcmin2": 10.0}
 
 
@@ -359,7 +359,7 @@ def test_population_stats_preserves_comoving_density(monkeypatch):
         z=np.array([0.0, 0.5, 1.0]),
         bins={0: np.array([0.0, 1.0, 0.0])},
         number_density={"n_gal_mpc3": 0.0005},
-        metadata={"frac_per_bin": {0: 1.0}},
+        metadata={"bins": {"frac_per_bin": {0: 1.0}}},
     )
 
     def fake_population_stats(bins, metadata, **kwargs):

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-from binny import build_survey_tomography
+from binny.surveys import build_survey_tomography
 
 OUTPUT = Path(__file__).resolve().parent
 

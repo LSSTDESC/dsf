@@ -32,7 +32,7 @@ number-density metadata.
 
    import matplotlib.pyplot as plt
    import numpy as np
-   from binny import build_tomography_from_spec
+   from binny.tomography import build_tomography_from_spec
 
    from dsf import DSF_COLORS
    from dsf.tomography.tomo_builder import TomographyBuilder

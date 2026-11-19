@@ -22,7 +22,7 @@ def make_tomography():
             0: np.array([1.0, 2.0, 2.0, 1.0], dtype=float),
             1: np.array([0.5, 1.0, 1.0, 0.5], dtype=float),
         },
-        tomo_meta={
+        metadata={
             "bins": {
                 "bin_edges": np.array([0.1, 0.3, 0.5], dtype=float),
             },
@@ -36,7 +36,7 @@ def make_tomography():
             3: np.array([0.0, 1.0, 1.0], dtype=float),
             4: np.array([0.5, 1.0, 0.5], dtype=float),
         },
-        tomo_meta={},
+        metadata={},
     )
 
     return {
@@ -148,7 +148,7 @@ class DummyDeltaSigmaCalculator:
         lens_result = tomography["lens_result"]
         bin_pairs = tomography["bin_pairs"]
 
-        lens_edges = np.asarray(lens_result.tomo_meta["bins"]["bin_edges"], dtype=float)
+        lens_edges = np.asarray(lens_result.metadata["bins"]["bin_edges"], dtype=float)
         lens_z = np.asarray(lens_result.z, dtype=float)
 
         unique_lens_bins = sorted({int(lens_bin) for lens_bin, _ in bin_pairs})

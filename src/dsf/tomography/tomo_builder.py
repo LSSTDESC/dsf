@@ -8,16 +8,16 @@ from typing import Any
 
 import numpy as np
 import yaml
-from binny import (
-    Tomography,
-    build_predefined_tomography,
-    build_survey_tomography,
-    build_tomography_from_spec,
-)
-from binny.tomography import (
+from binny.analysis import (
     make_bin_combo_filter,
     population_stats,
     shape_stats,
+)
+from binny.surveys import build_survey_tomography
+from binny.tomography import (
+    Tomography,
+    build_predefined_tomography,
+    build_tomography_from_spec,
 )
 
 from dsf.utils.types import BinPairs, TomographyInputs
@@ -139,7 +139,7 @@ class TomographyBuilder:
             result = build_predefined_tomography(
                 z=config["z"],
                 bins=bins,
-                normalize=spec.get("normalize_bins", False),
+                normalize_bins=spec.get("normalize_bins", False),
             )
 
             return Tomography(
@@ -153,7 +153,11 @@ class TomographyBuilder:
                 metadata={
                     **result.metadata,
                     **(config.get("tomo_meta") or {}),
-                    "frac_per_bin": fractions,
+                    "bins": {
+                        **result.metadata.get("bins", {}),
+                        **(config.get("tomo_meta") or {}).get("bins", {}),
+                        "frac_per_bin": fractions,
+                    },
                 },
                 survey_metadata=result.survey_metadata,
             )

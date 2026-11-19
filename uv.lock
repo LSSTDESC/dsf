@@ -1099,7 +1099,7 @@ requires-dist = [
     { name = "getdist" },
     { name = "matplotlib" },
     { name = "numpy" },
-    { name = "pybinny", specifier = ">=1.2.0" },
+    { name = "pybinny", specifier = ">=2.0.0" },
     { name = "pyccl" },
     { name = "pyyaml" },
     { name = "scipy" },
@@ -1647,10 +1647,9 @@ wheels = [
 
 [[package]]
 name = "pybinny"
-version = "1.2.0"
+version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cmasher" },
     { name = "derivkit" },
     { name = "matplotlib" },
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
@@ -1659,9 +1658,9 @@ dependencies = [
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0e/ec/2200da821d9c38d3093740f52a4391dbc9511ff23277a44ce1da66f49bff/pybinny-1.2.0.tar.gz", hash = "sha256:21937931b846b4d49a37037a8e823cfb880c234ac2ad679cc2b3c5d53a5ff470", size = 283601, upload-time = "2026-11-13T01:18:03.101Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ca/ff/d7b302522a6831b05bf58e8a1a8920d2084ce63aa03d606f409af8cfa7e3/pybinny-2.0.0.tar.gz", hash = "sha256:b4ada45d0e76edd1dd89bb8c7b84309f5170ac9340b76b673c587bb16bd696fc", size = 296826, upload-time = "2026-11-19T06:04:19.997Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/58/d7/ee1e7a4c06eba38c2f3cff7318eb0b56e6c57c57974e65e5f168ff46c20d/pybinny-1.2.0-py3-none-any.whl", hash = "sha256:d13c018b189b80b2b27ce41a26a6011eba6e920012e1ba3559208016433d1ad8", size = 201238, upload-time = "2026-11-13T01:18:01.514Z" },
+    { url = "https://files.pythonhosted.org/packages/28/59/5b6161eb9c7c3bd28d1c38f5f30ed16663542662774a97ab0ed2bff7740d/pybinny-2.0.0-py3-none-any.whl", hash = "sha256:3e3638afee598b153d96fa63e6d9b4038aae7fe665d81392d1994b98dbfc94d9", size = 203270, upload-time = "2026-11-19T06:04:18.721Z" },
 ]
 
 [[package]]
